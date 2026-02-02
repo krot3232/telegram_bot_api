@@ -1,0 +1,14 @@
+[Unit]
+Description=Webhook
+After=network.target
+
+[Service]
+Type=notify
+ExecStart=/root/telegram_bot_api/example/webhook/_build/default/rel/webhook/bin/webhook foreground
+ExecStop=/root/telegram_bot_api/example/webhook/_build/default/rel/webhook/bin/webhook stop
+WatchdogSec=10s
+Restart=on-failure
+
+
+[Install]
+WantedBy=multi-user.target

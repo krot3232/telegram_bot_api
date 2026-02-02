@@ -1,0 +1,21 @@
+{application, telegram_bot_api, [
+    {description, "Telegram Bot API library"},
+    {vsn, "1.93.0"},
+    {registered, []},
+    {mod, {telegram_bot_api_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        inets,
+        worker_pool,
+        cowboy
+    ]},
+    {env, []},
+    {modules, []},
+    {doc, "doc"},
+    {licenses, ["MIT"]},
+    {links, [
+        {"GitHub","https://github.com/krot3232/telegram_bot_api"}
+    ]},
+    {build_tools, ["rebar3"]}
+]}.

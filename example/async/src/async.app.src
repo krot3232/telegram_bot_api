@@ -1,0 +1,15 @@
+{application, async, [
+    {description, "An OTP application"},
+    {vsn, "0.1.0"},
+    {registered, []},
+    {mod, {async_app, []}},
+    {applications, [
+        kernel,
+        stdlib,
+        telegram_bot_api
+    ]},
+    {env, []},
+    {modules, []},
+    {licenses, ["MIT"]},
+    {links, []}
+ ]}.

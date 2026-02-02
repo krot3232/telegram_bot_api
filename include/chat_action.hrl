@@ -1,0 +1,12 @@
+%%https://core.telegram.org/bots/api#sendchataction
+-define(CHAT_ACTION_TYPING,<<"typing">>).
+-define(CHAT_ACTION_UPLOAD_PHOTO,<<"upload_photo">>).
+-define(CHAT_ACTION_RECORD_VIDEO,<<"record_video">>).
+-define(CHAT_ACTION_UPLOAD_VIDEO,<<"upload_video">>).
+-define(CHAT_ACTION_RECORD_VOICE,<<"record_voice">>).
+-define(CHAT_ACTION_UPLOAD_VOICE,<<"upload_voice">>).
+-define(CHAT_ACTION_UPLOAD_DOCUMENT,<<"upload_document">>).
+-define(CHAT_ACTION_CHOOSE_STICKER,<<"choose_sticker">>).
+-define(CHAT_ACTION_FIND_LOCATION,<<"find_location">>).
+-define(CHAT_ACTION_RECORD_VIDEO_NOTE,<<"record_video_note">>).
+-define(CHAT_ACTION_UPLOAD_VIDEO_NOTE,<<"upload_video_note">>).
