@@ -1,6 +1,6 @@
 {application, telegram_bot_api, [
     {description, "Telegram Bot API library"},
-    {vsn, "1.93.0"},
+    {vsn, git},
     {registered, []},
     {mod, {telegram_bot_api_app, []}},
     {applications, [
