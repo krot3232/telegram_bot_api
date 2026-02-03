@@ -5034,7 +5034,7 @@ Please note that this parameter doesn't affect updates created before the call t
   * `drop_pending_updates` - Pass True to drop all pending updates
   * `secret_token` - A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token” in every webhook request, 1-256 characters. Only characters A-Z, a-z, 0-9, _ and - are allowed. The header is useful to ensure that the request comes from a webhook set by you.
 """.
--doc (#{group=><<"">>,since=><<"1.15">>}).
+-doc (#{group=><<"Webhook">>,since=><<"1.15">>}).
 -spec setWebhook(Pool :: pool_name(), Req :: #{url := binary(), certificate => 'InputFile'(), ip_address => binary(), max_connections => integer(), allowed_updates => nonempty_list('update_type'()), drop_pending_updates => boolean(), secret_token => secret_token()}, Async :: boolean()) -> Result :: result(true).
 setWebhook(Pool, #{url:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"setWebhook">>, Req, Async}).
 -doc (#{equiv=>setWebhook(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
@@ -5047,7 +5047,7 @@ Returns True on success.
 ## Parameters
   * `drop_pending_updates` - Pass True to drop all pending updates
 """.
--doc (#{group=><<"">>,since=><<"2.3">>}).
+-doc (#{group=><<"Webhook">>,since=><<"2.3">>}).
 -spec deleteWebhook(Pool :: pool_name(), Req :: #{drop_pending_updates => boolean()}, Async :: boolean()) -> Result :: result(true).
 deleteWebhook(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteWebhook">>, Req, Async}).
 -doc (#{equiv=>deleteWebhook(Pool, Req, false),since=><<"2.3">>,group=><<"Sync Request">>}).
@@ -5060,7 +5060,7 @@ Requires no parameters.
 On success, returns a WebhookInfo object.  
 If the bot is using getUpdates, will return an object with the url field empty.
 """.
--doc (#{group=><<"">>,since=><<"2.2">>}).
+-doc (#{group=><<"Webhook">>,since=><<"2.2">>}).
 -spec getWebhookInfo(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result('WebhookInfo'()).
 getWebhookInfo(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getWebhookInfo">>, Req, Async}).
 -doc (#{equiv=>getWebhookInfo(Pool, Req, false),since=><<"2.2">>,group=><<"Sync Request">>}).
@@ -5086,7 +5086,7 @@ After a successful call, you can immediately log in on a local server, but will 
 Returns True on success.  
 Requires no parameters.
 """.
--doc (#{group=><<"">>,since=><<"5.0">>}).
+-doc (#{group=><<"Webhook">>,since=><<"5.0">>}).
 -spec logOut(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result(true).
 logOut(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"logOut">>, Req, Async}).
 -doc (#{equiv=>logOut(Pool, Req, false),since=><<"5.0">>,group=><<"Sync Request">>}).
