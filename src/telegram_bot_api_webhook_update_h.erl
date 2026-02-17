@@ -15,6 +15,7 @@ See `m:telegram_bot_api#webhook`
 -export([is_authorized/2]).
 -export([handle_post/2]).
 
+%% allowed_methods->is_authorized->resource_exists->content_types_accepted->handle_post
 init(Req, Opts) ->
     {cowboy_rest, Req, Opts}.
 

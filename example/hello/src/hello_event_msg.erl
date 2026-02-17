@@ -37,8 +37,8 @@ handle_event({update,_BotName,#{
                             parse_mode=><<"html">>
                             }),
     {ok, State};
-handle_event({error,_BotName,_Status,_Json}, State) ->
-    io:format("handle_event error ~p ~p ~n",[_Status,_Json]),
+handle_event({error,_BotName,_Status,_Json} = Err, State) ->
+    io:format("handle_event error ~p~n",[Err]),
     {ok, State};
 handle_event(_Event, State) ->
     io:format("handle_event ~p~n",[_Event]),

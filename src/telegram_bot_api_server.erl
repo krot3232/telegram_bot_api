@@ -6,7 +6,7 @@
 -export([stop/1, start_link/1]).
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2, terminate/2, code_change/3]).
 
--define(HTTP_TIMEOUT, 10000).
+-define(HTTP_TIMEOUT, 4900).
 -define(HTTP_MODULE, telegram_bot_api_http).
 -define(HTTP_ENDPOINT, <<"https://api.telegram.org">>).
 
@@ -18,13 +18,25 @@ start_link(Opts) ->
 
 init([Opts]) when is_map(Opts) ->
     HttpModule = maps:get(http_module, Opts, ?HTTP_MODULE),
+    HttpOption=maps:get(http_option, Opts, [
+        {connect_timeout,maps:get(http_timeout, Opts, ?HTTP_TIMEOUT)},
+        {timeout, maps:get(http_timeout, Opts, ?HTTP_TIMEOUT)},
+        {ssl, [{verify, verify_none}]}
+        ]),
+    HttpProfile=case maps:get(http_profile,Opts,undef) of
+        undef->
+            case erlang:process_info(self(),[registered_name]) of
+                [{registered_name,N}] ->N;
+                _ ->maps:get(name,Opts)
+            end;
+        Profile-> Profile 
+        end, 
     State = Opts#{
         http_module => HttpModule,
-        http_option => maps:get(http_option, Opts, [
-            {timeout, maps:get(http_timeout, Opts, ?HTTP_TIMEOUT)}, {ssl, [{verify, verify_none}]}
-        ]),
+        http_endpoint => maps:get(http_endpoint, Opts, ?HTTP_ENDPOINT),
+        http_option => HttpOption,
         option_request => maps:get(option_request, Opts, [{body_format, binary}]),
-        http_endpoint => maps:get(http_endpoint, Opts, ?HTTP_ENDPOINT)
+        http_profile=> HttpProfile
     },
     {ok, HttpModule:init(State)};
 init(_) ->
@@ -50,12 +62,11 @@ handle_call(
         E:M ->
             {reply, {E, M}, State}
     end;
+handle_call({set_proxy,Proxy}, _From, #{http_module := HttpModule,http_profile := HttpProfile}=State) ->
+    {reply, HttpModule:set_proxy(HttpProfile,Proxy), State};
 handle_call(Msg, _From, State) ->
     {reply, {error, {nomatch, Msg}}, State}.
 
-handle_cast({set_http_option, Type, Val}, #{http_option := HttpOption} = State) ->
-    HttpOptionNew = [{Type, Val} | proplists:delete(Type, HttpOption)],
-    {noreply, State#{http_option => HttpOptionNew}};
 handle_cast(_Msg, State) ->
     {noreply, State}.
 

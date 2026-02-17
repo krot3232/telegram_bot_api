@@ -5,9 +5,9 @@
 -define(CRLF, <<"\r\n">>).
 -define(BOUNDARY, <<"--AaB03x01">>).
 
--export([init/1, terminate/1, raw/6, multipart/6, download/6]).
+-export([init/1, terminate/1, raw/6, multipart/6, download/6, set_proxy/2]).
 -export([async_receiver/2]).
-
+ 
 -export_type([
     ipv4/0,
     module_name/0,
@@ -51,11 +51,11 @@
 -type module_name() :: telegram_bot_api_http | atom().
 -type http_option() :: nonempty_list('HttpOption'()).
 -type option_request() :: nonempty_list('OptionRequest'()).
--type http_timeout() :: integer() | infinity.
+-type http_timeout() :: timeout().
 -type http_endpoint() :: binary().
 -type ipv4() :: {0..255, 0..255, 0..255, 0..255}.
 -type http_port() :: pos_integer().
--type http_proxy() :: {string(), http_port()}.
+-type http_proxy() :: undefined | {string(), http_port()}.
 
 -type state() ::
     #{
@@ -75,6 +75,8 @@
         nonempty_improper_list('alias', reference()), term()
     ).
 -type from() :: {Client :: pid(), Tag :: reply_tag()}.
+
+
 
 -callback init(State :: state()) -> StateNew :: state().
 -callback terminate(State :: state()) -> ok.
@@ -102,19 +104,23 @@
     From :: from(),
     State :: state()
 ) -> result().
+-callback set_proxy(HttpProfile :: atom(),HttpProxy :: http_proxy()) -> ok | {error, Reason :: term()}.
+
+-spec set_proxy(HttpProfile :: atom(),HttpProxy :: http_proxy()) -> ok | {error, Reason :: term()}.
+set_proxy(_HttpProfile,undefined)->ok;
+set_proxy(HttpProfile,HttpProxy)->
+    httpc:set_options([{proxy, {HttpProxy, []}}, {https_proxy, {HttpProxy, []}}],HttpProfile).
 
 -spec init(State :: state()) -> StateNew :: state().
-init(State) ->
-    case State of
-        #{http_proxy := HttpProxy} ->
-            httpc:set_options([{proxy, {HttpProxy, []}}, {https_proxy, {HttpProxy, []}}]);
-        _ ->
-            ok
-    end,
+init(#{http_profile:=HttpProfile}=State) ->
+    inets:start(httpc, [{profile, HttpProfile}]),
+    ok=set_proxy(HttpProfile,maps:get(http_proxy,State,undefined)),
     State.
 
 -spec terminate(State :: state()) -> ok.
-terminate(_State) -> ok.
+terminate(#{http_profile:=HttpProfile}=_State) ->  
+    inets:stop(httpc, HttpProfile),
+    ok.
 
 -type result() ::
     {ok, HttpCode :: integer(), Json :: map(), State :: state()}
@@ -135,7 +141,7 @@ raw(
     Data,
     Async,
     From,
-    #{token := Token, http_option := HttpOption, option_request := OptionRequest} = State
+    #{token := Token, http_option := HttpOption, option_request := OptionRequest, http_profile:=HttpProfile} = State
 ) ->
     Body = telegram_bot_api_util:json_encode(Data),
     Url = <<HttpEndpoint/binary, "/bot", Token/binary, $/, Method/binary>>,
@@ -144,7 +150,8 @@ raw(
             post,
             {Url, [], "application/json", Body},
             HttpOption,
-            option_request(Async, From, OptionRequest)
+            option_request(Async, From, OptionRequest),
+            HttpProfile
         )
     of
         {ok, {{_HttpStatus, HttpCode, _HttpState}, _HttpHeaders, HttpBody}} ->
@@ -169,7 +176,7 @@ multipart(
     Data,
     Async,
     From,
-    #{token := Token, http_option := HttpOption, option_request := OptionRequest} = State
+    #{token := Token, http_option := HttpOption, option_request := OptionRequest, http_profile:=HttpProfile} = State
 ) ->
     Url = <<HttpEndpoint/binary, "/bot", Token/binary, $/, Method/binary>>,
     Type = binary_to_list(<<"multipart/form-data; boundary=", ?BOUNDARY/binary>>),
@@ -179,7 +186,8 @@ multipart(
             post,
             {Url, [{"Content-Length", integer_to_list(size(Body))}], Type, Body},
             HttpOption,
-            option_request(Async, From, OptionRequest)
+            option_request(Async, From, OptionRequest),
+            HttpProfile
         )
     of
         {ok, {{_HttpStatus, HttpCode, _HttpState}, _HttpHeaders, HttpBody}} ->
@@ -204,7 +212,7 @@ download(
     StreamTo,
     Async,
     From,
-    #{token := Token, http_option := HttpOption, option_request := OptionRequest} = State
+    #{token := Token, http_option := HttpOption, option_request := OptionRequest, http_profile:=HttpProfile} = State
 ) ->
     Url = <<HttpEndpoint/binary, "/file/bot", Token/binary, $/, FilePath/binary>>,
     OptionRequest1 = [{stream, StreamTo} | option_request(Async, From, OptionRequest)],
@@ -213,7 +221,8 @@ download(
             get,
             {Url, []},
             HttpOption,
-            OptionRequest1
+            OptionRequest1,
+            HttpProfile
         )
     of
         {ok, saved_to_file} ->
@@ -237,8 +246,10 @@ option_request(true, {Pid, _Tag} = _From, OptionRequest) ->
 option_request(_, _, OptionRequest) ->
     OptionRequest.
 
+multipart_body(Data) when Data==#{} -><<>>;
 multipart_body(Data) ->
-    I = maps:next(maps:iterator(Data)),
+    Itr=maps:iterator(Data),
+    I = maps:next(Itr),
     multipart_body(I, [<<"--", ?BOUNDARY/binary, "--", ?CRLF/binary, ?CRLF/binary>>]).
 
 multipart_body(none, Acc) ->

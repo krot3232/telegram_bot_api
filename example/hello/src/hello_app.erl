@@ -15,7 +15,7 @@ start(_StartType, _StartArgs) ->
 
     {ok,Token}=application:get_env(hello, token),
     {ok,Name}=application:get_env(hello, name),
-
+    io:format("Token ~p~n",[Token]),
    
     gen_event:add_handler(hello_event, hello_event_msg, [#{name=>Name,token=>Token}]),
 
@@ -23,6 +23,13 @@ start(_StartType, _StartArgs) ->
         name=>Name,token=>Token,
         workers=>1
       }),
+      %%If you previously used a webhook, you need to log out before using long polls.
+      %If you call logOut a bot where the webhook has not been installed, the bot will be blocked for 10 minutes.
+    %  Result=telegram_bot_api:logOut(Name,#{}),
+    %  io:format("Result ~p~n",[Result]),
+      
+      
+
       {ok, _Pid2} =  telegram_bot_api_sup:start_update(#{
           name=>Name,  
           update_time=>800,

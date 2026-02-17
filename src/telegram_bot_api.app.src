@@ -1,5 +1,5 @@
 {application, telegram_bot_api, [
-    {description, "Telegram Bot API library"},
+    {description, "Erlang library for Telegram Bot API. Includes all methods and types available in Telegram Bot API 9.4, released February 9, 2026."},
     {vsn, git},
     {registered, []},
     {mod, {telegram_bot_api_app, []}},
@@ -15,7 +15,8 @@
     {doc, "doc"},
     {licenses, ["MIT"]},
     {links, [
-        {"GitHub","https://github.com/krot3232/telegram_bot_api"}
+        {"GitHub","https://github.com/krot3232/telegram_bot_api"},
+        {"Example","https://github.com/krot3232/telegram_bot_api/tree/main/example"}
     ]},
     {build_tools, ["rebar3"]}
 ]}.

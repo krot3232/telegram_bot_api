@@ -56,7 +56,8 @@ Start Http pool telegram bot
     http_option => telegram_bot_api_http:http_option(),
     http_timeout => telegram_bot_api_http:http_timeout(),
     option_request => telegram_bot_api_http:option_request(),
-    http_proxy => telegram_bot_api_http:http_proxy()
+    http_proxy => telegram_bot_api_http:http_proxy(),
+    http_profile => atom()
 }) -> supervisor:startchild_ret() | supervisor:startchild_err() | {error, term()}.
 
 start_pool(#{name := Pool, token := _, workers := Workers} = Op) ->
@@ -118,7 +119,7 @@ Start webhook
 ### Parameters:
 - `secret_token` - A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token” in every webhook request, 1-256 characters.
 - [`bots`](`t:telegram_bot_api_webhook_server:bots/0`) - Maps bot
-- [`https`](`t:telegram_bot_api_webhook_server:https/0`) - Maps contains the IP address and port for REST API webhook, use for set url webhook `telegram_bot_api:setWebhook/3`
+- [`transport_opts`](`t:telegram_bot_api_webhook_server:transport_opts/0`) - Maps contains the IP address and port for REST API webhook, use for set url webhook `telegram_bot_api:setWebhook/3`
 ## Examples:
 ```erlang
 telegram_bot_api_sup:start_webhook(#{
@@ -131,7 +132,7 @@ telegram_bot_api_sup:start_webhook(#{
                                 }
                             %%.. other bot
                     },
-                    https=>#{
+                    transport_opts=>#{
                         ip=>{0,0,0,0},
                         port=>8443,
                         certfile=>Certfile,
@@ -145,14 +146,16 @@ telegram_bot_api_sup:start_webhook(#{
     Op :: #{
         id => child_id(),
         secret_token := telegram_bot_api:secret_token(),
-        bots := telegram_bot_api_webhook_server:bots(),
-        https := telegram_bot_api_webhook_server:https()
+        bots => telegram_bot_api_webhook_server:bots(),
+        transport_opts := telegram_bot_api_webhook_server:transport_opts(),
+        protocol_opts => telegram_bot_api_webhook_server:protocol_opts()
     }
 ) -> supervisor:startchild_ret() | supervisor:startchild_err().
-start_webhook(#{secret_token := _, bots := _, https := #{ip := _Ip, port := _Port}} = Op) ->
+start_webhook(#{secret_token := _, transport_opts := #{ip := _Ip, port := _Port}} = Op) ->
     try
         ChildSpec = telegram_bot_api_webhook_server:child_spec(Op),
         supervisor:start_child(?SERVER, ChildSpec)
     catch
         E:M -> {error, {E, M}}
     end.
+

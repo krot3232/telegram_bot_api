@@ -25,6 +25,9 @@ to_binary(V) when is_integer(V) -> integer_to_binary(V);
 to_binary(V) when is_map(V) -> json_encode(V);
 to_binary(V) -> list_to_binary(io_lib:format("~p", [V])).
 
+-doc """
+Request a public IP address via site http://ifconfig.me/ip
+""".
 -spec get_ip() -> {ok, binary()} | {error, term()}.
 get_ip() ->
     Url = "http://ifconfig.me/ip",

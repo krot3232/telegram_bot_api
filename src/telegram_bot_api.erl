@@ -16,6 +16,11 @@ Fields:
 """.
 -type multipart_file() :: #{file := binary(), name := binary()}.
 
+-doc """
+File to send, parameter name must match the name in `attach://<file_attach_name>`
+""".
+-type file_attach_name() :: atom().
+
 -type empty_list() :: [].
 -type response_error() :: #{
     ok := false,
@@ -26,7 +31,7 @@ Fields:
 -type response_ok(Type) :: #{ok := true, result := Type | empty_list(), description => binary()}.
 
 -type http_code() :: 200 | 400 | 401 | 500 | pos_integer().
--type error() :: {error, term()} | {Reason :: term(), Exception :: term()}.
+-type error() :: {error, term()} | {exit, Reason :: term()} | {Reason :: term(), Exception :: term()}.
 
 -type async() :: {ok, Ref :: reference()}.
 
@@ -73,169 +78,175 @@ A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token” in e
 """.
 -type secret_token() :: nonempty_binary().
 
+%Default timeout for wpool:call(Pool, Req, Strategy, Timeout).
+-define(TIMEOUT_DEFAULT, 5000).
+
 -export([
-	getUpdates/2, getUpdates/3,
-	setWebhook/2, setWebhook/3,
-	deleteWebhook/2, deleteWebhook/3,
-	logOut/2, logOut/3,
-	close/2, close/3,
-	sendMessageDraft/2, sendMessageDraft/3,
-	sendChatAction/2, sendChatAction/3,
-	setMessageReaction/2, setMessageReaction/3,
-	setUserEmojiStatus/2, setUserEmojiStatus/3,
-	banChatMember/2, banChatMember/3,
-	unbanChatMember/2, unbanChatMember/3,
-	restrictChatMember/2, restrictChatMember/3,
-	promoteChatMember/2, promoteChatMember/3,
-	setChatAdministratorCustomTitle/2, setChatAdministratorCustomTitle/3,
-	banChatSenderChat/2, banChatSenderChat/3,
-	unbanChatSenderChat/2, unbanChatSenderChat/3,
-	setChatPermissions/2, setChatPermissions/3,
-	approveChatJoinRequest/2, approveChatJoinRequest/3,
-	declineChatJoinRequest/2, declineChatJoinRequest/3,
-	setChatPhoto/2, setChatPhoto/3,
-	deleteChatPhoto/2, deleteChatPhoto/3,
-	setChatTitle/2, setChatTitle/3,
-	setChatDescription/2, setChatDescription/3,
-	pinChatMessage/2, pinChatMessage/3,
-	unpinChatMessage/2, unpinChatMessage/3,
-	unpinAllChatMessages/2, unpinAllChatMessages/3,
-	leaveChat/2, leaveChat/3,
-	setChatStickerSet/2, setChatStickerSet/3,
-	deleteChatStickerSet/2, deleteChatStickerSet/3,
-	editForumTopic/2, editForumTopic/3,
-	closeForumTopic/2, closeForumTopic/3,
-	reopenForumTopic/2, reopenForumTopic/3,
-	deleteForumTopic/2, deleteForumTopic/3,
-	unpinAllForumTopicMessages/2, unpinAllForumTopicMessages/3,
-	editGeneralForumTopic/2, editGeneralForumTopic/3,
-	closeGeneralForumTopic/2, closeGeneralForumTopic/3,
-	reopenGeneralForumTopic/2, reopenGeneralForumTopic/3,
-	hideGeneralForumTopic/2, hideGeneralForumTopic/3,
-	unhideGeneralForumTopic/2, unhideGeneralForumTopic/3,
-	unpinAllGeneralForumTopicMessages/2, unpinAllGeneralForumTopicMessages/3,
-	answerCallbackQuery/2, answerCallbackQuery/3,
-	setMyCommands/2, setMyCommands/3,
-	deleteMyCommands/2, deleteMyCommands/3,
-	setMyName/2, setMyName/3,
-	setMyDescription/2, setMyDescription/3,
-	setMyShortDescription/2, setMyShortDescription/3,
-	setChatMenuButton/2, setChatMenuButton/3,
-	setMyDefaultAdministratorRights/2, setMyDefaultAdministratorRights/3,
-	sendGift/2, sendGift/3,
-	giftPremiumSubscription/2, giftPremiumSubscription/3,
-	verifyUser/2, verifyUser/3,
-	verifyChat/2, verifyChat/3,
-	removeUserVerification/2, removeUserVerification/3,
-	removeChatVerification/2, removeChatVerification/3,
-	readBusinessMessage/2, readBusinessMessage/3,
-	deleteBusinessMessages/2, deleteBusinessMessages/3,
-	setBusinessAccountName/2, setBusinessAccountName/3,
-	setBusinessAccountUsername/2, setBusinessAccountUsername/3,
-	setBusinessAccountBio/2, setBusinessAccountBio/3,
-	setBusinessAccountProfilePhoto/2, setBusinessAccountProfilePhoto/3,
-	removeBusinessAccountProfilePhoto/2, removeBusinessAccountProfilePhoto/3,
-	setBusinessAccountGiftSettings/2, setBusinessAccountGiftSettings/3,
-	transferBusinessAccountStars/2, transferBusinessAccountStars/3,
-	convertGiftToStars/2, convertGiftToStars/3,
-	upgradeGift/2, upgradeGift/3,
-	transferGift/2, transferGift/3,
-	deleteStory/2, deleteStory/3,
-	approveSuggestedPost/2, approveSuggestedPost/3,
-	declineSuggestedPost/2, declineSuggestedPost/3,
-	deleteMessage/2, deleteMessage/3,
-	deleteMessages/2, deleteMessages/3,
-	createNewStickerSet/2, createNewStickerSet/3,
-	addStickerToSet/2, addStickerToSet/3,
-	setStickerPositionInSet/2, setStickerPositionInSet/3,
-	deleteStickerFromSet/2, deleteStickerFromSet/3,
-	replaceStickerInSet/2, replaceStickerInSet/3,
-	setStickerEmojiList/2, setStickerEmojiList/3,
-	setStickerKeywords/2, setStickerKeywords/3,
-	setStickerMaskPosition/2, setStickerMaskPosition/3,
-	setStickerSetTitle/2, setStickerSetTitle/3,
-	setStickerSetThumbnail/2, setStickerSetThumbnail/3,
-	setCustomEmojiStickerSetThumbnail/2, setCustomEmojiStickerSetThumbnail/3,
-	deleteStickerSet/2, deleteStickerSet/3,
-	answerInlineQuery/2, answerInlineQuery/3,
-	answerShippingQuery/2, answerShippingQuery/3,
-	answerPreCheckoutQuery/2, answerPreCheckoutQuery/3,
-	refundStarPayment/2, refundStarPayment/3,
-	editUserStarSubscription/2, editUserStarSubscription/3,
-	setPassportDataErrors/2, setPassportDataErrors/3,
-	getWebhookInfo/2, getWebhookInfo/3,
-	getMe/2, getMe/3,
-	sendMessage/2, sendMessage/3,
-	forwardMessage/2, forwardMessage/3,
-	sendPhoto/2, sendPhoto/3,
-	sendAudio/2, sendAudio/3,
-	sendDocument/2, sendDocument/3,
-	sendVideo/2, sendVideo/3,
-	sendAnimation/2, sendAnimation/3,
-	sendVoice/2, sendVoice/3,
-	sendVideoNote/2, sendVideoNote/3,
-	sendPaidMedia/2, sendPaidMedia/3,
-	sendLocation/2, sendLocation/3,
-	sendVenue/2, sendVenue/3,
-	sendContact/2, sendContact/3,
-	sendPoll/2, sendPoll/3,
-	sendChecklist/2, sendChecklist/3,
-	sendDice/2, sendDice/3,
-	editMessageChecklist/2, editMessageChecklist/3,
-	sendSticker/2, sendSticker/3,
-	sendInvoice/2, sendInvoice/3,
-	sendGame/2, sendGame/3,
-	forwardMessages/2, forwardMessages/3,
-	copyMessages/2, copyMessages/3,
-	copyMessage/2, copyMessage/3,
-	sendMediaGroup/2, sendMediaGroup/3,
-	getUserProfilePhotos/2, getUserProfilePhotos/3,
-	getFile/2, getFile/3,
-	uploadStickerFile/2, uploadStickerFile/3,
-	exportChatInviteLink/2, exportChatInviteLink/3,
-	createInvoiceLink/2, createInvoiceLink/3,
-	createChatInviteLink/2, createChatInviteLink/3,
-	editChatInviteLink/2, editChatInviteLink/3,
-	createChatSubscriptionInviteLink/2, createChatSubscriptionInviteLink/3,
-	editChatSubscriptionInviteLink/2, editChatSubscriptionInviteLink/3,
-	revokeChatInviteLink/2, revokeChatInviteLink/3,
-	getChat/2, getChat/3,
-	getChatAdministrators/2, getChatAdministrators/3,
-	getChatMemberCount/2, getChatMemberCount/3,
-	getChatMember/2, getChatMember/3,
-	getForumTopicIconStickers/2, getForumTopicIconStickers/3,
-	getCustomEmojiStickers/2, getCustomEmojiStickers/3,
-	createForumTopic/2, createForumTopic/3,
-	getUserChatBoosts/2, getUserChatBoosts/3,
-	getBusinessConnection/2, getBusinessConnection/3,
-	getMyCommands/2, getMyCommands/3,
-	getMyName/2, getMyName/3,
-	getMyDescription/2, getMyDescription/3,
-	getMyShortDescription/2, getMyShortDescription/3,
-	getChatMenuButton/2, getChatMenuButton/3,
-	getMyDefaultAdministratorRights/2, getMyDefaultAdministratorRights/3,
-	getAvailableGifts/2, getAvailableGifts/3,
-	getBusinessAccountStarBalance/2, getBusinessAccountStarBalance/3,
-	getMyStarBalance/2, getMyStarBalance/3,
-	getBusinessAccountGifts/2, getBusinessAccountGifts/3,
-	getUserGifts/2, getUserGifts/3,
-	getChatGifts/2, getChatGifts/3,
-	postStory/2, postStory/3,
-	repostStory/2, repostStory/3,
-	editStory/2, editStory/3,
-	editMessageText/2, editMessageText/3,
-	editMessageCaption/2, editMessageCaption/3,
-	editMessageMedia/2, editMessageMedia/3,
-	editMessageLiveLocation/2, editMessageLiveLocation/3,
-	stopMessageLiveLocation/2, stopMessageLiveLocation/3,
-	editMessageReplyMarkup/2, editMessageReplyMarkup/3,
-	setGameScore/2, setGameScore/3,
-	stopPoll/2, stopPoll/3,
-	getStickerSet/2, getStickerSet/3,
-	answerWebAppQuery/2, answerWebAppQuery/3,
-	savePreparedInlineMessage/2, savePreparedInlineMessage/3,
-	getStarTransactions/2, getStarTransactions/3,
-	getGameHighScores/2, getGameHighScores/3
+	getUpdates/2, getUpdates/3, getUpdates/4,
+	setWebhook/2, setWebhook/3, setWebhook/4,
+	deleteWebhook/2, deleteWebhook/3, deleteWebhook/4,
+	logOut/2, logOut/3, logOut/4,
+	close/2, close/3, close/4,
+	sendMessageDraft/2, sendMessageDraft/3, sendMessageDraft/4,
+	sendChatAction/2, sendChatAction/3, sendChatAction/4,
+	setMessageReaction/2, setMessageReaction/3, setMessageReaction/4,
+	setUserEmojiStatus/2, setUserEmojiStatus/3, setUserEmojiStatus/4,
+	banChatMember/2, banChatMember/3, banChatMember/4,
+	unbanChatMember/2, unbanChatMember/3, unbanChatMember/4,
+	restrictChatMember/2, restrictChatMember/3, restrictChatMember/4,
+	promoteChatMember/2, promoteChatMember/3, promoteChatMember/4,
+	setChatAdministratorCustomTitle/2, setChatAdministratorCustomTitle/3, setChatAdministratorCustomTitle/4,
+	banChatSenderChat/2, banChatSenderChat/3, banChatSenderChat/4,
+	unbanChatSenderChat/2, unbanChatSenderChat/3, unbanChatSenderChat/4,
+	setChatPermissions/2, setChatPermissions/3, setChatPermissions/4,
+	approveChatJoinRequest/2, approveChatJoinRequest/3, approveChatJoinRequest/4,
+	declineChatJoinRequest/2, declineChatJoinRequest/3, declineChatJoinRequest/4,
+	setChatPhoto/2, setChatPhoto/3, setChatPhoto/4,
+	deleteChatPhoto/2, deleteChatPhoto/3, deleteChatPhoto/4,
+	setChatTitle/2, setChatTitle/3, setChatTitle/4,
+	setChatDescription/2, setChatDescription/3, setChatDescription/4,
+	pinChatMessage/2, pinChatMessage/3, pinChatMessage/4,
+	unpinChatMessage/2, unpinChatMessage/3, unpinChatMessage/4,
+	unpinAllChatMessages/2, unpinAllChatMessages/3, unpinAllChatMessages/4,
+	leaveChat/2, leaveChat/3, leaveChat/4,
+	setChatStickerSet/2, setChatStickerSet/3, setChatStickerSet/4,
+	deleteChatStickerSet/2, deleteChatStickerSet/3, deleteChatStickerSet/4,
+	editForumTopic/2, editForumTopic/3, editForumTopic/4,
+	closeForumTopic/2, closeForumTopic/3, closeForumTopic/4,
+	reopenForumTopic/2, reopenForumTopic/3, reopenForumTopic/4,
+	deleteForumTopic/2, deleteForumTopic/3, deleteForumTopic/4,
+	unpinAllForumTopicMessages/2, unpinAllForumTopicMessages/3, unpinAllForumTopicMessages/4,
+	editGeneralForumTopic/2, editGeneralForumTopic/3, editGeneralForumTopic/4,
+	closeGeneralForumTopic/2, closeGeneralForumTopic/3, closeGeneralForumTopic/4,
+	reopenGeneralForumTopic/2, reopenGeneralForumTopic/3, reopenGeneralForumTopic/4,
+	hideGeneralForumTopic/2, hideGeneralForumTopic/3, hideGeneralForumTopic/4,
+	unhideGeneralForumTopic/2, unhideGeneralForumTopic/3, unhideGeneralForumTopic/4,
+	unpinAllGeneralForumTopicMessages/2, unpinAllGeneralForumTopicMessages/3, unpinAllGeneralForumTopicMessages/4,
+	answerCallbackQuery/2, answerCallbackQuery/3, answerCallbackQuery/4,
+	setMyCommands/2, setMyCommands/3, setMyCommands/4,
+	deleteMyCommands/2, deleteMyCommands/3, deleteMyCommands/4,
+	setMyName/2, setMyName/3, setMyName/4,
+	setMyDescription/2, setMyDescription/3, setMyDescription/4,
+	setMyShortDescription/2, setMyShortDescription/3, setMyShortDescription/4,
+	setMyProfilePhoto/2, setMyProfilePhoto/3, setMyProfilePhoto/4,
+	removeMyProfilePhoto/2, removeMyProfilePhoto/3, removeMyProfilePhoto/4,
+	setChatMenuButton/2, setChatMenuButton/3, setChatMenuButton/4,
+	setMyDefaultAdministratorRights/2, setMyDefaultAdministratorRights/3, setMyDefaultAdministratorRights/4,
+	sendGift/2, sendGift/3, sendGift/4,
+	giftPremiumSubscription/2, giftPremiumSubscription/3, giftPremiumSubscription/4,
+	verifyUser/2, verifyUser/3, verifyUser/4,
+	verifyChat/2, verifyChat/3, verifyChat/4,
+	removeUserVerification/2, removeUserVerification/3, removeUserVerification/4,
+	removeChatVerification/2, removeChatVerification/3, removeChatVerification/4,
+	readBusinessMessage/2, readBusinessMessage/3, readBusinessMessage/4,
+	deleteBusinessMessages/2, deleteBusinessMessages/3, deleteBusinessMessages/4,
+	setBusinessAccountName/2, setBusinessAccountName/3, setBusinessAccountName/4,
+	setBusinessAccountUsername/2, setBusinessAccountUsername/3, setBusinessAccountUsername/4,
+	setBusinessAccountBio/2, setBusinessAccountBio/3, setBusinessAccountBio/4,
+	setBusinessAccountProfilePhoto/2, setBusinessAccountProfilePhoto/3, setBusinessAccountProfilePhoto/4,
+	removeBusinessAccountProfilePhoto/2, removeBusinessAccountProfilePhoto/3, removeBusinessAccountProfilePhoto/4,
+	setBusinessAccountGiftSettings/2, setBusinessAccountGiftSettings/3, setBusinessAccountGiftSettings/4,
+	transferBusinessAccountStars/2, transferBusinessAccountStars/3, transferBusinessAccountStars/4,
+	convertGiftToStars/2, convertGiftToStars/3, convertGiftToStars/4,
+	upgradeGift/2, upgradeGift/3, upgradeGift/4,
+	transferGift/2, transferGift/3, transferGift/4,
+	deleteStory/2, deleteStory/3, deleteStory/4,
+	approveSuggestedPost/2, approveSuggestedPost/3, approveSuggestedPost/4,
+	declineSuggestedPost/2, declineSuggestedPost/3, declineSuggestedPost/4,
+	deleteMessage/2, deleteMessage/3, deleteMessage/4,
+	deleteMessages/2, deleteMessages/3, deleteMessages/4,
+	createNewStickerSet/2, createNewStickerSet/3, createNewStickerSet/4,
+	addStickerToSet/2, addStickerToSet/3, addStickerToSet/4,
+	setStickerPositionInSet/2, setStickerPositionInSet/3, setStickerPositionInSet/4,
+	deleteStickerFromSet/2, deleteStickerFromSet/3, deleteStickerFromSet/4,
+	replaceStickerInSet/2, replaceStickerInSet/3, replaceStickerInSet/4,
+	setStickerEmojiList/2, setStickerEmojiList/3, setStickerEmojiList/4,
+	setStickerKeywords/2, setStickerKeywords/3, setStickerKeywords/4,
+	setStickerMaskPosition/2, setStickerMaskPosition/3, setStickerMaskPosition/4,
+	setStickerSetTitle/2, setStickerSetTitle/3, setStickerSetTitle/4,
+	setStickerSetThumbnail/2, setStickerSetThumbnail/3, setStickerSetThumbnail/4,
+	setCustomEmojiStickerSetThumbnail/2, setCustomEmojiStickerSetThumbnail/3, setCustomEmojiStickerSetThumbnail/4,
+	deleteStickerSet/2, deleteStickerSet/3, deleteStickerSet/4,
+	answerInlineQuery/2, answerInlineQuery/3, answerInlineQuery/4,
+	answerShippingQuery/2, answerShippingQuery/3, answerShippingQuery/4,
+	answerPreCheckoutQuery/2, answerPreCheckoutQuery/3, answerPreCheckoutQuery/4,
+	refundStarPayment/2, refundStarPayment/3, refundStarPayment/4,
+	editUserStarSubscription/2, editUserStarSubscription/3, editUserStarSubscription/4,
+	setPassportDataErrors/2, setPassportDataErrors/3, setPassportDataErrors/4,
+	getWebhookInfo/2, getWebhookInfo/3, getWebhookInfo/4,
+	getMe/2, getMe/3, getMe/4,
+	sendMessage/2, sendMessage/3, sendMessage/4,
+	forwardMessage/2, forwardMessage/3, forwardMessage/4,
+	sendPhoto/2, sendPhoto/3, sendPhoto/4,
+	sendAudio/2, sendAudio/3, sendAudio/4,
+	sendDocument/2, sendDocument/3, sendDocument/4,
+	sendVideo/2, sendVideo/3, sendVideo/4,
+	sendAnimation/2, sendAnimation/3, sendAnimation/4,
+	sendVoice/2, sendVoice/3, sendVoice/4,
+	sendVideoNote/2, sendVideoNote/3, sendVideoNote/4,
+	sendPaidMedia/2, sendPaidMedia/3, sendPaidMedia/4,
+	sendLocation/2, sendLocation/3, sendLocation/4,
+	sendVenue/2, sendVenue/3, sendVenue/4,
+	sendContact/2, sendContact/3, sendContact/4,
+	sendPoll/2, sendPoll/3, sendPoll/4,
+	sendChecklist/2, sendChecklist/3, sendChecklist/4,
+	sendDice/2, sendDice/3, sendDice/4,
+	editMessageChecklist/2, editMessageChecklist/3, editMessageChecklist/4,
+	sendSticker/2, sendSticker/3, sendSticker/4,
+	sendInvoice/2, sendInvoice/3, sendInvoice/4,
+	sendGame/2, sendGame/3, sendGame/4,
+	forwardMessages/2, forwardMessages/3, forwardMessages/4,
+	copyMessages/2, copyMessages/3, copyMessages/4,
+	copyMessage/2, copyMessage/3, copyMessage/4,
+	sendMediaGroup/2, sendMediaGroup/3, sendMediaGroup/4,
+	getUserProfilePhotos/2, getUserProfilePhotos/3, getUserProfilePhotos/4,
+	getUserProfileAudios/2, getUserProfileAudios/3, getUserProfileAudios/4,
+	getFile/2, getFile/3, getFile/4,
+	uploadStickerFile/2, uploadStickerFile/3, uploadStickerFile/4,
+	exportChatInviteLink/2, exportChatInviteLink/3, exportChatInviteLink/4,
+	createInvoiceLink/2, createInvoiceLink/3, createInvoiceLink/4,
+	createChatInviteLink/2, createChatInviteLink/3, createChatInviteLink/4,
+	editChatInviteLink/2, editChatInviteLink/3, editChatInviteLink/4,
+	createChatSubscriptionInviteLink/2, createChatSubscriptionInviteLink/3, createChatSubscriptionInviteLink/4,
+	editChatSubscriptionInviteLink/2, editChatSubscriptionInviteLink/3, editChatSubscriptionInviteLink/4,
+	revokeChatInviteLink/2, revokeChatInviteLink/3, revokeChatInviteLink/4,
+	getChat/2, getChat/3, getChat/4,
+	getChatAdministrators/2, getChatAdministrators/3, getChatAdministrators/4,
+	getChatMemberCount/2, getChatMemberCount/3, getChatMemberCount/4,
+	getChatMember/2, getChatMember/3, getChatMember/4,
+	getForumTopicIconStickers/2, getForumTopicIconStickers/3, getForumTopicIconStickers/4,
+	getCustomEmojiStickers/2, getCustomEmojiStickers/3, getCustomEmojiStickers/4,
+	createForumTopic/2, createForumTopic/3, createForumTopic/4,
+	getUserChatBoosts/2, getUserChatBoosts/3, getUserChatBoosts/4,
+	getBusinessConnection/2, getBusinessConnection/3, getBusinessConnection/4,
+	getMyCommands/2, getMyCommands/3, getMyCommands/4,
+	getMyName/2, getMyName/3, getMyName/4,
+	getMyDescription/2, getMyDescription/3, getMyDescription/4,
+	getMyShortDescription/2, getMyShortDescription/3, getMyShortDescription/4,
+	getChatMenuButton/2, getChatMenuButton/3, getChatMenuButton/4,
+	getMyDefaultAdministratorRights/2, getMyDefaultAdministratorRights/3, getMyDefaultAdministratorRights/4,
+	getAvailableGifts/2, getAvailableGifts/3, getAvailableGifts/4,
+	getBusinessAccountStarBalance/2, getBusinessAccountStarBalance/3, getBusinessAccountStarBalance/4,
+	getMyStarBalance/2, getMyStarBalance/3, getMyStarBalance/4,
+	getBusinessAccountGifts/2, getBusinessAccountGifts/3, getBusinessAccountGifts/4,
+	getUserGifts/2, getUserGifts/3, getUserGifts/4,
+	getChatGifts/2, getChatGifts/3, getChatGifts/4,
+	postStory/2, postStory/3, postStory/4,
+	repostStory/2, repostStory/3, repostStory/4,
+	editStory/2, editStory/3, editStory/4,
+	editMessageText/2, editMessageText/3, editMessageText/4,
+	editMessageCaption/2, editMessageCaption/3, editMessageCaption/4,
+	editMessageMedia/2, editMessageMedia/3, editMessageMedia/4,
+	editMessageLiveLocation/2, editMessageLiveLocation/3, editMessageLiveLocation/4,
+	stopMessageLiveLocation/2, stopMessageLiveLocation/3, stopMessageLiveLocation/4,
+	editMessageReplyMarkup/2, editMessageReplyMarkup/3, editMessageReplyMarkup/4,
+	setGameScore/2, setGameScore/3, setGameScore/4,
+	stopPoll/2, stopPoll/3, stopPoll/4,
+	getStickerSet/2, getStickerSet/3, getStickerSet/4,
+	answerWebAppQuery/2, answerWebAppQuery/3, answerWebAppQuery/4,
+	savePreparedInlineMessage/2, savePreparedInlineMessage/3, savePreparedInlineMessage/4,
+	getStarTransactions/2, getStarTransactions/3, getStarTransactions/4,
+	getGameHighScores/2, getGameHighScores/3, getGameHighScores/4
 ]).
 
 
@@ -256,7 +267,7 @@ At most one of the optional parameters can be present in any given update.
   * `message_reaction_count` - Optional. Reactions to a message with anonymous reactions were changed. The bot must be an administrator in the chat and must explicitly specify message_reaction_count in the list of allowed_updates to receive these updates. The updates are grouped and can be sent with delay up to a few minutes.
   * `inline_query` - Optional. New incoming inline query
   * `chosen_inline_result` - Optional. The result of an inline query that was chosen by a user and sent to their chat partner. Please see our documentation on the feedback collecting for details on how to enable these updates for your bot.
-  * `callback_query` - Optional. New incoming callback query
+  * `callback_query` - Optional. New incoming [callback query](https://core.telegram.org/bots/api#callbackquery)
   * `shipping_query` - Optional. New incoming shipping query. Only for invoices with flexible price
   * `pre_checkout_query` - Optional. New incoming pre-checkout query. Contains full information about checkout
   * `purchased_paid_media` - Optional. A user purchased paid media with a non-empty payload sent by the bot in a non-channel chat
@@ -326,15 +337,16 @@ This object represents a Telegram user or bot.
   * `first_name` - User's or bot's first name
   * `last_name` - Optional. User's or bot's last name
   * `username` - Optional. User's or bot's username
-  * `language_code` - Optional. IETF language tag of the user's language
+  * `language_code` - Optional. [IETF language tag](https://en.wikipedia.org/wiki/IETF_language_tag) of the user's language
   * `is_premium` - Optional. True, if this user is a Telegram Premium user
   * `added_to_attachment_menu` - Optional. True, if this user added the bot to the attachment menu
   * `can_join_groups` - Optional. True, if the bot can be invited to groups. Returned only in getMe.
-  * `can_read_all_group_messages` - Optional. True, if privacy mode is disabled for the bot. Returned only in getMe.
+  * `can_read_all_group_messages` - Optional. True, if [privacy mode](https://core.telegram.org/bots/features#privacy-mode) is disabled for the bot. Returned only in getMe.
   * `supports_inline_queries` - Optional. True, if the bot supports inline queries. Returned only in getMe.
   * `can_connect_to_business` - Optional. True, if the bot can be connected to a Telegram Business account to receive its messages. Returned only in getMe.
-  * `has_main_web_app` - Optional. True, if the bot has a main Web App. Returned only in getMe.
+  * `has_main_web_app` - Optional. True, if the bot has a main [Web App](https://core.telegram.org/bots/webapps). Returned only in getMe.
   * `has_topics_enabled` - Optional. True, if the bot has forum topic mode enabled in private chats. Returned only in getMe.
+  * `allows_users_to_create_topics` - Optional. True, if the bot allows users to create and delete topics in private chats. Returned only in getMe.
 """.
 -type 'User'() :: #{
 	id := integer(),
@@ -350,13 +362,14 @@ This object represents a Telegram user or bot.
 	supports_inline_queries => boolean(),
 	can_connect_to_business => boolean(),
 	has_main_web_app => boolean(),
-	has_topics_enabled => boolean()
+	has_topics_enabled => boolean(),
+	allows_users_to_create_topics => boolean()
 }.
 
 -doc """
 This object represents a chat.
   * `id` - Unique identifier for this chat. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this identifier.
-  * `type` - Type of the chat, can be either “private”, “group”, “supergroup” or “channel”
+  * `type` - Type of the chat, can be either `private`, `group`, `supergroup` or `channel`
   * `title` - Optional. Title, for supergroups, channels and group chats
   * `username` - Optional. Username, for private chats, supergroups and channels if available
   * `first_name` - Optional. First name of the other party in a private chat
@@ -378,32 +391,32 @@ This object represents a chat.
 -doc """
 This object contains full information about a chat.
   * `id` - Unique identifier for this chat. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this identifier.
-  * `type` - Type of the chat, can be either “private”, “group”, “supergroup” or “channel”
+  * `type` - Type of the chat, can be either `private`, `group`, `supergroup` or `channel`
   * `title` - Optional. Title, for supergroups, channels and group chats
   * `username` - Optional. Username, for private chats, supergroups and channels if available
   * `first_name` - Optional. First name of the other party in a private chat
   * `last_name` - Optional. Last name of the other party in a private chat
   * `is_forum` - Optional. True, if the supergroup chat is a forum (has topics enabled)
   * `is_direct_messages` - Optional. True, if the chat is the direct messages chat of a channel
-  * `accent_color_id` - Identifier of the accent color for the chat name and backgrounds of the chat photo, reply header, and link preview. See accent colors for more details.
+  * `accent_color_id` - Identifier of the accent color for the chat name and backgrounds of the chat photo, reply header, and link preview. See [accent colors](https://core.telegram.org/bots/api#accent-colors) for more details.
   * `max_reaction_count` - The maximum number of reactions that can be set on a message in the chat
   * `photo` - Optional. Chat photo
-  * `active_usernames` - Optional. If non-empty, the list of all active chat usernames; for private chats, supergroups and channels
+  * `active_usernames` - Optional. If non-empty, the list of all [active chat usernames](https://telegram.org/blog/topics-in-groups-collectible-usernames#collectible-usernames); for private chats, supergroups and channels
   * `birthdate` - Optional. For private chats, the date of birth of the user
   * `business_intro` - Optional. For private chats with business accounts, the intro of the business
   * `business_location` - Optional. For private chats with business accounts, the location of the business
   * `business_opening_hours` - Optional. For private chats with business accounts, the opening hours of the business
   * `personal_chat` - Optional. For private chats, the personal channel of the user
   * `parent_chat` - Optional. Information about the corresponding channel chat; for direct messages chats only
-  * `available_reactions` - Optional. List of available reactions allowed in the chat. If omitted, then all emoji reactions are allowed.
+  * `available_reactions` - Optional. List of available reactions allowed in the chat. If omitted, then all [emoji reactions](https://core.telegram.org/bots/api#reactiontypeemoji) are allowed.
   * `background_custom_emoji_id` - Optional. Custom emoji identifier of the emoji chosen by the chat for the reply header and link preview background
-  * `profile_accent_color_id` - Optional. Identifier of the accent color for the chat's profile background. See profile accent colors for more details.
+  * `profile_accent_color_id` - Optional. Identifier of the accent color for the chat's profile background. See [profile accent colors](https://core.telegram.org/bots/api#profile-accent-colors) for more details.
   * `profile_background_custom_emoji_id` - Optional. Custom emoji identifier of the emoji chosen by the chat for its profile background
   * `emoji_status_custom_emoji_id` - Optional. Custom emoji identifier of the emoji status of the chat or the other party in a private chat
   * `emoji_status_expiration_date` - Optional. Expiration date of the emoji status of the chat or the other party in a private chat, in Unix time, if any
   * `bio` - Optional. Bio of the other party in a private chat
   * `has_private_forwards` - Optional. True, if privacy settings of the other party in the private chat allows to use tg://user?id=<user_id> links only in chats with the user
-  * `has_restricted_voice_and_video_messages` - Optional. True, if the privacy settings of the other party restrict sending voice and video note messages in the private chat
+  * `has_restricted_voice_and_video_messages` - Optional. True, if the privacy settings of the other party restrict sending voice and [video note](https://telegram.org/blog/video-messages-and-telescope) messages in the private chat
   * `join_to_send_messages` - Optional. True, if users need to join the supergroup before they can send messages
   * `join_by_request` - Optional. True, if all users directly joining the supergroup without using an invite link need to be approved by supergroup administrators
   * `description` - Optional. Description, for groups, supergroups and channel chats
@@ -425,8 +438,9 @@ This object contains full information about a chat.
   * `linked_chat_id` - Optional. Unique identifier for the linked chat, i.e. the discussion group identifier for a channel and vice versa; for supergroups and channel chats. This identifier may be greater than 32 bits and some programming languages may have difficulty/silent defects in interpreting it. But it is smaller than 52 bits, so a signed 64 bit integer or double-precision float type are safe for storing this identifier.
   * `location` - Optional. For supergroups, the location to which the supergroup is connected
   * `rating` - Optional. For private chats, the rating of the user if any
+  * `first_profile_audio` - Optional. For private chats, the first audio added to the profile of the user
   * `unique_gift_colors` - Optional. The color scheme based on a unique gift that must be used for the chat's name, message replies and link previews
-  * `paid_message_star_count` - Optional. The number of Telegram Stars a general user have to pay to send a message to the chat
+  * `paid_message_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) a general user have to pay to send a message to the chat
 """.
 -type 'ChatFullInfo'() :: #{
 	id := integer(),
@@ -477,6 +491,7 @@ This object contains full information about a chat.
 	linked_chat_id => integer(),
 	location => 'ChatLocation'(),
 	rating => 'UserRating'(),
+	first_profile_audio => 'Audio'(),
 	unique_gift_colors => 'UniqueGiftColors'(),
 	paid_message_star_count => integer()
 }.
@@ -508,7 +523,7 @@ This object represents a message.
   * `is_paid_post` - Optional. True, if the message is a paid post. Note that such posts must not be deleted for 24 hours to receive the payment and can't be edited.
   * `media_group_id` - Optional. The unique identifier of a media message group this message belongs to
   * `author_signature` - Optional. Signature of the post author for messages in channels, or the custom title of an anonymous group administrator
-  * `paid_star_count` - Optional. The number of Telegram Stars that were paid by the sender of the message to send it
+  * `paid_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) that were paid by the sender of the message to send it
   * `text` - Optional. For text messages, the actual UTF-8 text of the message
   * `entities` - Optional. For text messages, special entities like usernames, URLs, bot commands, etc. that appear in the text
   * `link_preview_options` - Optional. Options used for link preview generation for the message, if it is a text message and link preview options were changed
@@ -518,11 +533,11 @@ This object represents a message.
   * `audio` - Optional. Message is an audio file, information about the file
   * `document` - Optional. Message is a general file, information about the file
   * `paid_media` - Optional. Message contains paid media; information about the paid media
-  * `photo` - Optional. Message is a photo, available sizes of the photo
+  * `photo` - Optional. Message is a photo, available [sizes](https://core.telegram.org/bots/api#photosize) of the photo
   * `sticker` - Optional. Message is a sticker, information about the sticker
   * `story` - Optional. Message is a forwarded story
   * `video` - Optional. Message is a video, information about the video
-  * `video_note` - Optional. Message is a video note, information about the video message
+  * `video_note` - Optional. Message is a [video note](https://telegram.org/blog/video-messages-and-telescope), information about the [video message](https://telegram.org/blog/video-messages-and-telescope)
   * `voice` - Optional. Message is a voice message, information about the file
   * `caption` - Optional. Caption for the animation, audio, document, paid media, photo, video or voice
   * `caption_entities` - Optional. For messages with a caption, special entities like usernames, URLs, bot commands, etc. that appear in the caption
@@ -531,32 +546,34 @@ This object represents a message.
   * `checklist` - Optional. Message is a checklist
   * `contact` - Optional. Message is a shared contact, information about the contact
   * `dice` - Optional. Message is a dice with random value
-  * `game` - Optional. Message is a game, information about the game. More about games »
+  * `game` - Optional. Message is a game, information about the game. [More about games »](https://core.telegram.org/bots/api#games)
   * `poll` - Optional. Message is a native poll, information about the poll
   * `venue` - Optional. Message is a venue, information about the venue. For backward compatibility, when this field is set, the location field will also be set
   * `location` - Optional. Message is a shared location, information about the location
   * `new_chat_members` - Optional. New members that were added to the group or supergroup and information about them (the bot itself may be one of these members)
   * `left_chat_member` - Optional. A member was removed from the group, information about them (this member may be the bot itself)
+  * `chat_owner_left` - Optional. Service message: chat owner has left
+  * `chat_owner_changed` - Optional. Service message: chat owner has changed
   * `new_chat_title` - Optional. A chat title was changed to this value
   * `new_chat_photo` - Optional. A chat photo was change to this value
   * `delete_chat_photo` - Optional. Service message: the chat photo was deleted
   * `group_chat_created` - Optional. Service message: the group has been created
-  * `supergroup_chat_created` - Optional. Service message: the supergroup has been created. This field can't be received in a message coming through updates, because bot can't be a member of a supergroup when it is created. It can only be found in reply_to_message if someone replies to a very first message in a directly created supergroup.
-  * `channel_chat_created` - Optional. Service message: the channel has been created. This field can't be received in a message coming through updates, because bot can't be a member of a channel when it is created. It can only be found in reply_to_message if someone replies to a very first message in a channel.
+  * `supergroup_chat_created` - Optional. Service message: the supergroup has been created. This field can't be received in a message coming through updates, because bot can't be a member of a supergroup [when it is created](https://core.telegram.org/bots/features#botfather). It can only be found in reply_to_message if someone replies to a very first message in a directly created supergroup.
+  * `channel_chat_created` - Optional. Service message: the channel has been created. This field can't be received in a message coming through updates, because bot can't be a member of a channel [when it is created](https://core.telegram.org/bots/features#botfather). It can only be found in reply_to_message if someone replies to a very first message in a channel.
   * `message_auto_delete_timer_changed` - Optional. Service message: auto-delete timer settings changed in the chat
   * `migrate_to_chat_id` - Optional. The group has been migrated to a supergroup with the specified identifier. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this identifier.
   * `migrate_from_chat_id` - Optional. The supergroup has been migrated from a group with the specified identifier. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this identifier.
   * `pinned_message` - Optional. Specified message was pinned. Note that the Message object in this field will not contain further reply_to_message fields even if it itself is a reply.
-  * `invoice` - Optional. Message is an invoice for a payment, information about the invoice. More about payments »
-  * `successful_payment` - Optional. Message is a service message about a successful payment, information about the payment. More about payments »
-  * `refunded_payment` - Optional. Message is a service message about a refunded payment, information about the payment. More about payments »
+  * `invoice` - Optional. Message is an invoice for a payment, information about the invoice. [More about payments »](https://core.telegram.org/bots/api#payments)
+  * `successful_payment` - Optional. Message is a service message about a successful payment, information about the payment. [More about payments »](https://core.telegram.org/bots/api#payments)
+  * `refunded_payment` - Optional. Message is a service message about a refunded payment, information about the payment. [More about payments »](https://core.telegram.org/bots/api#payments)
   * `users_shared` - Optional. Service message: users were shared with the bot
   * `chat_shared` - Optional. Service message: a chat was shared with the bot
   * `gift` - Optional. Service message: a regular gift was sent or received
   * `unique_gift` - Optional. Service message: a unique gift was sent or received
   * `gift_upgrade_sent` - Optional. Service message: upgrade of a gift was purchased after the gift was sent
-  * `connected_website` - Optional. The domain name of the website on which the user has logged in. More about Telegram Login »
-  * `write_access_allowed` - Optional. Service message: the user allowed the bot to write messages after adding it to the attachment or side menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method requestWriteAccess
+  * `connected_website` - Optional. The domain name of the website on which the user has logged in. [More about Telegram Login »](https://core.telegram.org/widgets/login)
+  * `write_access_allowed` - Optional. Service message: the user allowed the bot to write messages after adding it to the attachment or side menu, launching a [Web App](https://core.telegram.org/bots/webapps) from a link, or accepting an explicit request from a [Web App](https://core.telegram.org/bots/webapps) sent by the method [requestWriteAccess](https://core.telegram.org/bots/webapps#initializing-mini-apps)
   * `passport_data` - Optional. Telegram Passport data
   * `proximity_alert_triggered` - Optional. Service message. A user in the chat triggered another user's proximity alert while sharing Live Location.
   * `boost_added` - Optional. Service message: user boosted the chat
@@ -584,8 +601,8 @@ This object represents a message.
   * `video_chat_started` - Optional. Service message: video chat started
   * `video_chat_ended` - Optional. Service message: video chat ended
   * `video_chat_participants_invited` - Optional. Service message: new participants invited to a video chat
-  * `web_app_data` - Optional. Service message: data sent by a Web App
-  * `reply_markup` - Optional. Inline keyboard attached to the message. login_url buttons are represented as ordinary url buttons.
+  * `web_app_data` - Optional. Service message: data sent by a [Web App](https://core.telegram.org/bots/webapps)
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message. login_url buttons are represented as ordinary url buttons.
 """.
 -type 'Message'() :: #{
 	message_id := integer(),
@@ -642,6 +659,8 @@ This object represents a message.
 	location => 'Location'(),
 	new_chat_members => nonempty_list('User'()),
 	left_chat_member => 'User'(),
+	chat_owner_left => 'ChatOwnerLeft'(),
+	chat_owner_changed => 'ChatOwnerChanged'(),
 	new_chat_title => binary(),
 	new_chat_photo => nonempty_list('PhotoSize'()),
 	delete_chat_photo => true,
@@ -722,13 +741,13 @@ This object describes a message that can be inaccessible to the bot.
 -doc """
 This object represents one special entity in a text message.  
 For example, hashtags, usernames, URLs, etc.
-  * `type` - Type of the entity. Currently, can be “mention” (@username), “hashtag” (#hashtag or #hashtag@chatusername), “cashtag” ($USD or $USD@chatusername), “bot_command” (/start@jobs_bot), “url” (https://telegram.org), “email” (do-not-reply@telegram.org), “phone_number” (+1-212-555-0123), “bold” (bold text), “italic” (italic text), “underline” (underlined text), “strikethrough” (strikethrough text), “spoiler” (spoiler message), “blockquote” (block quotation), “expandable_blockquote” (collapsed-by-default block quotation), “code” (monowidth string), “pre” (monowidth block), “text_link” (for clickable text URLs), “text_mention” (for users without usernames), “custom_emoji” (for inline custom emoji stickers)
-  * `offset` - Offset in UTF-16 code units to the start of the entity
-  * `length` - Length of the entity in UTF-16 code units
-  * `url` - Optional. For “text_link” only, URL that will be opened after user taps on the text
-  * `user` - Optional. For “text_mention” only, the mentioned user
-  * `language` - Optional. For “pre” only, the programming language of the entity text
-  * `custom_emoji_id` - Optional. For “custom_emoji” only, unique identifier of the custom emoji. Use getCustomEmojiStickers to get full information about the sticker
+  * `type` - Type of the entity. Currently, can be `mention` (@username), `hashtag` (#hashtag or #hashtag@chatusername), `cashtag` ($USD or $USD@chatusername), `bot_command` (/start@jobs_bot), `url` (https://telegram.org), `email` (do-not-reply@telegram.org), `phone_number` (+1-212-555-0123), `bold` (bold text), `italic` (italic text), `underline` (underlined text), `strikethrough` (strikethrough text), `spoiler` (spoiler message), `blockquote` (block quotation), `expandable_blockquote` (collapsed-by-default block quotation), `code` (monowidth string), `pre` (monowidth block), `text_link` (for clickable text URLs), `text_mention` (for users [without usernames](https://telegram.org/blog/edit#new-mentions)), `custom_emoji` (for inline custom emoji stickers)
+  * `offset` - Offset in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length) to the start of the entity
+  * `length` - Length of the entity in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length)
+  * `url` - Optional. For `text_link` only, URL that will be opened after user taps on the text
+  * `user` - Optional. For `text_mention` only, the mentioned user
+  * `language` - Optional. For `pre` only, the programming language of the entity text
+  * `custom_emoji_id` - Optional. For `custom_emoji` only, unique identifier of the custom emoji. Use getCustomEmojiStickers to get full information about the sticker
 """.
 -type 'MessageEntity'() :: #{
 	type := binary(),
@@ -744,7 +763,7 @@ For example, hashtags, usernames, URLs, etc.
 This object contains information about the quoted part of a message that is replied to by the given message.
   * `text` - Text of the quoted part of a message that is replied to by the given message
   * `entities` - Optional. Special entities that appear in the quote. Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are kept in quotes.
-  * `position` - Approximate quote position in the original message in UTF-16 code units as specified by the sender
+  * `position` - Approximate quote position in the original message in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length) as specified by the sender
   * `is_manual` - Optional. True, if the quote was chosen manually by the message sender. Otherwise, the quote was added automatically by the server.
 """.
 -type 'TextQuote'() :: #{
@@ -764,20 +783,20 @@ This object contains information about a message that is being replied to, which
   * `audio` - Optional. Message is an audio file, information about the file
   * `document` - Optional. Message is a general file, information about the file
   * `paid_media` - Optional. Message contains paid media; information about the paid media
-  * `photo` - Optional. Message is a photo, available sizes of the photo
+  * `photo` - Optional. Message is a photo, available [sizes](https://core.telegram.org/bots/api#photosize) of the photo
   * `sticker` - Optional. Message is a sticker, information about the sticker
   * `story` - Optional. Message is a forwarded story
   * `video` - Optional. Message is a video, information about the video
-  * `video_note` - Optional. Message is a video note, information about the video message
+  * `video_note` - Optional. Message is a [video note](https://telegram.org/blog/video-messages-and-telescope), information about the [video message](https://telegram.org/blog/video-messages-and-telescope)
   * `voice` - Optional. Message is a voice message, information about the file
   * `has_media_spoiler` - Optional. True, if the message media is covered by a spoiler animation
   * `checklist` - Optional. Message is a checklist
   * `contact` - Optional. Message is a shared contact, information about the contact
   * `dice` - Optional. Message is a dice with random value
-  * `game` - Optional. Message is a game, information about the game. More about games »
+  * `game` - Optional. Message is a game, information about the game. [More about games »](https://core.telegram.org/bots/api#games)
   * `giveaway` - Optional. Message is a scheduled giveaway, information about the giveaway
   * `giveaway_winners` - Optional. A giveaway with public winners was completed
-  * `invoice` - Optional. Message is an invoice for a payment, information about the invoice. More about payments »
+  * `invoice` - Optional. Message is an invoice for a payment, information about the invoice. [More about payments »](https://core.telegram.org/bots/api#payments)
   * `location` - Optional. Message is a shared location, information about the location
   * `poll` - Optional. Message is a native poll, information about the poll
   * `venue` - Optional. Message is a venue, information about the venue
@@ -816,9 +835,9 @@ Describes reply parameters for the message that is being sent.
   * `chat_id` - Optional. If the message to be replied to is from a different chat, unique identifier for the chat or username of the channel (in the format @channelusername). Not supported for messages sent on behalf of a business account and messages from channel direct messages chats.
   * `allow_sending_without_reply` - Optional. Pass True if the message should be sent even if the specified message to be replied to is not found. Always False for replies in another chat or forum topic. Always True for messages sent on behalf of a business account.
   * `quote` - Optional. Quoted part of the message to be replied to; 0-1024 characters after entities parsing. The quote must be an exact substring of the message to be replied to, including bold, italic, underline, strikethrough, spoiler, and custom_emoji entities. The message will fail to send if the quote isn't found in the original message.
-  * `quote_parse_mode` - Optional. Mode for parsing entities in the quote. See formatting options for more details.
+  * `quote_parse_mode` - Optional. Mode for parsing entities in the quote. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `quote_entities` - Optional. A JSON-serialized list of special entities that appear in the quote. It can be specified instead of quote_parse_mode.
-  * `quote_position` - Optional. Position of the quote in the original message in UTF-16 code units
+  * `quote_position` - Optional. Position of the quote in the original message in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length)
   * `checklist_task_id` - Optional. Identifier of the specific checklist task to be replied to
 """.
 -type 'ReplyParameters'() :: #{
@@ -840,7 +859,7 @@ This object describes the origin of a message.
 
 -doc """
 The message was originally sent by a known user.
-  * `type` - Type of the message origin, always “user”
+  * `type` - Type of the message origin, always `user`
   * `date` - Date the message was sent originally in Unix time
   * `sender_user` - User that sent the message originally
 """.
@@ -852,7 +871,7 @@ The message was originally sent by a known user.
 
 -doc """
 The message was originally sent by an unknown user.
-  * `type` - Type of the message origin, always “hidden_user”
+  * `type` - Type of the message origin, always `hidden_user`
   * `date` - Date the message was sent originally in Unix time
   * `sender_user_name` - Name of the user that sent the message originally
 """.
@@ -864,7 +883,7 @@ The message was originally sent by an unknown user.
 
 -doc """
 The message was originally sent on behalf of a chat to a group chat.
-  * `type` - Type of the message origin, always “chat”
+  * `type` - Type of the message origin, always `chat`
   * `date` - Date the message was sent originally in Unix time
   * `sender_chat` - Chat that sent the message originally
   * `author_signature` - Optional. For messages originally sent by an anonymous chat administrator, original message author signature
@@ -878,7 +897,7 @@ The message was originally sent on behalf of a chat to a group chat.
 
 -doc """
 The message was originally sent to a channel chat.
-  * `type` - Type of the message origin, always “channel”
+  * `type` - Type of the message origin, always `channel`
   * `date` - Date the message was sent originally in Unix time
   * `chat` - Channel chat to which the message was originally sent
   * `message_id` - Unique message identifier inside the chat
@@ -985,6 +1004,24 @@ This object represents a story.
 }.
 
 -doc """
+This object represents a video file of a specific quality.
+  * `file_id` - Identifier for this file, which can be used to download or reuse the file
+  * `file_unique_id` - Unique identifier for this file, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
+  * `width` - Video width
+  * `height` - Video height
+  * `codec` - Codec that was used to encode the video, for example, `h264`, `h265`, or `av01`
+  * `file_size` - Optional. File size in bytes. It can be bigger than 2^31 and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this value.
+""".
+-type 'VideoQuality'() :: #{
+	file_id := binary(),
+	file_unique_id := binary(),
+	width := integer(),
+	height := integer(),
+	codec := binary(),
+	file_size => integer()
+}.
+
+-doc """
 This object represents a video file.
   * `file_id` - Identifier for this file, which can be used to download or reuse the file
   * `file_unique_id` - Unique identifier for this file, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
@@ -992,8 +1029,9 @@ This object represents a video file.
   * `height` - Video height as defined by the sender
   * `duration` - Duration of the video in seconds as defined by the sender
   * `thumbnail` - Optional. Video thumbnail
-  * `cover` - Optional. Available sizes of the cover of the video in the message
+  * `cover` - Optional. Available [sizes](https://core.telegram.org/bots/api#photosize) of the cover of the video in the message
   * `start_timestamp` - Optional. Timestamp in seconds from which the video will play in the message
+  * `qualities` - Optional. List of available qualities of the video
   * `file_name` - Optional. Original filename as defined by the sender
   * `mime_type` - Optional. MIME type of the file as defined by the sender
   * `file_size` - Optional. File size in bytes. It can be bigger than 2^31 and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a signed 64-bit integer or double-precision float type are safe for storing this value.
@@ -1007,16 +1045,17 @@ This object represents a video file.
 	thumbnail => 'PhotoSize'(),
 	cover => nonempty_list('PhotoSize'()),
 	start_timestamp => integer(),
+	qualities => nonempty_list('VideoQuality'()),
 	file_name => binary(),
 	mime_type => binary(),
 	file_size => integer()
 }.
 
 -doc """
-This object represents a video message (available in Telegram apps as of v.4.0).
+This object represents a [video message](https://telegram.org/blog/video-messages-and-telescope) (available in Telegram apps as of [v.4.0](https://telegram.org/blog/video-messages-and-telescope)).
   * `file_id` - Identifier for this file, which can be used to download or reuse the file
   * `file_unique_id` - Unique identifier for this file, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
-  * `length` - Video width and height (diameter of the video message) as defined by the sender
+  * `length` - Video width and height (diameter of the [video message](https://telegram.org/blog/video-messages-and-telescope)) as defined by the sender
   * `duration` - Duration of the video in seconds as defined by the sender
   * `thumbnail` - Optional. Video thumbnail
   * `file_size` - Optional. File size in bytes
@@ -1048,7 +1087,7 @@ This object represents a voice note.
 
 -doc """
 Describes the paid media added to a message.
-  * `star_count` - The number of Telegram Stars that must be paid to buy access to the media
+  * `star_count` - The number of [Telegram Stars](https://t.me/BotNews/90) that must be paid to buy access to the media
   * `paid_media` - Information about the paid media
 """.
 -type 'PaidMediaInfo'() :: #{
@@ -1064,7 +1103,7 @@ This object describes paid media.
 
 -doc """
 The paid media isn't available before the payment.
-  * `type` - Type of the paid media, always “preview”
+  * `type` - Type of the paid media, always `preview`
   * `width` - Optional. Media width as defined by the sender
   * `height` - Optional. Media height as defined by the sender
   * `duration` - Optional. Duration of the media in seconds as defined by the sender
@@ -1078,7 +1117,7 @@ The paid media isn't available before the payment.
 
 -doc """
 The paid media is a photo.
-  * `type` - Type of the paid media, always “photo”
+  * `type` - Type of the paid media, always `photo`
   * `photo` - The photo
 """.
 -type 'PaidMediaPhoto'() :: #{
@@ -1088,7 +1127,7 @@ The paid media is a photo.
 
 -doc """
 The paid media is a video.
-  * `type` - Type of the paid media, always “video”
+  * `type` - Type of the paid media, always `video`
   * `video` - The video
 """.
 -type 'PaidMediaVideo'() :: #{
@@ -1102,7 +1141,7 @@ This object represents a phone contact.
   * `first_name` - Contact's first name
   * `last_name` - Optional. Contact's last name
   * `user_id` - Optional. Contact's user identifier in Telegram. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier.
-  * `vcard` - Optional. Additional data about the contact in the form of a vCard
+  * `vcard` - Optional. Additional data about the contact in the form of a [vCard](https://en.wikipedia.org/wiki/VCard)
 """.
 -type 'Contact'() :: #{
 	phone_number := binary(),
@@ -1113,9 +1152,9 @@ This object represents a phone contact.
 }.
 
 -doc """
-This object represents an animated emoji that displays a random value.
+This object represents an [animated](https://telegram.org/blog/animated-stickers) emoji that displays a random value.
   * `emoji` - Emoji on which the dice throw animation is based
-  * `value` - Value of the dice, 1-6 for “”, “” and “” base emoji, 1-5 for “” and “” base emoji, 1-64 for “” base emoji
+  * `value` - Value of the dice, 1-6 for `🎲`, `🎯` and `🎳` base emoji, 1-5 for `🏀` and `⚽` base emoji, 1-64 for `🎰` base emoji
 """.
 -type 'Dice'() :: #{
 	emoji := binary(),
@@ -1137,7 +1176,7 @@ This object contains information about one answer option in a poll.
 -doc """
 This object contains information about one answer option in a poll to be sent.
   * `text` - Option text, 1-100 characters
-  * `text_parse_mode` - Optional. Mode for parsing entities in the text. See formatting options for more details. Currently, only custom emoji entities are allowed
+  * `text_parse_mode` - Optional. Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Currently, only custom emoji entities are allowed
   * `text_entities` - Optional. A JSON-serialized list of special entities that appear in the poll option text. It can be specified instead of text_parse_mode
 """.
 -type 'InputPollOption'() :: #{
@@ -1169,7 +1208,7 @@ This object contains information about a poll.
   * `total_voter_count` - Total number of users that voted in the poll
   * `is_closed` - True, if the poll is closed
   * `is_anonymous` - True, if the poll is anonymous
-  * `type` - Poll type, currently can be “regular” or “quiz”
+  * `type` - Poll type, currently can be `regular` or `quiz`
   * `allows_multiple_answers` - True, if the poll allows multiple answers
   * `correct_option_id` - Optional. 0-based identifier of the correct answer option. Available only for polls in the quiz mode, which are closed, or was sent (not forwarded) by the bot or to the private chat with the bot.
   * `explanation` - Optional. Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters
@@ -1232,7 +1271,7 @@ Describes a checklist.
 Describes a task to add to a checklist.
   * `id` - Unique identifier of the task; must be positive and unique among all task identifiers currently present in the checklist
   * `text` - Text of the task; 1-100 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the text. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `text_entities` - Optional. List of special entities that appear in the text, which can be specified instead of parse_mode. Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are allowed.
 """.
 -type 'InputChecklistTask'() :: #{
@@ -1245,7 +1284,7 @@ Describes a task to add to a checklist.
 -doc """
 Describes a checklist to create.
   * `title` - Title of the checklist; 1-255 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the title. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the title. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `title_entities` - Optional. List of special entities that appear in the title, which can be specified instead of parse_mode. Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are allowed.
   * `tasks` - List of 1-30 tasks in the checklist
   * `others_can_add_tasks` - Optional. Pass True if other users can add tasks to the checklist
@@ -1306,9 +1345,9 @@ This object represents a venue.
   * `title` - Name of the venue
   * `address` - Address of the venue
   * `foursquare_id` - Optional. Foursquare identifier of the venue
-  * `foursquare_type` - Optional. Foursquare type of the venue. (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.)
+  * `foursquare_type` - Optional. Foursquare type of the venue. (For example, `arts_entertainment/default`, `arts_entertainment/aquarium` or `food/icecream`.)
   * `google_place_id` - Optional. Google Places identifier of the venue
-  * `google_place_type` - Optional. Google Places type of the venue. (See supported types.)
+  * `google_place_type` - Optional. Google Places type of the venue. (See [supported types](https://developers.google.com/places/web-service/supported_types).)
 """.
 -type 'Venue'() :: #{
 	location := 'Location'(),
@@ -1321,9 +1360,9 @@ This object represents a venue.
 }.
 
 -doc """
-Describes data sent from a Web App to the bot.
+Describes data sent from a [Web App](https://core.telegram.org/bots/webapps) to the bot.
   * `data` - The data. Be aware that a bad client can send arbitrary data in this field.
-  * `button_text` - Text of the web_app keyboard button from which the Web App was opened. Be aware that a bad client can send arbitrary data in this field.
+  * `button_text` - Text of the web_app keyboard button from which the [Web App](https://core.telegram.org/bots/webapps) was opened. Be aware that a bad client can send arbitrary data in this field.
 """.
 -type 'WebAppData'() :: #{
 	data := binary(),
@@ -1366,7 +1405,7 @@ This object describes the way a background is filled based on the selected color
 
 -doc """
 The background is filled using the selected color.
-  * `type` - Type of the background fill, always “solid”
+  * `type` - Type of the background fill, always `solid`
   * `color` - The color of the background fill in the RGB24 format
 """.
 -type 'BackgroundFillSolid'() :: #{
@@ -1376,7 +1415,7 @@ The background is filled using the selected color.
 
 -doc """
 The background is a gradient fill.
-  * `type` - Type of the background fill, always “gradient”
+  * `type` - Type of the background fill, always `gradient`
   * `top_color` - Top color of the gradient in the RGB24 format
   * `bottom_color` - Bottom color of the gradient in the RGB24 format
   * `rotation_angle` - Clockwise rotation angle of the background fill in degrees; 0-359
@@ -1390,7 +1429,7 @@ The background is a gradient fill.
 
 -doc """
 The background is a freeform gradient that rotates after every message in the chat.
-  * `type` - Type of the background fill, always “freeform_gradient”
+  * `type` - Type of the background fill, always `freeform_gradient`
   * `colors` - A list of the 3 or 4 base colors that are used to generate the freeform gradient in the RGB24 format
 """.
 -type 'BackgroundFillFreeformGradient'() :: #{
@@ -1406,7 +1445,7 @@ This object describes the type of a background.
 
 -doc """
 The background is automatically filled based on the selected colors.
-  * `type` - Type of the background, always “fill”
+  * `type` - Type of the background, always `fill`
   * `fill` - The background fill
   * `dark_theme_dimming` - Dimming of the background in dark themes, as a percentage; 0-100
 """.
@@ -1418,7 +1457,7 @@ The background is automatically filled based on the selected colors.
 
 -doc """
 The background is a wallpaper in the JPEG format.
-  * `type` - Type of the background, always “wallpaper”
+  * `type` - Type of the background, always `wallpaper`
   * `document` - Document with the wallpaper
   * `dark_theme_dimming` - Dimming of the background in dark themes, as a percentage; 0-100
   * `is_blurred` - Optional. True, if the wallpaper is downscaled to fit in a 450x450 square and then box-blurred with radius 12
@@ -1434,7 +1473,7 @@ The background is a wallpaper in the JPEG format.
 
 -doc """
 The background is a .PNG or .TGV (gzipped subset of SVG with MIME type “application/x-tgwallpattern”) pattern to be combined with the background fill chosen by the user.
-  * `type` - Type of the background, always “pattern”
+  * `type` - Type of the background, always `pattern`
   * `document` - Document with the pattern
   * `fill` - The background fill that is combined with the pattern
   * `intensity` - Intensity of the pattern when it is shown above the filled background; 0-100
@@ -1452,7 +1491,7 @@ The background is a .PNG or .TGV (gzipped subset of SVG with MIME type “applic
 
 -doc """
 The background is taken directly from a built-in chat theme.
-  * `type` - Type of the background, always “chat_theme”
+  * `type` - Type of the background, always `chat_theme`
   * `theme_name` - Name of the chat theme, which is usually an emoji
 """.
 -type 'BackgroundTypeChatTheme'() :: #{
@@ -1522,7 +1561,7 @@ This object contains information about a user that was shared with the bot using
   * `first_name` - Optional. First name of the user, if the name was requested by the bot
   * `last_name` - Optional. Last name of the user, if the name was requested by the bot
   * `username` - Optional. Username of the user, if the username was requested by the bot
-  * `photo` - Optional. Available sizes of the chat photo, if the photo was requested by the bot
+  * `photo` - Optional. Available [sizes](https://core.telegram.org/bots/api#photosize) of the chat photo, if the photo was requested by the bot
 """.
 -type 'SharedUser'() :: #{
 	user_id := integer(),
@@ -1548,7 +1587,7 @@ This object contains information about a chat that was shared with the bot using
   * `chat_id` - Identifier of the shared chat. This number may have more than 32 significant bits and some programming languages may have difficulty/silent defects in interpreting it. But it has at most 52 significant bits, so a 64-bit integer or double-precision float type are safe for storing this identifier. The bot may not have access to the chat and could be unable to use this identifier, unless the chat is already known to the bot by some other means.
   * `title` - Optional. Title of the chat, if the title was requested by the bot.
   * `username` - Optional. Username of the chat, if the username was requested by the bot and available.
-  * `photo` - Optional. Available sizes of the chat photo, if the photo was requested by the bot
+  * `photo` - Optional. Available [sizes](https://core.telegram.org/bots/api#photosize) of the chat photo, if the photo was requested by the bot
 """.
 -type 'ChatShared'() :: #{
 	request_id := integer(),
@@ -1559,9 +1598,9 @@ This object contains information about a chat that was shared with the bot using
 }.
 
 -doc """
-This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a Web App from a link, or accepting an explicit request from a Web App sent by the method requestWriteAccess.
-  * `from_request` - Optional. True, if the access was granted after the user accepted an explicit request from a Web App sent by the method requestWriteAccess
-  * `web_app_name` - Optional. Name of the Web App, if the access was granted when the Web App was launched from a link
+This object represents a service message about a user allowing a bot to write messages after adding it to the attachment menu, launching a [Web App](https://core.telegram.org/bots/webapps) from a link, or accepting an explicit request from a [Web App](https://core.telegram.org/bots/webapps) sent by the method [requestWriteAccess](https://core.telegram.org/bots/webapps#initializing-mini-apps).
+  * `from_request` - Optional. True, if the access was granted after the user accepted an explicit request from a [Web App](https://core.telegram.org/bots/webapps) sent by the method [requestWriteAccess](https://core.telegram.org/bots/webapps#initializing-mini-apps)
+  * `web_app_name` - Optional. Name of the [Web App](https://core.telegram.org/bots/webapps), if the access was granted when the [Web App](https://core.telegram.org/bots/webapps) was launched from a link
   * `from_attachment_menu` - Optional. True, if the access was granted when the bot was added to the attachment or side menu
 """.
 -type 'WriteAccessAllowed'() :: #{
@@ -1602,7 +1641,7 @@ This object represents a service message about new members invited to a video ch
 
 -doc """
 Describes a service message about a change in the price of paid messages within a chat.
-  * `paid_message_star_count` - The new number of Telegram Stars that must be paid by non-administrator users of the supergroup chat for each sent message
+  * `paid_message_star_count` - The new number of [Telegram Stars](https://t.me/BotNews/90) that must be paid by non-administrator users of the supergroup chat for each sent message
 """.
 -type 'PaidMessagePriceChanged'() :: #{
 	paid_message_star_count := integer()
@@ -1611,7 +1650,7 @@ Describes a service message about a change in the price of paid messages within 
 -doc """
 Describes a service message about a change in the price of direct messages sent to a channel chat.
   * `are_direct_messages_enabled` - True, if direct messages are enabled for the channel chat; false otherwise
-  * `direct_message_star_count` - Optional. The new number of Telegram Stars that must be paid by users for each direct message sent to the channel. Does not apply to users who have been exempted by administrators. Defaults to 0.
+  * `direct_message_star_count` - Optional. The new number of [Telegram Stars](https://t.me/BotNews/90) that must be paid by users for each direct message sent to the channel. Does not apply to users who have been exempted by administrators. Defaults to 0.
 """.
 -type 'DirectMessagePriceChanged'() :: #{
 	are_direct_messages_enabled := boolean(),
@@ -1654,9 +1693,9 @@ Describes a service message about the rejection of a suggested post.
 -doc """
 Describes a service message about a successful payment for a suggested post.
   * `suggested_post_message` - Optional. Message containing the suggested post. Note that the Message object in this field will not contain the reply_to_message field even if it itself is a reply.
-  * `currency` - Currency in which the payment was made. Currently, one of “XTR” for Telegram Stars or “TON” for toncoins
-  * `amount` - Optional. The amount of the currency that was received by the channel in nanotoncoins; for payments in toncoins only
-  * `star_amount` - Optional. The amount of Telegram Stars that was received by the channel; for payments in Telegram Stars only
+  * `currency` - Currency in which the payment was made. Currently, one of `XTR` for [Telegram Stars](https://t.me/BotNews/90) or `TON` for toncoins
+  * `amount` - Optional. The amount of the [currency](https://core.telegram.org/bots/payments#supported-currencies) that was received by the channel in nanotoncoins; for payments in toncoins only
+  * `star_amount` - Optional. The amount of [Telegram Stars](https://t.me/BotNews/90) that was received by the channel; for payments in [Telegram Stars](https://t.me/BotNews/90) only
 """.
 -type 'SuggestedPostPaid'() :: #{
 	suggested_post_message => 'Message'(),
@@ -1668,7 +1707,7 @@ Describes a service message about a successful payment for a suggested post.
 -doc """
 Describes a service message about a payment refund for a suggested post.
   * `suggested_post_message` - Optional. Message containing the suggested post. Note that the Message object in this field will not contain the reply_to_message field even if it itself is a reply.
-  * `reason` - Reason for the refund. Currently, one of “post_deleted” if the post was deleted within 24 hours of being posted or removed from scheduled messages without being posted, or “payment_refunded” if the payer refunded their payment.
+  * `reason` - Reason for the refund. Currently, one of `post_deleted` if the post was deleted within 24 hours of being posted or removed from scheduled messages without being posted, or `payment_refunded` if the payer refunded their payment.
 """.
 -type 'SuggestedPostRefunded'() :: #{
 	suggested_post_message => 'Message'(),
@@ -1677,7 +1716,7 @@ Describes a service message about a payment refund for a suggested post.
 
 -doc """
 This object represents a service message about the creation of a scheduled giveaway.
-  * `prize_star_count` - Optional. The number of Telegram Stars to be split between giveaway winners; for Telegram Star giveaways only
+  * `prize_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) to be split between giveaway winners; for Telegram Star giveaways only
 """.
 -type 'GiveawayCreated'() :: #{
 	prize_star_count => integer()
@@ -1691,8 +1730,8 @@ This object represents a message about a scheduled giveaway.
   * `only_new_members` - Optional. True, if only users who join the chats after the giveaway started should be eligible to win
   * `has_public_winners` - Optional. True, if the list of giveaway winners will be visible to everyone
   * `prize_description` - Optional. Description of additional giveaway prize
-  * `country_codes` - Optional. A list of two-letter ISO 3166-1 alpha-2 country codes indicating the countries from which eligible users for the giveaway must come. If empty, then all users can participate in the giveaway. Users with a phone number that was bought on Fragment can always participate in giveaways.
-  * `prize_star_count` - Optional. The number of Telegram Stars to be split between giveaway winners; for Telegram Star giveaways only
+  * `country_codes` - Optional. A list of two-letter [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country codes indicating the countries from which eligible users for the giveaway must come. If empty, then all users can participate in the giveaway. Users with a phone number that was bought on [Fragment](https://fragment.com) can always participate in giveaways.
+  * `prize_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) to be split between giveaway winners; for Telegram Star giveaways only
   * `premium_subscription_month_count` - Optional. The number of months the Telegram Premium subscription won from the giveaway will be active for; for Telegram Premium giveaways only
 """.
 -type 'Giveaway'() :: #{
@@ -1715,7 +1754,7 @@ This object represents a message about the completion of a giveaway with public 
   * `winner_count` - Total number of winners in the giveaway
   * `winners` - List of up to 100 winners of the giveaway
   * `additional_chat_count` - Optional. The number of other chats the user had to join in order to be eligible for the giveaway
-  * `prize_star_count` - Optional. The number of Telegram Stars that were split between giveaway winners; for Telegram Star giveaways only
+  * `prize_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) that were split between giveaway winners; for Telegram Star giveaways only
   * `premium_subscription_month_count` - Optional. The number of months the Telegram Premium subscription won from the giveaway will be active for; for Telegram Premium giveaways only
   * `unclaimed_prize_count` - Optional. Number of undistributed prizes
   * `only_new_members` - Optional. True, if only users who had joined the chats after the giveaway started were eligible to win
@@ -1769,8 +1808,8 @@ Describes the options used for link preview generation.
 
 -doc """
 Describes the price of a suggested post.
-  * `currency` - Currency in which the post will be paid. Currently, must be one of “XTR” for Telegram Stars or “TON” for toncoins
-  * `amount` - The amount of the currency that will be paid for the post in the smallest units of the currency, i.e. Telegram Stars or nanotoncoins. Currently, price in Telegram Stars must be between 5 and 100000, and price in nanotoncoins must be between 10000000 and 10000000000000.
+  * `currency` - Currency in which the post will be paid. Currently, must be one of `XTR` for [Telegram Stars](https://t.me/BotNews/90) or `TON` for toncoins
+  * `amount` - The amount of the [currency](https://core.telegram.org/bots/payments#supported-currencies) that will be paid for the post in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies), i.e. [Telegram Stars](https://t.me/BotNews/90) or nanotoncoins. Currently, price in [Telegram Stars](https://t.me/BotNews/90) must be between 5 and 100000, and price in nanotoncoins must be between 10000000 and 10000000000000.
 """.
 -type 'SuggestedPostPrice'() :: #{
 	currency := binary(),
@@ -1779,7 +1818,7 @@ Describes the price of a suggested post.
 
 -doc """
 Contains information about a suggested post.
-  * `state` - State of the suggested post. Currently, it can be one of “pending”, “approved”, “declined”.
+  * `state` - State of the suggested post. Currently, it can be one of `pending`, `approved`, `declined`.
   * `price` - Optional. Proposed price of the post. If the field is omitted, then the post is unpaid.
   * `send_date` - Optional. Proposed send date of the post. If the field is omitted, then the post can be published at any time within 30 days at the sole discretion of the user or administrator who approves it.
 """.
@@ -1812,11 +1851,21 @@ Describes a topic of a direct messages chat.
 -doc """
 This object represent a user's profile pictures.
   * `total_count` - Total number of profile pictures the target user has
-  * `photos` - Requested profile pictures (in up to 4 sizes each)
+  * `photos` - Requested profile pictures (in up to 4 [sizes](https://core.telegram.org/bots/api#photosize) each)
 """.
 -type 'UserProfilePhotos'() :: #{
 	total_count := integer(),
 	photos := nonempty_list(nonempty_list('PhotoSize'()))
+}.
+
+-doc """
+This object represents the audios displayed on a user's profile.
+  * `total_count` - Total number of profile audios for the target user
+  * `audios` - Requested profile audios
+""".
+-type 'UserProfileAudios'() :: #{
+	total_count := integer(),
+	audios := nonempty_list('Audio'())
 }.
 
 -doc """
@@ -1838,20 +1887,20 @@ The maximum file size to download is 20 MB
 }.
 
 -doc """
-Describes a Web App.
-  * `url` - An HTTPS URL of a Web App to be opened with additional data as specified in Initializing Web Apps
+Describes a [Web App](https://core.telegram.org/bots/webapps).
+  * `url` - An HTTPS URL of a [Web App](https://core.telegram.org/bots/webapps) to be opened with additional data as specified in [Initializing Web Apps](https://core.telegram.org/bots/webapps#initializing-mini-apps)
 """.
 -type 'WebAppInfo'() :: #{
 	url := binary()
 }.
 
 -doc """
-This object represents a custom keyboard with reply options (see Introduction to bots for details and examples).  
+This object represents a [custom keyboard](https://core.telegram.org/bots/features#keyboards) with reply options (see Introduction to bots for details and examples).  
 Not supported in channels and for messages sent on behalf of a Telegram Business account.
   * `keyboard` - Array of button rows, each represented by an Array of KeyboardButton objects
-  * `is_persistent` - Optional. Requests clients to always show the keyboard when the regular keyboard is hidden. Defaults to false, in which case the custom keyboard can be hidden and opened with a keyboard icon.
-  * `resize_keyboard` - Optional. Requests clients to resize the keyboard vertically for optimal fit (e.g., make the keyboard smaller if there are just two rows of buttons). Defaults to false, in which case the custom keyboard is always of the same height as the app's standard keyboard.
-  * `one_time_keyboard` - Optional. Requests clients to hide the keyboard as soon as it's been used. The keyboard will still be available, but clients will automatically display the usual letter-keyboard in the chat - the user can press a special button in the input field to see the custom keyboard again. Defaults to false.
+  * `is_persistent` - Optional. Requests clients to always show the keyboard when the regular keyboard is hidden. Defaults to false, in which case the [custom keyboard](https://core.telegram.org/bots/features#keyboards) can be hidden and opened with a keyboard icon.
+  * `resize_keyboard` - Optional. Requests clients to resize the keyboard vertically for optimal fit (e.g., make the keyboard smaller if there are just two rows of buttons). Defaults to false, in which case the [custom keyboard](https://core.telegram.org/bots/features#keyboards) is always of the same height as the app's standard keyboard.
+  * `one_time_keyboard` - Optional. Requests clients to hide the keyboard as soon as it's been used. The keyboard will still be available, but clients will automatically display the usual letter-keyboard in the chat - the user can press a special button in the input field to see the [custom keyboard](https://core.telegram.org/bots/features#keyboards) again. Defaults to false.
   * `input_field_placeholder` - Optional. The placeholder to be shown in the input field when the keyboard is active; 1-64 characters
   * `selective` - Optional. Use this parameter if you want to show the keyboard to specific users only. Targets: 1) users that are @mentioned in the text of the Message object; 2) if the bot's message is a reply to a message in the same chat and forum topic, sender of the original message.
 
@@ -1868,20 +1917,22 @@ Example: A user requests to change the bot's language, bot replies to the reques
 
 -doc """
 This object represents one button of the reply keyboard.  
-At most one of the optional fields must be used to specify type of the button.  
-For simple text buttons, String can be used instead of this object to specify the button text.  
-Note: request_users and request_chat options will only work in Telegram versions released after 3 February, 2023.  
-Older clients will display unsupported message.
-  * `text` - Text of the button. If none of the optional fields are used, it will be sent as a message when the button is pressed
-  * `request_users` - Optional. If specified, pressing the button will open a list of suitable users. Identifiers of selected users will be sent to the bot in a “users_shared” service message. Available in private chats only.
-  * `request_chat` - Optional. If specified, pressing the button will open a list of suitable chats. Tapping on a chat will send its identifier to the bot in a “chat_shared” service message. Available in private chats only.
+At most one of the fields other than text, icon_custom_emoji_id, and style must be used to specify the type of the button.  
+For simple text buttons, String can be used instead of this object to specify the button text.
+  * `text` - Text of the button. If none of the fields other than text, icon_custom_emoji_id, and style are used, it will be sent as a message when the button is pressed
+  * `icon_custom_emoji_id` - Optional. Unique identifier of the custom emoji shown before the text of the button. Can only be used by bots that purchased additional usernames on [Fragment](https://fragment.com) or in the messages directly sent by the bot to private, group and supergroup chats if the owner of the bot has a Telegram Premium subscription.
+  * `style` - Optional. Style of the button. Must be one of `danger` (red), `success` (green) or `primary` (blue). If omitted, then an app-specific style is used.
+  * `request_users` - Optional. If specified, pressing the button will open a list of suitable users. Identifiers of selected users will be sent to the bot in a `users_shared` service message. Available in private chats only.
+  * `request_chat` - Optional. If specified, pressing the button will open a list of suitable chats. Tapping on a chat will send its identifier to the bot in a `chat_shared` service message. Available in private chats only.
   * `request_contact` - Optional. If True, the user's phone number will be sent as a contact when the button is pressed. Available in private chats only.
   * `request_location` - Optional. If True, the user's current location will be sent when the button is pressed. Available in private chats only.
   * `request_poll` - Optional. If specified, the user will be asked to create a poll and send it to the bot when the button is pressed. Available in private chats only.
-  * `web_app` - Optional. If specified, the described Web App will be launched when the button is pressed. The Web App will be able to send a “web_app_data” service message. Available in private chats only.
+  * `web_app` - Optional. If specified, the described [Web App](https://core.telegram.org/bots/webapps) will be launched when the button is pressed. The [Web App](https://core.telegram.org/bots/webapps) will be able to send a `web_app_data` service message. Available in private chats only.
 """.
 -type 'KeyboardButton'() :: #{
 	text := binary(),
+	icon_custom_emoji_id => binary(),
+	style => binary(),
 	request_users => 'KeyboardButtonRequestUsers'(),
 	request_chat => 'KeyboardButtonRequestChat'(),
 	request_contact => boolean(),
@@ -1893,7 +1944,7 @@ Older clients will display unsupported message.
 -doc """
 This object defines the criteria used to request suitable users.  
 Information about the selected users will be shared with the bot when the corresponding button is pressed.  
-More about requesting users »
+[More about requesting users »](https://core.telegram.org/bots/features#chat-and-user-selection)
   * `request_id` - Signed 32-bit identifier of the request that will be received back in the UsersShared object. Must be unique within the message
   * `user_is_bot` - Optional. Pass True to request bots, pass False to request regular users. If not specified, no additional restrictions are applied.
   * `user_is_premium` - Optional. Pass True to request premium users, pass False to request non-premium users. If not specified, no additional restrictions are applied.
@@ -1916,7 +1967,7 @@ More about requesting users »
 This object defines the criteria used to request a suitable chat.  
 Information about the selected chat will be shared with the bot when the corresponding button is pressed.  
 The bot will be granted requested rights in the chat if appropriate.  
-More about requesting chats ».
+[More about requesting chats »](https://core.telegram.org/bots/features#chat-and-user-selection).
   * `request_id` - Signed 32-bit identifier of the request, which will be received back in the ChatShared object. Must be unique within the message
   * `chat_is_channel` - Pass True to request a channel chat, pass False to request a group or a supergroup chat.
   * `chat_is_forum` - Optional. Pass True to request a forum supergroup, pass False to request a non-forum chat. If not specified, no additional restrictions are applied.
@@ -1952,11 +2003,11 @@ This object represents type of a poll, which is allowed to be created and sent w
 }.
 
 -doc """
-Upon receiving a message with this object, Telegram clients will remove the current custom keyboard and display the default letter-keyboard.  
-By default, custom keyboards are displayed until a new keyboard is sent by a bot.  
+Upon receiving a message with this object, Telegram clients will remove the current [custom keyboard](https://core.telegram.org/bots/features#keyboards) and display the default letter-keyboard.  
+By default, [custom keyboard](https://core.telegram.org/bots/features#keyboards)s are displayed until a new keyboard is sent by a bot.  
 An exception is made for one-time keyboards that are hidden immediately after the user presses a button (see ReplyKeyboardMarkup).  
 Not supported in channels and for messages sent on behalf of a Telegram Business account.
-  * `remove_keyboard` - Requests clients to remove the custom keyboard (user will not be able to summon this keyboard; if you want to hide the keyboard from sight but keep it accessible, use one_time_keyboard in ReplyKeyboardMarkup)
+  * `remove_keyboard` - Requests clients to remove the [custom keyboard](https://core.telegram.org/bots/features#keyboards) (user will not be able to summon this keyboard; if you want to hide the keyboard from sight but keep it accessible, use one_time_keyboard in ReplyKeyboardMarkup)
   * `selective` - Optional. Use this parameter if you want to remove the keyboard for specific users only. Targets: 1) users that are @mentioned in the text of the Message object; 2) if the bot's message is a reply to a message in the same chat and forum topic, sender of the original message.
 
 Example: A user votes in a poll, bot returns confirmation message in reply to the vote and removes the keyboard for that user, while still showing the keyboard with poll options to users who haven't voted yet.
@@ -1967,7 +2018,7 @@ Example: A user votes in a poll, bot returns confirmation message in reply to th
 }.
 
 -doc """
-This object represents an inline keyboard that appears right next to the message it belongs to.
+This object represents an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) that appears right next to the message it belongs to.
   * `inline_keyboard` - Array of button rows, each represented by an Array of InlineKeyboardButton objects
 """.
 -type 'InlineKeyboardMarkup'() :: #{
@@ -1975,28 +2026,32 @@ This object represents an inline keyboard that appears right next to the message
 }.
 
 -doc """
-This object represents one button of an inline keyboard.  
-Exactly one of the optional fields must be used to specify type of the button.
+This object represents one button of an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).  
+Exactly one of the fields other than text, icon_custom_emoji_id, and style must be used to specify the type of the button.
   * `text` - Label text on the button
+  * `icon_custom_emoji_id` - Optional. Unique identifier of the custom emoji shown before the text of the button. Can only be used by bots that purchased additional usernames on [Fragment](https://fragment.com) or in the messages directly sent by the bot to private, group and supergroup chats if the owner of the bot has a Telegram Premium subscription.
+  * `style` - Optional. Style of the button. Must be one of `danger` (red), `success` (green) or `primary` (blue). If omitted, then an app-specific style is used.
   * `url` - Optional. HTTP or tg:// URL to be opened when the button is pressed. Links tg://user?id=<user_id> can be used to mention a user by their identifier without using a username, if this is allowed by their privacy settings.
-  * `callback_data` - Optional. Data to be sent in a callback query to the bot when the button is pressed, 1-64 bytes
-  * `web_app` - Optional. Description of the Web App that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method answerWebAppQuery. Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a Telegram Business account.
-  * `login_url` - Optional. An HTTPS URL used to automatically authorize the user. Can be used as a replacement for the Telegram Login Widget.
+  * `callback_data` - Optional. Data to be sent in a [callback query](https://core.telegram.org/bots/api#callbackquery) to the bot when the button is pressed, 1-64 bytes
+  * `web_app` - Optional. Description of the [Web App](https://core.telegram.org/bots/webapps) that will be launched when the user presses the button. The [Web App](https://core.telegram.org/bots/webapps) will be able to send an arbitrary message on behalf of the user using the method answerWebAppQuery. Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a Telegram Business account.
+  * `login_url` - Optional. An HTTPS URL used to automatically authorize the user. Can be used as a replacement for the [Telegram Login Widget](https://core.telegram.org/widgets/login).
   * `switch_inline_query` - Optional. If set, pressing the button will prompt the user to select one of their chats, open that chat and insert the bot's username and the specified inline query in the input field. May be empty, in which case just the bot's username will be inserted. Not supported for messages sent in channel direct messages chats and on behalf of a Telegram Business account.
   * `switch_inline_query_current_chat` - Optional. If set, pressing the button will insert the bot's username and the specified inline query in the current chat's input field. May be empty, in which case only the bot's username will be inserted.
 
-This offers a quick way for the user to open your bot in inline mode in the same chat - good for selecting something from multiple options. Not supported in channels and for messages sent in channel direct messages chats and on behalf of a Telegram Business account.
+This offers a quick way for the user to open your bot in [inline mode](https://core.telegram.org/bots/inline) in the same chat - good for selecting something from multiple options. Not supported in channels and for messages sent in channel direct messages chats and on behalf of a Telegram Business account.
   * `switch_inline_query_chosen_chat` - Optional. If set, pressing the button will prompt the user to select one of their chats of the specified type, open that chat and insert the bot's username and the specified inline query in the input field. Not supported for messages sent in channel direct messages chats and on behalf of a Telegram Business account.
   * `copy_text` - Optional. Description of the button that copies the specified text to the clipboard.
   * `callback_game` - Optional. Description of the game that will be launched when the user presses the button.
 
 NOTE: This type of button must always be the first button in the first row.
-  * `pay` - Optional. Specify True, to send a Pay button. Substrings “” and “XTR” in the buttons's text will be replaced with a Telegram Star icon.
+  * `pay` - Optional. Specify True, to send a [Pay button](https://core.telegram.org/bots/api#payments). Substrings `⭐` and `XTR` in the buttons's text will be replaced with a Telegram Star icon.
 
 NOTE: This type of button must always be the first button in the first row and can only be used in invoice messages.
 """.
 -type 'InlineKeyboardButton'() :: #{
 	text := binary(),
+	icon_custom_emoji_id => binary(),
+	style => binary(),
 	url => binary(),
 	callback_data => binary(),
 	web_app => 'WebAppInfo'(),
@@ -2010,16 +2065,16 @@ NOTE: This type of button must always be the first button in the first row and c
 }.
 
 -doc """
-This object represents a parameter of the inline keyboard button used to automatically authorize a user.  
-Serves as a great replacement for the Telegram Login Widget when the user is coming from Telegram.  
+This object represents a parameter of the [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) button used to automatically authorize a user.  
+Serves as a great replacement for the [Telegram Login Widget](https://core.telegram.org/widgets/login) when the user is coming from Telegram.  
 All the user needs to do is tap/click a button and confirm that they want to log in:  
-Telegram apps support these buttons as of version 5.7.  
-Sample bot: @discussbot
-  * `url` - An HTTPS URL to be opened with user authorization data added to the query string when the button is pressed. If the user refuses to provide authorization data, the original URL without information about the user will be opened. The data added is the same as described in Receiving authorization data.
+Telegram apps support these buttons as of [version 5.7](https://telegram.org/blog/privacy-discussions-web-bots#meet-seamless-web-bots).  
+Sample bot: [@discussbot](https://t.me/discussbot)
+  * `url` - An HTTPS URL to be opened with user authorization data added to the query string when the button is pressed. If the user refuses to provide authorization data, the original URL without information about the user will be opened. The data added is the same as described in [Receiving authorization data](https://core.telegram.org/widgets/login#receiving-authorization-data).
 
 NOTE: You must always check the hash of the received data to verify the authentication and the integrity of the data as described in Checking authorization.
   * `forward_text` - Optional. New text of the button in forwarded messages.
-  * `bot_username` - Optional. Username of a bot, which will be used for user authorization. See Setting up a bot for more details. If not specified, the current bot's username will be assumed. The url's domain must be the same as the domain linked with the bot. See Linking your domain to the bot for more details.
+  * `bot_username` - Optional. Username of a bot, which will be used for user authorization. See [Setting up a bot](https://core.telegram.org/widgets/login#setting-up-a-bot) for more details. If not specified, the current bot's username will be assumed. The url's domain must be the same as the domain linked with the bot. See Linking your domain to the bot for more details.
   * `request_write_access` - Optional. Pass True to request the permission for your bot to send messages to the user.
 """.
 -type 'LoginUrl'() :: #{
@@ -2030,7 +2085,7 @@ NOTE: You must always check the hash of the received data to verify the authenti
 }.
 
 -doc """
-This object represents an inline button that switches the current user to inline mode in a chosen chat, with an optional default inline query.
+This object represents an inline button that switches the current user to [inline mode](https://core.telegram.org/bots/inline) in a chosen chat, with an optional default inline query.
   * `query` - Optional. The default inline query to be inserted in the input field. If left empty, only the bot's username will be inserted
   * `allow_user_chats` - Optional. True, if private chats with users can be chosen
   * `allow_bot_chats` - Optional. True, if private chats with bots can be chosen
@@ -2046,7 +2101,7 @@ This object represents an inline button that switches the current user to inline
 }.
 
 -doc """
-This object represents an inline keyboard button that copies specified text to the clipboard.
+This object represents an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) button that copies specified text to the clipboard.
   * `text` - The text to be copied to the clipboard; 1-256 characters
 """.
 -type 'CopyTextButton'() :: #{
@@ -2054,16 +2109,16 @@ This object represents an inline keyboard button that copies specified text to t
 }.
 
 -doc """
-This object represents an incoming callback query from a callback button in an inline keyboard.  
+This object represents an incoming [callback query](https://core.telegram.org/bots/api#callbackquery) from a callback button in an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).  
 If the button that originated the query was attached to a message sent by the bot, the field message will be present.  
-If the button was attached to a message sent via the bot (in inline mode), the field inline_message_id will be present.  
+If the button was attached to a message sent via the bot (in [inline mode](https://core.telegram.org/bots/inline)), the field inline_message_id will be present.  
 Exactly one of the fields data or game_short_name will be present.  
 NOTE: After the user presses a callback button, Telegram clients will display a progress bar until you call answerCallbackQuery.  
 It is, therefore, necessary to react by calling answerCallbackQuery even if no notification to the user is needed (e.g., without specifying any of the optional parameters).
   * `id` - Unique identifier for this query
   * `from` - Sender
   * `message` - Optional. Message sent by the bot with the callback button that originated the query
-  * `inline_message_id` - Optional. Identifier of the message sent via the bot in inline mode, that originated the query.
+  * `inline_message_id` - Optional. Identifier of the message sent via the bot in [inline mode](https://core.telegram.org/bots/inline), that originated the query.
   * `chat_instance` - Global identifier, uniquely corresponding to the chat to which the message with the callback button was sent. Useful for high scores in games.
   * `data` - Optional. Data associated with the callback button. Be aware that the message originated the query can contain no callback buttons with this data.
   * `game_short_name` - Optional. Short name of a Game to be returned, serves as the unique identifier for the game
@@ -2080,9 +2135,9 @@ It is, therefore, necessary to react by calling answerCallbackQuery even if no n
 
 -doc """
 Upon receiving a message with this object, Telegram clients will display a reply interface to the user (act as if the user has selected the bot's message and tapped 'Reply').  
-This can be extremely useful if you want to create user-friendly step-by-step interfaces without having to sacrifice privacy mode.  
+This can be extremely useful if you want to create user-friendly step-by-step interfaces without having to sacrifice [privacy mode](https://core.telegram.org/bots/features#privacy-mode).  
 Not supported in channels and for messages sent on behalf of a Telegram Business account.  
-Example: A poll bot for groups runs in privacy mode (only receives commands, replies to its messages and mentions).  
+Example: A [poll bot](https://t.me/PollBot) for groups runs in [privacy mode](https://core.telegram.org/bots/features#privacy-mode) (only receives commands, replies to its messages and mentions).  
 There could be two ways to create a new poll:    Explain the user how to send a command with parameters (e.g.  
 /newpoll question answer1 answer2).  
 May be appealing for hardcore users but lacks modern day polish.  
@@ -2117,7 +2172,7 @@ This object represents a chat photo.
 
 -doc """
 Represents an invite link for a chat.
-  * `invite_link` - The invite link. If the link was created by another chat administrator, then the second part of the link will be replaced with “…”.
+  * `invite_link` - The invite link. If the link was created by another chat administrator, then the second part of the link will be replaced with `…`.
   * `creator` - Creator of the link
   * `creates_join_request` - True, if users joining the chat via the link need to be approved by chat administrators
   * `is_primary` - True, if the link is primary
@@ -2127,7 +2182,7 @@ Represents an invite link for a chat.
   * `member_limit` - Optional. The maximum number of users that can be members of the chat simultaneously after joining the chat via this invite link; 1-99999
   * `pending_join_request_count` - Optional. Number of pending join requests created using this link
   * `subscription_period` - Optional. The number of seconds the subscription will be active for before the next payment
-  * `subscription_price` - Optional. The amount of Telegram Stars a user must pay initially and after each subsequent subscription period to be a member of the chat using the link
+  * `subscription_price` - Optional. The amount of [Telegram Stars](https://t.me/BotNews/90) a user must pay initially and after each subsequent subscription period to be a member of the chat using the link
 """.
 -type 'ChatInviteLink'() :: #{
 	invite_link := binary(),
@@ -2146,7 +2201,7 @@ Represents an invite link for a chat.
 -doc """
 Represents the rights of an administrator in a chat.
   * `is_anonymous` - True, if the user's presence in the chat is hidden
-  * `can_manage_chat` - True, if the administrator can access the chat event log, get boost list, see hidden supergroup and channel members, report spam messages, ignore slow mode, and send messages to the chat without paying Telegram Stars. Implied by any other administrator privilege.
+  * `can_manage_chat` - True, if the administrator can access the chat event log, get boost list, see hidden supergroup and channel members, report spam messages, ignore slow mode, and send messages to the chat without paying [Telegram Stars](https://t.me/BotNews/90). Implied by any other administrator privilege.
   * `can_delete_messages` - True, if the administrator can delete messages of other users
   * `can_manage_video_chats` - True, if the administrator can manage video chats
   * `can_restrict_members` - True, if the administrator can restrict, ban or unban chat members, or access supergroup statistics
@@ -2211,7 +2266,7 @@ Currently, the following 6 types of chat members are supported:
 
 -doc """
 Represents a chat member that owns the chat and has all administrator privileges.
-  * `status` - The member's status in the chat, always “creator”
+  * `status` - The member's status in the chat, always `creator`
   * `user` - Information about the user
   * `is_anonymous` - True, if the user's presence in the chat is hidden
   * `custom_title` - Optional. Custom title for this user
@@ -2225,11 +2280,11 @@ Represents a chat member that owns the chat and has all administrator privileges
 
 -doc """
 Represents a chat member that has some additional privileges.
-  * `status` - The member's status in the chat, always “administrator”
+  * `status` - The member's status in the chat, always `administrator`
   * `user` - Information about the user
   * `can_be_edited` - True, if the bot is allowed to edit administrator privileges of that user
   * `is_anonymous` - True, if the user's presence in the chat is hidden
-  * `can_manage_chat` - True, if the administrator can access the chat event log, get boost list, see hidden supergroup and channel members, report spam messages, ignore slow mode, and send messages to the chat without paying Telegram Stars. Implied by any other administrator privilege.
+  * `can_manage_chat` - True, if the administrator can access the chat event log, get boost list, see hidden supergroup and channel members, report spam messages, ignore slow mode, and send messages to the chat without paying [Telegram Stars](https://t.me/BotNews/90). Implied by any other administrator privilege.
   * `can_delete_messages` - True, if the administrator can delete messages of other users
   * `can_manage_video_chats` - True, if the administrator can manage video chats
   * `can_restrict_members` - True, if the administrator can restrict, ban or unban chat members, or access supergroup statistics
@@ -2271,7 +2326,7 @@ Represents a chat member that has some additional privileges.
 
 -doc """
 Represents a chat member that has no additional privileges or restrictions.
-  * `status` - The member's status in the chat, always “member”
+  * `status` - The member's status in the chat, always `member`
   * `user` - Information about the user
   * `until_date` - Optional. Date when the user's subscription will expire; Unix time
 """.
@@ -2284,7 +2339,7 @@ Represents a chat member that has no additional privileges or restrictions.
 -doc """
 Represents a chat member that is under certain restrictions in the chat.  
 Supergroups only.
-  * `status` - The member's status in the chat, always “restricted”
+  * `status` - The member's status in the chat, always `restricted`
   * `user` - Information about the user
   * `is_member` - True, if the user is a member of the chat at the moment of the request
   * `can_send_messages` - True, if the user is allowed to send text messages, contacts, giveaways, giveaway winners, invoices, locations and venues
@@ -2292,7 +2347,7 @@ Supergroups only.
   * `can_send_documents` - True, if the user is allowed to send documents
   * `can_send_photos` - True, if the user is allowed to send photos
   * `can_send_videos` - True, if the user is allowed to send videos
-  * `can_send_video_notes` - True, if the user is allowed to send video notes
+  * `can_send_video_notes` - True, if the user is allowed to send [video note](https://telegram.org/blog/video-messages-and-telescope)s
   * `can_send_voice_notes` - True, if the user is allowed to send voice notes
   * `can_send_polls` - True, if the user is allowed to send polls and checklists
   * `can_send_other_messages` - True, if the user is allowed to send animations, games, stickers and use inline bots
@@ -2326,7 +2381,7 @@ Supergroups only.
 
 -doc """
 Represents a chat member that isn't currently a member of the chat, but may join it themselves.
-  * `status` - The member's status in the chat, always “left”
+  * `status` - The member's status in the chat, always `left`
   * `user` - Information about the user
 """.
 -type 'ChatMemberLeft'() :: #{
@@ -2336,7 +2391,7 @@ Represents a chat member that isn't currently a member of the chat, but may join
 
 -doc """
 Represents a chat member that was banned in the chat and can't return to the chat or view chat messages.
-  * `status` - The member's status in the chat, always “kicked”
+  * `status` - The member's status in the chat, always `kicked`
   * `user` - Information about the user
   * `until_date` - Date when restrictions will be lifted for this user; Unix time. If 0, then the user is banned forever
 """.
@@ -2371,7 +2426,7 @@ Describes actions that a non-administrator user is allowed to take in a chat.
   * `can_send_documents` - Optional. True, if the user is allowed to send documents
   * `can_send_photos` - Optional. True, if the user is allowed to send photos
   * `can_send_videos` - Optional. True, if the user is allowed to send videos
-  * `can_send_video_notes` - Optional. True, if the user is allowed to send video notes
+  * `can_send_video_notes` - Optional. True, if the user is allowed to send [video note](https://telegram.org/blog/video-messages-and-telescope)s
   * `can_send_voice_notes` - Optional. True, if the user is allowed to send voice notes
   * `can_send_polls` - Optional. True, if the user is allowed to send polls and checklists
   * `can_send_other_messages` - Optional. True, if the user is allowed to send animations, games, stickers and use inline bots
@@ -2486,7 +2541,7 @@ Describes the position of a clickable area within a story.
 
 -doc """
 Describes the physical address of a location.
-  * `country_code` - The two-letter ISO 3166-1 alpha-2 country code of the country where the location is located
+  * `country_code` - The two-letter [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code of the country where the location is located
   * `state` - Optional. State of the location
   * `city` - Optional. City of the location
   * `street` - Optional. Street address of the location
@@ -2507,7 +2562,7 @@ Describes the type of a clickable area on a story.
 -doc """
 Describes a story area pointing to a location.  
 Currently, a story can have up to 10 location areas.
-  * `type` - Type of the area, always “location”
+  * `type` - Type of the area, always `location`
   * `latitude` - Location latitude in degrees
   * `longitude` - Location longitude in degrees
   * `address` - Optional. Address of the location
@@ -2522,7 +2577,7 @@ Currently, a story can have up to 10 location areas.
 -doc """
 Describes a story area pointing to a suggested reaction.  
 Currently, a story can have up to 5 suggested reaction areas.
-  * `type` - Type of the area, always “suggested_reaction”
+  * `type` - Type of the area, always `suggested_reaction`
   * `reaction_type` - Type of the reaction
   * `is_dark` - Optional. Pass True if the reaction area has a dark background
   * `is_flipped` - Optional. Pass True if reaction area corner is flipped
@@ -2537,7 +2592,7 @@ Currently, a story can have up to 5 suggested reaction areas.
 -doc """
 Describes a story area pointing to an HTTP or tg:// link.  
 Currently, a story can have up to 3 link areas.
-  * `type` - Type of the area, always “link”
+  * `type` - Type of the area, always `link`
   * `url` - HTTP or tg:// URL to be opened when the area is clicked
 """.
 -type 'StoryAreaTypeLink'() :: #{
@@ -2548,7 +2603,7 @@ Currently, a story can have up to 3 link areas.
 -doc """
 Describes a story area containing weather information.  
 Currently, a story can have up to 3 weather areas.
-  * `type` - Type of the area, always “weather”
+  * `type` - Type of the area, always `weather`
   * `temperature` - Temperature, in degree Celsius
   * `emoji` - Emoji representing the weather
   * `background_color` - A color of the area background in the ARGB format
@@ -2563,7 +2618,7 @@ Currently, a story can have up to 3 weather areas.
 -doc """
 Describes a story area pointing to a unique gift.  
 Currently, a story can have at most 1 unique gift area.
-  * `type` - Type of the area, always “unique_gift”
+  * `type` - Type of the area, always `unique_gift`
   * `name` - Unique name of the gift
 """.
 -type 'StoryAreaTypeUniqueGift'() :: #{
@@ -2599,8 +2654,8 @@ This object describes the type of a reaction.
 
 -doc """
 The reaction is based on an emoji.
-  * `type` - Type of the reaction, always “emoji”
-  * `emoji` - Reaction emoji. Currently, it can be one of , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , , ,
+  * `type` - Type of the reaction, always `emoji`
+  * `emoji` - Reaction emoji. Currently, it can be one of ❤, 👍, 👎, 🔥, 🥰, 👏, 😁, 🤔, 🤯, 😱, 🤬, 😢, 🎉, 🤩, 🤮, 💩, 🙏, 👌, 🕊, 🤡, 🥱, 🥴, 😍, 🐳, ❤‍🔥, 🌚, 🌭, 💯, 🤣, ⚡, 🍌, 🏆, 💔, 🤨, 😐, 🍓, 🍾, 💋, 🖕, 😈, 😴, 😭, 🤓, 👻, 👨‍💻, 👀, 🎃, 🙈, 😇, 😨, 🤝, ✍, 🤗, 🫡, 🎅, 🎄, ☃, 💅, 🤪, 🗿, 🆒, 💘, 🙉, 🦄, 😘, 💊, 🙊, 😎, 👾, 🤷‍♂, 🤷, 🤷‍♀, 😡
 """.
 -type 'ReactionTypeEmoji'() :: #{
 	type := binary(),
@@ -2609,7 +2664,7 @@ The reaction is based on an emoji.
 
 -doc """
 The reaction is based on a custom emoji.
-  * `type` - Type of the reaction, always “custom_emoji”
+  * `type` - Type of the reaction, always `custom_emoji`
   * `custom_emoji_id` - Custom emoji identifier
 """.
 -type 'ReactionTypeCustomEmoji'() :: #{
@@ -2619,7 +2674,7 @@ The reaction is based on a custom emoji.
 
 -doc """
 The reaction is paid.
-  * `type` - Type of the reaction, always “paid”
+  * `type` - Type of the reaction, always `paid`
 """.
 -type 'ReactionTypePaid'() :: #{
 	type := binary()
@@ -2701,8 +2756,8 @@ This object describes the background of a gift.
 This object represents a gift that can be sent by the bot.
   * `id` - Unique identifier of the gift
   * `sticker` - The sticker that represents the gift
-  * `star_count` - The number of Telegram Stars that must be paid to send the sticker
-  * `upgrade_star_count` - Optional. The number of Telegram Stars that must be paid to upgrade the gift to a unique one
+  * `star_count` - The number of [Telegram Stars](https://t.me/BotNews/90) that must be paid to send the sticker
+  * `upgrade_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) that must be paid to upgrade the gift to a unique one
   * `is_premium` - Optional. True, if the gift can only be purchased by Telegram Premium subscribers
   * `has_colors` - Optional. True, if the gift can be used (after being upgraded) to customize a user's appearance
   * `total_count` - Optional. The total number of gifts of this type that can be sent by all users; for limited gifts only
@@ -2741,12 +2796,14 @@ This object represent a list of gifts.
 This object describes the model of a unique gift.
   * `name` - Name of the model
   * `sticker` - The sticker that represents the unique gift
-  * `rarity_per_mille` - The number of unique gifts that receive this model for every 1000 gifts upgraded
+  * `rarity_per_mille` - The number of unique gifts that receive this model for every 1000 gift upgrades. Always 0 for crafted gifts.
+  * `rarity` - Optional. Rarity of the model if it is a crafted model. Currently, can be `uncommon`, `rare`, `epic`, or `legendary`.
 """.
 -type 'UniqueGiftModel'() :: #{
 	name := binary(),
 	sticker := 'Sticker'(),
-	rarity_per_mille := integer()
+	rarity_per_mille := integer(),
+	rarity => binary()
 }.
 
 -doc """
@@ -2815,6 +2872,7 @@ This object describes a unique gift that was upgraded from a regular gift.
   * `symbol` - Symbol of the gift
   * `backdrop` - Backdrop of the gift
   * `is_premium` - Optional. True, if the original regular gift was exclusively purchaseable by Telegram Premium subscribers
+  * `is_burned` - Optional. True, if the gift was used to craft another gift and isn't available anymore
   * `is_from_blockchain` - Optional. True, if the gift is assigned from the TON blockchain and can't be resold or transferred in Telegram
   * `colors` - Optional. The color scheme that can be used by the gift's owner for the chat's name, replies to messages and link previews; for business account gifts and gifts that are currently on sale only
   * `publisher_chat` - Optional. Information about the chat that published the gift
@@ -2828,6 +2886,7 @@ This object describes a unique gift that was upgraded from a regular gift.
 	symbol := 'UniqueGiftSymbol'(),
 	backdrop := 'UniqueGiftBackdrop'(),
 	is_premium => true,
+	is_burned => true,
 	is_from_blockchain => true,
 	colors => 'UniqueGiftColors'(),
 	publisher_chat => 'Chat'()
@@ -2837,8 +2896,8 @@ This object describes a unique gift that was upgraded from a regular gift.
 Describes a service message about a regular gift that was sent or received.
   * `gift` - Information about the gift
   * `owned_gift_id` - Optional. Unique identifier of the received gift for the bot; only present for gifts received on behalf of business accounts
-  * `convert_star_count` - Optional. Number of Telegram Stars that can be claimed by the receiver by converting the gift; omitted if conversion to Telegram Stars is impossible
-  * `prepaid_upgrade_star_count` - Optional. Number of Telegram Stars that were prepaid for the ability to upgrade the gift
+  * `convert_star_count` - Optional. Number of [Telegram Stars](https://t.me/BotNews/90) that can be claimed by the receiver by converting the gift; omitted if conversion to [Telegram Stars](https://t.me/BotNews/90) is impossible
+  * `prepaid_upgrade_star_count` - Optional. Number of [Telegram Stars](https://t.me/BotNews/90) that were prepaid for the ability to upgrade the gift
   * `is_upgrade_separate` - Optional. True, if the gift's upgrade was purchased after the gift was sent
   * `can_be_upgraded` - Optional. True, if the gift can be upgraded to a unique gift
   * `text` - Optional. Text of the message that was added to the gift
@@ -2862,11 +2921,11 @@ Describes a service message about a regular gift that was sent or received.
 -doc """
 Describes a service message about a unique gift that was sent or received.
   * `gift` - Information about the gift
-  * `origin` - Origin of the gift. Currently, either “upgrade” for gifts upgraded from regular gifts, “transfer” for gifts transferred from other users or channels, “resale” for gifts bought from other users, “gifted_upgrade” for upgrades purchased after the gift was sent, or “offer” for gifts bought or sold through gift purchase offers
-  * `last_resale_currency` - Optional. For gifts bought from other users, the currency in which the payment for the gift was done. Currently, one of “XTR” for Telegram Stars or “TON” for toncoins.
-  * `last_resale_amount` - Optional. For gifts bought from other users, the price paid for the gift in either Telegram Stars or nanotoncoins
+  * `origin` - Origin of the gift. Currently, either `upgrade` for gifts upgraded from regular gifts, `transfer` for gifts transferred from other users or channels, `resale` for gifts bought from other users, `gifted_upgrade` for upgrades purchased after the gift was sent, or `offer` for gifts bought or sold through gift purchase offers
+  * `last_resale_currency` - Optional. For gifts bought from other users, the [currency](https://core.telegram.org/bots/payments#supported-currencies) in which the payment for the gift was done. Currently, one of `XTR` for [Telegram Stars](https://t.me/BotNews/90) or `TON` for toncoins.
+  * `last_resale_amount` - Optional. For gifts bought from other users, the price paid for the gift in either [Telegram Stars](https://t.me/BotNews/90) or nanotoncoins
   * `owned_gift_id` - Optional. Unique identifier of the received gift for the bot; only present for gifts received on behalf of business accounts
-  * `transfer_star_count` - Optional. Number of Telegram Stars that must be paid to transfer the gift; omitted if the bot cannot transfer the gift
+  * `transfer_star_count` - Optional. Number of [Telegram Stars](https://t.me/BotNews/90) that must be paid to transfer the gift; omitted if the bot cannot transfer the gift
   * `next_transfer_date` - Optional. Point in time (Unix timestamp) when the gift can be transferred. If it is in the past, then the gift can be transferred now
 """.
 -type 'UniqueGiftInfo'() :: #{
@@ -2887,7 +2946,7 @@ This object describes a gift received and owned by a user or a chat.
 
 -doc """
 Describes a regular gift owned by a user or a chat.
-  * `type` - Type of the gift, always “regular”
+  * `type` - Type of the gift, always `regular`
   * `gift` - Information about the regular gift
   * `owned_gift_id` - Optional. Unique identifier of the gift for the bot; for gifts received on behalf of business accounts only
   * `sender_user` - Optional. Sender of the gift if it is a known user
@@ -2898,8 +2957,8 @@ Describes a regular gift owned by a user or a chat.
   * `is_saved` - Optional. True, if the gift is displayed on the account's profile page; for gifts received on behalf of business accounts only
   * `can_be_upgraded` - Optional. True, if the gift can be upgraded to a unique gift; for gifts received on behalf of business accounts only
   * `was_refunded` - Optional. True, if the gift was refunded and isn't available anymore
-  * `convert_star_count` - Optional. Number of Telegram Stars that can be claimed by the receiver instead of the gift; omitted if the gift cannot be converted to Telegram Stars; for gifts received on behalf of business accounts only
-  * `prepaid_upgrade_star_count` - Optional. Number of Telegram Stars that were paid for the ability to upgrade the gift
+  * `convert_star_count` - Optional. Number of [Telegram Stars](https://t.me/BotNews/90) that can be claimed by the receiver instead of the gift; omitted if the gift cannot be converted to [Telegram Stars](https://t.me/BotNews/90); for gifts received on behalf of business accounts only
+  * `prepaid_upgrade_star_count` - Optional. Number of [Telegram Stars](https://t.me/BotNews/90) that were paid for the ability to upgrade the gift
   * `is_upgrade_separate` - Optional. True, if the gift's upgrade was purchased after the gift was sent; for gifts received on behalf of business accounts only
   * `unique_gift_number` - Optional. Unique number reserved for this gift when upgraded. See the number field in UniqueGift
 """.
@@ -2923,14 +2982,14 @@ Describes a regular gift owned by a user or a chat.
 
 -doc """
 Describes a unique gift received and owned by a user or a chat.
-  * `type` - Type of the gift, always “unique”
+  * `type` - Type of the gift, always `unique`
   * `gift` - Information about the unique gift
   * `owned_gift_id` - Optional. Unique identifier of the received gift for the bot; for gifts received on behalf of business accounts only
   * `sender_user` - Optional. Sender of the gift if it is a known user
   * `send_date` - Date the gift was sent in Unix time
   * `is_saved` - Optional. True, if the gift is displayed on the account's profile page; for gifts received on behalf of business accounts only
   * `can_be_transferred` - Optional. True, if the gift can be transferred to another owner; for gifts received on behalf of business accounts only
-  * `transfer_star_count` - Optional. Number of Telegram Stars that must be paid to transfer the gift; omitted if the bot cannot transfer the gift
+  * `transfer_star_count` - Optional. Number of [Telegram Stars](https://t.me/BotNews/90) that must be paid to transfer the gift; omitted if the bot cannot transfer the gift
   * `next_transfer_date` - Optional. Point in time (Unix timestamp) when the gift can be transferred. If it is in the past, then the gift can be transferred now
 """.
 -type 'OwnedGiftUnique'() :: #{
@@ -2974,9 +3033,9 @@ This object describes the types of gifts that can be gifted to a user or a chat.
 }.
 
 -doc """
-Describes an amount of Telegram Stars.
-  * `amount` - Integer amount of Telegram Stars, rounded to 0; can be negative
-  * `nanostar_amount` - Optional. The number of 1/1000000000 shares of Telegram Stars; from -999999999 to 999999999; can be negative if and only if amount is non-positive
+Describes an amount of [Telegram Stars](https://t.me/BotNews/90).
+  * `amount` - Integer amount of [Telegram Stars](https://t.me/BotNews/90), rounded to 0; can be negative
+  * `nanostar_amount` - Optional. The number of 1/1000000000 shares of [Telegram Stars](https://t.me/BotNews/90); from -999999999 to 999999999; can be negative if and only if amount is non-positive
 """.
 -type 'StarAmount'() :: #{
 	amount := integer(),
@@ -3106,10 +3165,10 @@ Represents a menu button, which opens the bot's list of commands.
 }.
 
 -doc """
-Represents a menu button, which launches a Web App.
+Represents a menu button, which launches a [Web App](https://core.telegram.org/bots/webapps).
   * `type` - Type of the button, must be web_app
   * `text` - Text on the button
-  * `web_app` - Description of the Web App that will be launched when the user presses the button. The Web App will be able to send an arbitrary message on behalf of the user using the method answerWebAppQuery. Alternatively, a t.me link to a Web App of the bot can be specified in the object instead of the Web App's URL, in which case the Web App will be opened as if the user pressed the link.
+  * `web_app` - Description of the [Web App](https://core.telegram.org/bots/webapps) that will be launched when the user presses the button. The [Web App](https://core.telegram.org/bots/webapps) will be able to send an arbitrary message on behalf of the user using the method answerWebAppQuery. Alternatively, a t.me link to a [Web App](https://core.telegram.org/bots/webapps) of the bot can be specified in the object instead of the [Web App](https://core.telegram.org/bots/webapps)'s URL, in which case the [Web App](https://core.telegram.org/bots/webapps) will be opened as if the user pressed the link.
 """.
 -type 'MenuButtonWebApp'() :: #{
 	type := binary(),
@@ -3133,7 +3192,7 @@ This object describes the source of a chat boost.
 
 -doc """
 The boost was obtained by subscribing to Telegram Premium or by gifting a Telegram Premium subscription to another user.
-  * `source` - Source of the boost, always “premium”
+  * `source` - Source of the boost, always `premium`
   * `user` - User that boosted the chat
 """.
 -type 'ChatBoostSourcePremium'() :: #{
@@ -3144,7 +3203,7 @@ The boost was obtained by subscribing to Telegram Premium or by gifting a Telegr
 -doc """
 The boost was obtained by the creation of Telegram Premium gift codes to boost a chat.  
 Each such code boosts the chat 4 times for the duration of the corresponding Telegram Premium subscription.
-  * `source` - Source of the boost, always “gift_code”
+  * `source` - Source of the boost, always `gift_code`
   * `user` - User for which the gift code was created
 """.
 -type 'ChatBoostSourceGiftCode'() :: #{
@@ -3155,10 +3214,10 @@ Each such code boosts the chat 4 times for the duration of the corresponding Tel
 -doc """
 The boost was obtained by the creation of a Telegram Premium or a Telegram Star giveaway.  
 This boosts the chat 4 times for the duration of the corresponding Telegram Premium subscription for Telegram Premium giveaways and prize_star_count / 500 times for one year for Telegram Star giveaways.
-  * `source` - Source of the boost, always “giveaway”
+  * `source` - Source of the boost, always `giveaway`
   * `giveaway_message_id` - Identifier of a message in the chat with the giveaway; the message could have been deleted already. May be 0 if the message isn't sent yet.
   * `user` - Optional. User that won the prize in the giveaway if any; for Telegram Premium giveaways only
-  * `prize_star_count` - Optional. The number of Telegram Stars to be split between giveaway winners; for Telegram Star giveaways only
+  * `prize_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) to be split between giveaway winners; for Telegram Star giveaways only
   * `is_unclaimed` - Optional. True, if the giveaway was completed, but there was no user to win the prize
 """.
 -type 'ChatBoostSourceGiveaway'() :: #{
@@ -3208,6 +3267,22 @@ This object represents a boost removed from a chat.
 }.
 
 -doc """
+Describes a service message about the chat owner leaving the chat.
+  * `new_owner` - Optional. The user which will be the new owner of the chat if the previous owner does not return to the chat
+""".
+-type 'ChatOwnerLeft'() :: #{
+	new_owner => 'User'()
+}.
+
+-doc """
+Describes a service message about an ownership change in the chat.
+  * `new_owner` - The new owner of the chat
+""".
+-type 'ChatOwnerChanged'() :: #{
+	new_owner := 'User'()
+}.
+
+-doc """
 This object represents a list of boosts added to a chat by a user.
   * `boosts` - The list of boosts added to the chat by the user
 """.
@@ -3226,10 +3301,10 @@ Represents the rights of a business bot.
   * `can_edit_profile_photo` - Optional. True, if the bot can edit the profile photo of the business account
   * `can_edit_username` - Optional. True, if the bot can edit the username of the business account
   * `can_change_gift_settings` - Optional. True, if the bot can change the privacy settings pertaining to gifts for the business account
-  * `can_view_gifts_and_stars` - Optional. True, if the bot can view gifts and the amount of Telegram Stars owned by the business account
-  * `can_convert_gifts_to_stars` - Optional. True, if the bot can convert regular gifts owned by the business account to Telegram Stars
+  * `can_view_gifts_and_stars` - Optional. True, if the bot can view gifts and the amount of [Telegram Stars](https://t.me/BotNews/90) owned by the business account
+  * `can_convert_gifts_to_stars` - Optional. True, if the bot can convert regular gifts owned by the business account to [Telegram Stars](https://t.me/BotNews/90)
   * `can_transfer_and_upgrade_gifts` - Optional. True, if the bot can transfer and upgrade gifts owned by the business account
-  * `can_transfer_stars` - Optional. True, if the bot can transfer Telegram Stars received by the business account to its own account, or use them to upgrade and transfer gifts
+  * `can_transfer_stars` - Optional. True, if the bot can transfer [Telegram Stars](https://t.me/BotNews/90) received by the business account to its own account, or use them to upgrade and transfer gifts
   * `can_manage_stories` - Optional. True, if the bot can post, edit and delete stories on behalf of the business account
 """.
 -type 'BusinessBotRights'() :: #{
@@ -3298,9 +3373,9 @@ It should be one of
 -doc """
 Represents a photo to be sent.
   * `type` - Type of the result, must be photo
-  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
+  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Optional. Caption of the photo to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the photo caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
   * `has_spoiler` - Optional. Pass True if the photo needs to be covered with a spoiler animation
@@ -3318,12 +3393,12 @@ Represents a photo to be sent.
 -doc """
 Represents a video to be sent.
   * `type` - Type of the result, must be video
-  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
-  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
-  * `cover` - Optional. Cover for the video in the message. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
+  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `cover` - Optional. Cover for the video in the message. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `start_timestamp` - Optional. Start timestamp for the video in the message
   * `caption` - Optional. Caption of the video to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the video caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
   * `width` - Optional. Video width
@@ -3352,10 +3427,10 @@ Represents a video to be sent.
 -doc """
 Represents an animation file (GIF or H.264/MPEG-4 AVC video without sound) to be sent.
   * `type` - Type of the result, must be animation
-  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
-  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Optional. Caption of the animation to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the animation caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the animation caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
   * `width` - Optional. Animation width
@@ -3380,10 +3455,10 @@ Represents an animation file (GIF or H.264/MPEG-4 AVC video without sound) to be
 -doc """
 Represents an audio file to be treated as music to be sent.
   * `type` - Type of the result, must be audio
-  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
-  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Optional. Caption of the audio to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the audio caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `duration` - Optional. Duration of the audio in seconds
   * `performer` - Optional. Performer of the audio
@@ -3404,10 +3479,10 @@ Represents an audio file to be treated as music to be sent.
 -doc """
 Represents a general file to be sent.
   * `type` - Type of the result, must be document
-  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
-  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Optional. Caption of the document to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the document caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `disable_content_type_detection` - Optional. Disables automatic server-side content type detection for files uploaded using multipart/form-data. Always True, if the document is sent as part of an album.
 """.
@@ -3436,7 +3511,7 @@ This object describes the paid media to be sent.
 -doc """
 The paid media to send is a photo.
   * `type` - Type of the media, must be photo
-  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
+  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
 """.
 -type 'InputPaidMediaPhoto'() :: #{
 	type := binary(),
@@ -3446,9 +3521,9 @@ The paid media to send is a photo.
 -doc """
 The paid media to send is a video.
   * `type` - Type of the media, must be video
-  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
-  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
-  * `cover` - Optional. Cover for the video in the message. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
+  * `media` - File to send. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `thumbnail` - Optional. Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `cover` - Optional. Cover for the video in the message. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `start_timestamp` - Optional. Start timestamp for the video in the message
   * `width` - Optional. Video width
   * `height` - Optional. Video height
@@ -3476,7 +3551,7 @@ This object describes a profile photo to set.
 -doc """
 A static profile photo in the .JPG format.
   * `type` - Type of the profile photo, must be static
-  * `photo` - The static profile photo. Profile photos can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the photo was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `photo` - The static profile photo. Profile photos can't be reused and can only be uploaded as a new file, so you can pass `attach://<file_attach_name>` if the photo was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
 """.
 -type 'InputProfilePhotoStatic'() :: #{
 	type := binary(),
@@ -3484,9 +3559,9 @@ A static profile photo in the .JPG format.
 }.
 
 -doc """
-An animated profile photo in the MPEG4 format.
-  * `type` - Type of the profile photo, must be animated
-  * `animation` - The animated profile photo. Profile photos can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the photo was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+An [animated](https://telegram.org/blog/animated-stickers) profile photo in the MPEG4 format.
+  * `type` - Type of the profile photo, must be [animated](https://telegram.org/blog/animated-stickers)
+  * `animation` - The [animated](https://telegram.org/blog/animated-stickers) profile photo. Profile photos can't be reused and can only be uploaded as a new file, so you can pass `attach://<file_attach_name>` if the photo was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `main_frame_timestamp` - Optional. Timestamp in seconds of the frame that will be used as the static profile photo. Defaults to 0.0.
 """.
 -type 'InputProfilePhotoAnimated'() :: #{
@@ -3504,7 +3579,7 @@ This object describes the content of a story to post.
 -doc """
 Describes a photo to post as a story.
   * `type` - Type of the content, must be photo
-  * `photo` - The photo to post as a story. The photo must be of the size 1080x1920 and must not exceed 10 MB. The photo can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the photo was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `photo` - The photo to post as a story. The photo must be of the size 1080x1920 and must not exceed 10 MB. The photo can't be reused and can only be uploaded as a new file, so you can pass `attach://<file_attach_name>` if the photo was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
 """.
 -type 'InputStoryContentPhoto'() :: #{
 	type := binary(),
@@ -3514,7 +3589,7 @@ Describes a photo to post as a story.
 -doc """
 Describes a video to post as a story.
   * `type` - Type of the content, must be video
-  * `video` - The video to post as a story. The video must be of the size 720x1280, streamable, encoded with H.265 codec, with key frames added each second in the MPEG4 format, and must not exceed 30 MB. The video can't be reused and can only be uploaded as a new file, so you can pass “attach://<file_attach_name>” if the video was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `video` - The video to post as a story. The video must be of the size 720x1280, streamable, encoded with H.265 codec, with key frames added each second in the MPEG4 format, and must not exceed 30 MB. The video can't be reused and can only be uploaded as a new file, so you can pass `attach://<file_attach_name>` if the video was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `duration` - Optional. Precise duration of the video in seconds; 0-60
   * `cover_frame_timestamp` - Optional. Timestamp in seconds of the frame that will be used as the static cover for the story. Defaults to 0.0.
   * `is_animation` - Optional. Pass True if the video has no sound
@@ -3531,11 +3606,11 @@ Describes a video to post as a story.
 This object represents a sticker.
   * `file_id` - Identifier for this file, which can be used to download or reuse the file
   * `file_unique_id` - Unique identifier for this file, which is supposed to be the same over time and for different bots. Can't be used to download or reuse the file.
-  * `type` - Type of the sticker, currently one of “regular”, “mask”, “custom_emoji”. The type of the sticker is independent from its format, which is determined by the fields is_animated and is_video.
+  * `type` - Type of the sticker, currently one of `regular`, `mask`, `custom_emoji`. The type of the sticker is independent from its format, which is determined by the fields is_[animated](https://telegram.org/blog/animated-stickers) and is_video.
   * `width` - Sticker width
   * `height` - Sticker height
-  * `is_animated` - True, if the sticker is animated
-  * `is_video` - True, if the sticker is a video sticker
+  * `is_animated` - True, if the sticker is [animated](https://telegram.org/blog/animated-stickers)
+  * `is_video` - True, if the sticker is a [video sticker](https://telegram.org/blog/video-stickers-better-reactions)
   * `thumbnail` - Optional. Sticker thumbnail in the .WEBP or .JPG format
   * `emoji` - Optional. Emoji associated with the sticker
   * `set_name` - Optional. Name of the sticker set to which the sticker belongs
@@ -3567,7 +3642,7 @@ This object represents a sticker.
 This object represents a sticker set.
   * `name` - Sticker set name
   * `title` - Sticker set title
-  * `sticker_type` - Type of stickers in the set, currently one of “regular”, “mask”, “custom_emoji”
+  * `sticker_type` - Type of stickers in the set, currently one of `regular`, `mask`, `custom_emoji`
   * `stickers` - List of all set stickers
   * `thumbnail` - Optional. Sticker set thumbnail in the .WEBP, .TGS, or .WEBM format
 """.
@@ -3581,9 +3656,9 @@ This object represents a sticker set.
 
 -doc """
 This object describes the position on faces where a mask should be placed by default.
-  * `point` - The part of the face relative to which the mask should be placed. One of “forehead”, “eyes”, “mouth”, or “chin”.
-  * `x_shift` - Shift by X-axis measured in widths of the mask scaled to the face size, from left to right. For example, choosing -1.0 will place mask just to the left of the default mask position.
-  * `y_shift` - Shift by Y-axis measured in heights of the mask scaled to the face size, from top to bottom. For example, 1.0 will place the mask just below the default mask position.
+  * `point` - The part of the face relative to which the mask should be placed. One of `forehead`, `eyes`, `mouth`, or `chin`.
+  * `x_shift` - Shift by X-axis measured in widths of the mask scaled to the face size, from left to right. For example, choosing -1.0 will place mask just to the left of the default [mask position](https://core.telegram.org/bots/api#maskposition).
+  * `y_shift` - Shift by Y-axis measured in heights of the mask scaled to the face size, from top to bottom. For example, 1.0 will place the mask just below the default [mask position](https://core.telegram.org/bots/api#maskposition).
   * `scale` - Mask scaling coefficient. For example, 2.0 means double size.
 """.
 -type 'MaskPosition'() :: #{
@@ -3595,11 +3670,11 @@ This object describes the position on faces where a mask should be placed by def
 
 -doc """
 This object describes a sticker to be added to a sticker set.
-  * `sticker` - The added sticker. Pass a file_id as a String to send a file that already exists on the Telegram servers, pass an HTTP URL as a String for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new file using multipart/form-data under <file_attach_name> name. Animated and video stickers can't be uploaded via HTTP URL. More information on Sending Files »
-  * `format` - Format of the added sticker, must be one of “static” for a .WEBP or .PNG image, “animated” for a .TGS animation, “video” for a .WEBM video
+  * `sticker` - The added sticker. Pass a file_id as a String to send a file that already exists on the Telegram servers, pass an HTTP URL as a String for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new file using multipart/form-data under <file_attach_name> name. Animated and [video sticker](https://telegram.org/blog/video-stickers-better-reactions)s can't be uploaded via HTTP URL. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `format` - Format of the added sticker, must be one of `static` for a .WEBP or .PNG image, `[animated](https://telegram.org/blog/animated-stickers)` for a .TGS animation, `video` for a .WEBM video
   * `emoji_list` - List of 1-20 emoji associated with the sticker
-  * `mask_position` - Optional. Position where the mask should be placed on faces. For “mask” stickers only.
-  * `keywords` - Optional. List of 0-20 search keywords for the sticker with total length of up to 64 characters. For “regular” and “custom_emoji” stickers only.
+  * `mask_position` - Optional. Position where the mask should be placed on faces. For `mask` stickers only.
+  * `keywords` - Optional. List of 0-20 search keywords for the sticker with total length of up to 64 characters. For `regular` and `custom_emoji` stickers only.
 """.
 -type 'InputSticker'() :: #{
 	sticker := binary(),
@@ -3616,7 +3691,7 @@ When the user sends an empty query, your bot could return some default or trendi
   * `from` - Sender
   * `query` - Text of the query (up to 256 characters)
   * `offset` - Offset of the results to be returned, can be controlled by the bot
-  * `chat_type` - Optional. Type of the chat from which the inline query was sent. Can be either “sender” for a private chat with the inline query sender, “private”, “group”, “supergroup”, or “channel”. The chat type should be always known for requests sent from official clients and most third-party clients, unless the request was sent from a secret chat
+  * `chat_type` - Optional. Type of the chat from which the inline query was sent. Can be either `sender` for a private chat with the inline query sender, `private`, `group`, `supergroup`, or `channel`. The chat type should be always known for requests sent from official clients and most third-party clients, unless the request was sent from a secret chat
   * `location` - Optional. Sender location, only for bots that request user location
 """.
 -type 'InlineQuery'() :: #{
@@ -3632,8 +3707,8 @@ When the user sends an empty query, your bot could return some default or trendi
 This object represents a button to be shown above inline query results.  
 You must use exactly one of the optional fields.
   * `text` - Label text on the button
-  * `web_app` - Optional. Description of the Web App that will be launched when the user presses the button. The Web App will be able to switch back to the inline mode using the method switchInlineQuery inside the Web App.
-  * `start_parameter` - Optional. Deep-linking parameter for the /start message sent to the bot when a user presses the button. 1-64 characters, only A-Z, a-z, 0-9, _ and - are allowed.
+  * `web_app` - Optional. Description of the [Web App](https://core.telegram.org/bots/webapps) that will be launched when the user presses the button. The [Web App](https://core.telegram.org/bots/webapps) will be able to switch back to the [inline mode](https://core.telegram.org/bots/inline) using the method switchInlineQuery inside the [Web App](https://core.telegram.org/bots/webapps).
+  * `start_parameter` - Optional. [Deep-linking](https://core.telegram.org/bots/features#deep-linking) parameter for the /start message sent to the bot when a user presses the button. 1-64 characters, only A-Z, a-z, 0-9, _ and - are allowed.
 
 Example: An inline bot that sends YouTube videos can ask the user to connect the bot to their YouTube account to adapt search results accordingly. To do this, it displays a 'Connect your YouTube account' button above the results, or even before showing any. The user presses the button, switches to a private chat with the bot and, in doing so, passes a start parameter that instructs the bot to return an OAuth link. Once done, the bot can offer a switch_inline button so that the user can easily return to the chat where they wanted to use the bot's inline capabilities.
 """.
@@ -3656,7 +3731,7 @@ Represents a link to an article or web page.
   * `id` - Unique identifier for this result, 1-64 Bytes
   * `title` - Title of the result
   * `input_message_content` - Content of the message to be sent
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `url` - Optional. URL of the result
   * `description` - Optional. Short description of the result
   * `thumbnail_url` - Optional. Url of the thumbnail for the result
@@ -3689,10 +3764,10 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `title` - Optional. Title for the result
   * `description` - Optional. Short description of the result
   * `caption` - Optional. Caption of the photo to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the photo caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the photo
 """.
 -type 'InlineQueryResultPhoto'() :: #{
@@ -3713,8 +3788,8 @@ Alternatively, you can use input_message_content to send a message with the spec
 }.
 
 -doc """
-Represents a link to an animated GIF file.  
-By default, this animated GIF file will be sent by the user with optional caption.  
+Represents a link to an [animated](https://telegram.org/blog/animated-stickers) GIF file.  
+By default, this [animated](https://telegram.org/blog/animated-stickers) GIF file will be sent by the user with optional caption.  
 Alternatively, you can use input_message_content to send a message with the specified content instead of the animation.
   * `type` - Type of the result, must be gif
   * `id` - Unique identifier for this result, 1-64 bytes
@@ -3722,14 +3797,14 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `gif_width` - Optional. Width of the GIF
   * `gif_height` - Optional. Height of the GIF
   * `gif_duration` - Optional. Duration of the GIF in seconds
-  * `thumbnail_url` - URL of the static (JPEG or GIF) or animated (MPEG4) thumbnail for the result
-  * `thumbnail_mime_type` - Optional. MIME type of the thumbnail, must be one of “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to “image/jpeg”
+  * `thumbnail_url` - URL of the static (JPEG or GIF) or [animated](https://telegram.org/blog/animated-stickers) (MPEG4) thumbnail for the result
+  * `thumbnail_mime_type` - Optional. MIME type of the thumbnail, must be one of `image/jpeg`, `image/gif`, or `video/mp4`. Defaults to `image/jpeg`
   * `title` - Optional. Title for the result
   * `caption` - Optional. Caption of the GIF file to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the GIF animation
 """.
 -type 'InlineQueryResultGif'() :: #{
@@ -3752,7 +3827,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 
 -doc """
 Represents a link to a video animation (H.264/MPEG-4 AVC video without sound).  
-By default, this animated MPEG-4 file will be sent by the user with optional caption.  
+By default, this [animated](https://telegram.org/blog/animated-stickers) MPEG-4 file will be sent by the user with optional caption.  
 Alternatively, you can use input_message_content to send a message with the specified content instead of the animation.
   * `type` - Type of the result, must be mpeg4_gif
   * `id` - Unique identifier for this result, 1-64 bytes
@@ -3760,14 +3835,14 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `mpeg4_width` - Optional. Video width
   * `mpeg4_height` - Optional. Video height
   * `mpeg4_duration` - Optional. Video duration in seconds
-  * `thumbnail_url` - URL of the static (JPEG or GIF) or animated (MPEG4) thumbnail for the result
-  * `thumbnail_mime_type` - Optional. MIME type of the thumbnail, must be one of “image/jpeg”, “image/gif”, or “video/mp4”. Defaults to “image/jpeg”
+  * `thumbnail_url` - URL of the static (JPEG or GIF) or [animated](https://telegram.org/blog/animated-stickers) (MPEG4) thumbnail for the result
+  * `thumbnail_mime_type` - Optional. MIME type of the thumbnail, must be one of `image/jpeg`, `image/gif`, or `video/mp4`. Defaults to `image/jpeg`
   * `title` - Optional. Title for the result
   * `caption` - Optional. Caption of the MPEG-4 file to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the video animation
 """.
 -type 'InlineQueryResultMpeg4Gif'() :: #{
@@ -3796,18 +3871,18 @@ If an InlineQueryResultVideo message contains an embedded video (e.g., YouTube),
   * `type` - Type of the result, must be video
   * `id` - Unique identifier for this result, 1-64 bytes
   * `video_url` - A valid URL for the embedded video player or video file
-  * `mime_type` - MIME type of the content of the video URL, “text/html” or “video/mp4”
+  * `mime_type` - MIME type of the content of the video URL, `text/html` or `video/mp4`
   * `thumbnail_url` - URL of the thumbnail (JPEG only) for the video
   * `title` - Title for the result
   * `caption` - Optional. Caption of the video to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the video caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
   * `video_width` - Optional. Video width
   * `video_height` - Optional. Video height
   * `video_duration` - Optional. Video duration in seconds
   * `description` - Optional. Short description of the result
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the video. This field is required if InlineQueryResultVideo is used to send an HTML-page as a result (e.g., a YouTube video).
 """.
 -type 'InlineQueryResultVideo'() :: #{
@@ -3838,11 +3913,11 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `audio_url` - A valid URL for the audio file
   * `title` - Title
   * `caption` - Optional. Caption, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the audio caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `performer` - Optional. Performer
   * `audio_duration` - Optional. Audio duration in seconds
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the audio
 """.
 -type 'InlineQueryResultAudio'() :: #{
@@ -3868,10 +3943,10 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `voice_url` - A valid URL for the voice recording
   * `title` - Recording title
   * `caption` - Optional. Caption, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the voice message caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the voice message caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `voice_duration` - Optional. Recording duration in seconds
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the voice recording
 """.
 -type 'InlineQueryResultVoice'() :: #{
@@ -3896,12 +3971,12 @@ Currently, only .PDF and .ZIP files can be sent using this method.
   * `id` - Unique identifier for this result, 1-64 bytes
   * `title` - Title for the result
   * `caption` - Optional. Caption of the document to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the document caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `document_url` - A valid URL for the file
-  * `mime_type` - MIME type of the content of the file, either “application/pdf” or “application/zip”
+  * `mime_type` - MIME type of the content of the file, either `application/pdf` or `application/zip`
   * `description` - Optional. Short description of the result
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the file
   * `thumbnail_url` - Optional. URL of the thumbnail (JPEG only) for the file
   * `thumbnail_width` - Optional. Thumbnail width
@@ -3937,7 +4012,7 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `live_period` - Optional. Period in seconds during which the location can be updated, should be between 60 and 86400, or 0x7FFFFFFF for live locations that can be edited indefinitely.
   * `heading` - Optional. For live locations, a direction in which the user is moving, in degrees. Must be between 1 and 360 if specified.
   * `proximity_alert_radius` - Optional. For live locations, a maximum distance for proximity alerts about approaching another chat member, in meters. Must be between 1 and 100000 if specified.
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the location
   * `thumbnail_url` - Optional. Url of the thumbnail for the result
   * `thumbnail_width` - Optional. Thumbnail width
@@ -3971,10 +4046,10 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `title` - Title of the venue
   * `address` - Address of the venue
   * `foursquare_id` - Optional. Foursquare identifier of the venue if known
-  * `foursquare_type` - Optional. Foursquare type of the venue, if known. (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.)
+  * `foursquare_type` - Optional. Foursquare type of the venue, if known. (For example, `arts_entertainment/default`, `arts_entertainment/aquarium` or `food/icecream`.)
   * `google_place_id` - Optional. Google Places identifier of the venue
-  * `google_place_type` - Optional. Google Places type of the venue. (See supported types.)
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `google_place_type` - Optional. Google Places type of the venue. (See [supported types](https://developers.google.com/places/web-service/supported_types).)
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the venue
   * `thumbnail_url` - Optional. Url of the thumbnail for the result
   * `thumbnail_width` - Optional. Thumbnail width
@@ -4007,8 +4082,8 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `phone_number` - Contact's phone number
   * `first_name` - Contact's first name
   * `last_name` - Optional. Contact's last name
-  * `vcard` - Optional. Additional data about the contact in the form of a vCard, 0-2048 bytes
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `vcard` - Optional. Additional data about the contact in the form of a [vCard](https://en.wikipedia.org/wiki/VCard), 0-2048 bytes
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the contact
   * `thumbnail_url` - Optional. Url of the thumbnail for the result
   * `thumbnail_width` - Optional. Thumbnail width
@@ -4033,7 +4108,7 @@ Represents a Game.
   * `type` - Type of the result, must be game
   * `id` - Unique identifier for this result, 1-64 bytes
   * `game_short_name` - Short name of the game
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
 """.
 -type 'InlineQueryResultGame'() :: #{
 	type := binary(),
@@ -4052,10 +4127,10 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `title` - Optional. Title for the result
   * `description` - Optional. Short description of the result
   * `caption` - Optional. Caption of the photo to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the photo caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the photo
 """.
 -type 'InlineQueryResultCachedPhoto'() :: #{
@@ -4073,18 +4148,18 @@ Alternatively, you can use input_message_content to send a message with the spec
 }.
 
 -doc """
-Represents a link to an animated GIF file stored on the Telegram servers.  
-By default, this animated GIF file will be sent by the user with an optional caption.  
+Represents a link to an [animated](https://telegram.org/blog/animated-stickers) GIF file stored on the Telegram servers.  
+By default, this [animated](https://telegram.org/blog/animated-stickers) GIF file will be sent by the user with an optional caption.  
 Alternatively, you can use input_message_content to send a message with specified content instead of the animation.
   * `type` - Type of the result, must be gif
   * `id` - Unique identifier for this result, 1-64 bytes
   * `gif_file_id` - A valid file identifier for the GIF file
   * `title` - Optional. Title for the result
   * `caption` - Optional. Caption of the GIF file to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the GIF animation
 """.
 -type 'InlineQueryResultCachedGif'() :: #{
@@ -4102,17 +4177,17 @@ Alternatively, you can use input_message_content to send a message with specifie
 
 -doc """
 Represents a link to a video animation (H.264/MPEG-4 AVC video without sound) stored on the Telegram servers.  
-By default, this animated MPEG-4 file will be sent by the user with an optional caption.  
+By default, this [animated](https://telegram.org/blog/animated-stickers) MPEG-4 file will be sent by the user with an optional caption.  
 Alternatively, you can use input_message_content to send a message with the specified content instead of the animation.
   * `type` - Type of the result, must be mpeg4_gif
   * `id` - Unique identifier for this result, 1-64 bytes
   * `mpeg4_file_id` - A valid file identifier for the MPEG4 file
   * `title` - Optional. Title for the result
   * `caption` - Optional. Caption of the MPEG-4 file to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the video animation
 """.
 -type 'InlineQueryResultCachedMpeg4Gif'() :: #{
@@ -4135,7 +4210,7 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `type` - Type of the result, must be sticker
   * `id` - Unique identifier for this result, 1-64 bytes
   * `sticker_file_id` - A valid file identifier of the sticker
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the sticker
 """.
 -type 'InlineQueryResultCachedSticker'() :: #{
@@ -4156,9 +4231,9 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `document_file_id` - A valid file identifier for the file
   * `description` - Optional. Short description of the result
   * `caption` - Optional. Caption of the document to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the document caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the file
 """.
 -type 'InlineQueryResultCachedDocument'() :: #{
@@ -4184,10 +4259,10 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `title` - Title for the result
   * `description` - Optional. Short description of the result
   * `caption` - Optional. Caption of the video to be sent, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the video caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Optional. Pass True, if the caption must be shown above the message media
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the video
 """.
 -type 'InlineQueryResultCachedVideo'() :: #{
@@ -4213,9 +4288,9 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `voice_file_id` - A valid file identifier for the voice message
   * `title` - Voice message title
   * `caption` - Optional. Caption, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the voice message caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the voice message caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the voice message
 """.
 -type 'InlineQueryResultCachedVoice'() :: #{
@@ -4238,9 +4313,9 @@ Alternatively, you can use input_message_content to send a message with the spec
   * `id` - Unique identifier for this result, 1-64 bytes
   * `audio_file_id` - A valid file identifier for the audio file
   * `caption` - Optional. Caption, 0-1024 characters after entities parsing
-  * `parse_mode` - Optional. Mode for parsing entities in the audio caption. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - Optional. List of special entities that appear in the caption, which can be specified instead of parse_mode
-  * `reply_markup` - Optional. Inline keyboard attached to the message
+  * `reply_markup` - Optional. [Inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message
   * `input_message_content` - Optional. Content of the message to be sent instead of the audio
 """.
 -type 'InlineQueryResultCachedAudio'() :: #{
@@ -4263,7 +4338,7 @@ Telegram clients currently support the following 5 types:
 -doc """
 Represents the content of a text message to be sent as the result of an inline query.
   * `message_text` - Text of the message to be sent, 1-4096 characters
-  * `parse_mode` - Optional. Mode for parsing entities in the message text. See formatting options for more details.
+  * `parse_mode` - Optional. Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `entities` - Optional. List of special entities that appear in message text, which can be specified instead of parse_mode
   * `link_preview_options` - Optional. Link preview generation options for the message
 """.
@@ -4299,9 +4374,9 @@ Represents the content of a venue message to be sent as the result of an inline 
   * `title` - Name of the venue
   * `address` - Address of the venue
   * `foursquare_id` - Optional. Foursquare identifier of the venue, if known
-  * `foursquare_type` - Optional. Foursquare type of the venue, if known. (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.)
+  * `foursquare_type` - Optional. Foursquare type of the venue, if known. (For example, `arts_entertainment/default`, `arts_entertainment/aquarium` or `food/icecream`.)
   * `google_place_id` - Optional. Google Places identifier of the venue
-  * `google_place_type` - Optional. Google Places type of the venue. (See supported types.)
+  * `google_place_type` - Optional. Google Places type of the venue. (See [supported types](https://developers.google.com/places/web-service/supported_types).)
 """.
 -type 'InputVenueMessageContent'() :: #{
 	latitude := float(),
@@ -4319,7 +4394,7 @@ Represents the content of a contact message to be sent as the result of an inlin
   * `phone_number` - Contact's phone number
   * `first_name` - Contact's first name
   * `last_name` - Optional. Contact's last name
-  * `vcard` - Optional. Additional data about the contact in the form of a vCard, 0-2048 bytes
+  * `vcard` - Optional. Additional data about the contact in the form of a [vCard](https://en.wikipedia.org/wiki/VCard), 0-2048 bytes
 """.
 -type 'InputContactMessageContent'() :: #{
 	phone_number := binary(),
@@ -4333,23 +4408,23 @@ Represents the content of an invoice message to be sent as the result of an inli
   * `title` - Product name, 1-32 characters
   * `description` - Product description, 1-255 characters
   * `payload` - Bot-defined invoice payload, 1-128 bytes. This will not be displayed to the user, use it for your internal processes.
-  * `provider_token` - Optional. Payment provider token, obtained via @BotFather. Pass an empty string for payments in Telegram Stars.
-  * `currency` - Three-letter ISO 4217 currency code, see more on currencies. Pass “XTR” for payments in Telegram Stars.
-  * `prices` - Price breakdown, a JSON-serialized list of components (e.g. product price, tax, discount, delivery cost, delivery tax, bonus, etc.). Must contain exactly one item for payments in Telegram Stars.
-  * `max_tip_amount` - Optional. The maximum accepted amount for tips in the smallest units of the currency (integer, not float/double). For example, for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies). Defaults to 0. Not supported for payments in Telegram Stars.
-  * `suggested_tip_amounts` - Optional. A JSON-serialized array of suggested amounts of tip in the smallest units of the currency (integer, not float/double). At most 4 suggested tip amounts can be specified. The suggested tip amounts must be positive, passed in a strictly increased order and must not exceed max_tip_amount.
+  * `provider_token` - Optional. Payment provider token, obtained via [@BotFather](https://t.me/botfather). Pass an empty string for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `currency` - Three-letter ISO 4217 [currency](https://core.telegram.org/bots/payments#supported-currencies) code, see [more on currencies](https://core.telegram.org/bots/payments#supported-currencies). Pass `XTR` for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `prices` - Price breakdown, a JSON-serialized list of components (e.g. product price, tax, discount, delivery cost, delivery tax, bonus, etc.). Must contain exactly one item for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `max_tip_amount` - Optional. The maximum accepted amount for tips in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies). Defaults to 0. Not supported for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `suggested_tip_amounts` - Optional. A JSON-serialized array of suggested amounts of tip in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). At most 4 suggested tip amounts can be specified. The suggested tip amounts must be positive, passed in a strictly increased order and must not exceed max_tip_amount.
   * `provider_data` - Optional. A JSON-serialized object for data about the invoice, which will be shared with the payment provider. A detailed description of the required fields should be provided by the payment provider.
   * `photo_url` - Optional. URL of the product photo for the invoice. Can be a photo of the goods or a marketing image for a service.
   * `photo_size` - Optional. Photo size in bytes
   * `photo_width` - Optional. Photo width
   * `photo_height` - Optional. Photo height
-  * `need_name` - Optional. Pass True if you require the user's full name to complete the order. Ignored for payments in Telegram Stars.
-  * `need_phone_number` - Optional. Pass True if you require the user's phone number to complete the order. Ignored for payments in Telegram Stars.
-  * `need_email` - Optional. Pass True if you require the user's email address to complete the order. Ignored for payments in Telegram Stars.
-  * `need_shipping_address` - Optional. Pass True if you require the user's shipping address to complete the order. Ignored for payments in Telegram Stars.
-  * `send_phone_number_to_provider` - Optional. Pass True if the user's phone number should be sent to the provider. Ignored for payments in Telegram Stars.
-  * `send_email_to_provider` - Optional. Pass True if the user's email address should be sent to the provider. Ignored for payments in Telegram Stars.
-  * `is_flexible` - Optional. Pass True if the final price depends on the shipping method. Ignored for payments in Telegram Stars.
+  * `need_name` - Optional. Pass True if you require the user's full name to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_phone_number` - Optional. Pass True if you require the user's phone number to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_email` - Optional. Pass True if you require the user's email address to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_shipping_address` - Optional. Pass True if you require the user's shipping address to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `send_phone_number_to_provider` - Optional. Pass True if the user's phone number should be sent to the provider. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `send_email_to_provider` - Optional. Pass True if the user's email address should be sent to the provider. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `is_flexible` - Optional. Pass True if the final price depends on the shipping method. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
 """.
 -type 'InputInvoiceMessageContent'() :: #{
 	title := binary(),
@@ -4376,11 +4451,11 @@ Represents the content of an invoice message to be sent as the result of an inli
 
 -doc """
 Represents a result of an inline query that was chosen by the user and sent to their chat partner.  
-Note: It is necessary to enable inline feedback via @BotFather in order to receive these objects in updates.
+Note: It is necessary to enable [inline feedback](https://core.telegram.org/bots/inline#collecting-feedback) via [@BotFather](https://t.me/botfather) in order to receive these objects in updates.
   * `result_id` - The unique identifier for the result that was chosen
   * `from` - The user that chose the result
   * `location` - Optional. Sender location, only for bots that require user location
-  * `inline_message_id` - Optional. Identifier of the sent inline message. Available only if there is an inline keyboard attached to the message. Will be also received in callback queries and can be used to edit the message.
+  * `inline_message_id` - Optional. Identifier of the sent inline message. Available only if there is an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message. Will be also received in callback queries and can be used to edit the message.
   * `query` - The query that was used to obtain the result
 """.
 -type 'ChosenInlineResult'() :: #{
@@ -4392,8 +4467,8 @@ Note: It is necessary to enable inline feedback via @BotFather in order to recei
 }.
 
 -doc """
-Describes an inline message sent by a Web App on behalf of a user.
-  * `inline_message_id` - Optional. Identifier of the sent inline message. Available only if there is an inline keyboard attached to the message.
+Describes an inline message sent by a [Web App](https://core.telegram.org/bots/webapps) on behalf of a user.
+  * `inline_message_id` - Optional. Identifier of the sent inline message. Available only if there is an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message.
 """.
 -type 'SentWebAppMessage'() :: #{
 	inline_message_id => binary()
@@ -4412,7 +4487,7 @@ Describes an inline message to be sent by a user of a Mini App.
 -doc """
 This object represents a portion of the price for goods or services.
   * `label` - Portion label
-  * `amount` - Price of the product in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
+  * `amount` - Price of the product in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies).
 """.
 -type 'LabeledPrice'() :: #{
 	label := binary(),
@@ -4424,8 +4499,8 @@ This object contains basic information about an invoice.
   * `title` - Product name
   * `description` - Product description
   * `start_parameter` - Unique bot deep-linking parameter that can be used to generate this invoice
-  * `currency` - Three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars
-  * `total_amount` - Total price in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
+  * `currency` - Three-letter ISO 4217 [currency](https://core.telegram.org/bots/payments#supported-currencies) code, or `XTR` for payments in [Telegram Stars](https://t.me/BotNews/90)
+  * `total_amount` - Total price in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies).
 """.
 -type 'Invoice'() :: #{
 	title := binary(),
@@ -4437,7 +4512,7 @@ This object contains basic information about an invoice.
 
 -doc """
 This object represents a shipping address.
-  * `country_code` - Two-letter ISO 3166-1 alpha-2 country code
+  * `country_code` - Two-letter [ISO 3166-1 alpha-2](https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2) country code
   * `state` - State, if applicable
   * `city` - City
   * `street_line1` - First line for the address
@@ -4483,8 +4558,8 @@ This object represents one shipping option.
 This object contains basic information about a successful payment.  
 Note that if the buyer initiates a chargeback with the relevant payment provider following this transaction, the funds may be debited from your balance.  
 This is outside of Telegram's control.
-  * `currency` - Three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars
-  * `total_amount` - Total price in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
+  * `currency` - Three-letter ISO 4217 [currency](https://core.telegram.org/bots/payments#supported-currencies) code, or `XTR` for payments in [Telegram Stars](https://t.me/BotNews/90)
+  * `total_amount` - Total price in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies).
   * `invoice_payload` - Bot-specified invoice payload
   * `subscription_expiration_date` - Optional. Expiration date of the subscription, in Unix time; for recurring payments only
   * `is_recurring` - Optional. True, if the payment is a recurring payment for a subscription
@@ -4509,8 +4584,8 @@ This is outside of Telegram's control.
 
 -doc """
 This object contains basic information about a refunded payment.
-  * `currency` - Three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars. Currently, always “XTR”
-  * `total_amount` - Total refunded price in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45, total_amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
+  * `currency` - Three-letter ISO 4217 [currency](https://core.telegram.org/bots/payments#supported-currencies) code, or `XTR` for payments in [Telegram Stars](https://t.me/BotNews/90). Currently, always `XTR`
+  * `total_amount` - Total refunded price in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a price of US$ 1.45, total_amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies).
   * `invoice_payload` - Bot-specified invoice payload
   * `telegram_payment_charge_id` - Telegram payment identifier
   * `provider_payment_charge_id` - Optional. Provider payment identifier
@@ -4541,8 +4616,8 @@ This object contains information about an incoming shipping query.
 This object contains information about an incoming pre-checkout query.
   * `id` - Unique query identifier
   * `from` - User who sent the query
-  * `currency` - Three-letter ISO 4217 currency code, or “XTR” for payments in Telegram Stars
-  * `total_amount` - Total price in the smallest units of the currency (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies).
+  * `currency` - Three-letter ISO 4217 [currency](https://core.telegram.org/bots/payments#supported-currencies) code, or `XTR` for payments in [Telegram Stars](https://t.me/BotNews/90)
+  * `total_amount` - Total price in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a price of US$ 1.45 pass amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies).
   * `invoice_payload` - Bot-specified invoice payload
   * `shipping_option_id` - Optional. Identifier of the shipping option chosen by the user
   * `order_info` - Optional. Order information provided by the user
@@ -4575,7 +4650,7 @@ This object describes the state of a revenue withdrawal operation.
 
 -doc """
 The withdrawal is in progress.
-  * `type` - Type of the state, always “pending”
+  * `type` - Type of the state, always `pending`
 """.
 -type 'RevenueWithdrawalStatePending'() :: #{
 	type := binary()
@@ -4583,7 +4658,7 @@ The withdrawal is in progress.
 
 -doc """
 The withdrawal succeeded.
-  * `type` - Type of the state, always “succeeded”
+  * `type` - Type of the state, always `succeeded`
   * `date` - Date the withdrawal was completed in Unix time
   * `url` - An HTTPS URL that can be used to see transaction details
 """.
@@ -4595,7 +4670,7 @@ The withdrawal succeeded.
 
 -doc """
 The withdrawal failed and the transaction was refunded.
-  * `type` - Type of the state, always “failed”
+  * `type` - Type of the state, always `failed`
 """.
 -type 'RevenueWithdrawalStateFailed'() :: #{
 	type := binary()
@@ -4605,9 +4680,9 @@ The withdrawal failed and the transaction was refunded.
 Contains information about the affiliate that received a commission via this transaction.
   * `affiliate_user` - Optional. The bot or the user that received an affiliate commission if it was received by a bot or a user
   * `affiliate_chat` - Optional. The chat that received an affiliate commission if it was received by a chat
-  * `commission_per_mille` - The number of Telegram Stars received by the affiliate for each 1000 Telegram Stars received by the bot from referred users
-  * `amount` - Integer amount of Telegram Stars received by the affiliate from the transaction, rounded to 0; can be negative for refunds
-  * `nanostar_amount` - Optional. The number of 1/1000000000 shares of Telegram Stars received by the affiliate; from -999999999 to 999999999; can be negative for refunds
+  * `commission_per_mille` - The number of [Telegram Stars](https://t.me/BotNews/90) received by the affiliate for each 1000 [Telegram Stars](https://t.me/BotNews/90) received by the bot from referred users
+  * `amount` - Integer amount of [Telegram Stars](https://t.me/BotNews/90) received by the affiliate from the transaction, rounded to 0; can be negative for refunds
+  * `nanostar_amount` - Optional. The number of 1/1000000000 shares of [Telegram Stars](https://t.me/BotNews/90) received by the affiliate; from -999999999 to 999999999; can be negative for refunds
 """.
 -type 'AffiliateInfo'() :: #{
 	affiliate_user => 'User'(),
@@ -4625,16 +4700,16 @@ This object describes the source of a transaction, or its recipient for outgoing
 
 -doc """
 Describes a transaction with a user.
-  * `type` - Type of the transaction partner, always “user”
-  * `transaction_type` - Type of the transaction, currently one of “invoice_payment” for payments via invoices, “paid_media_payment” for payments for paid media, “gift_purchase” for gifts sent by the bot, “premium_purchase” for Telegram Premium subscriptions gifted by the bot, “business_account_transfer” for direct transfers from managed business accounts
+  * `type` - Type of the transaction partner, always `user`
+  * `transaction_type` - Type of the transaction, currently one of `invoice_payment` for payments via invoices, `paid_media_payment` for payments for paid media, `gift_purchase` for gifts sent by the bot, `premium_purchase` for Telegram Premium subscriptions gifted by the bot, `business_account_transfer` for direct transfers from managed business accounts
   * `user` - Information about the user
-  * `affiliate` - Optional. Information about the affiliate that received a commission via this transaction. Can be available only for “invoice_payment” and “paid_media_payment” transactions.
-  * `invoice_payload` - Optional. Bot-specified invoice payload. Can be available only for “invoice_payment” transactions.
-  * `subscription_period` - Optional. The duration of the paid subscription. Can be available only for “invoice_payment” transactions.
-  * `paid_media` - Optional. Information about the paid media bought by the user; for “paid_media_payment” transactions only
-  * `paid_media_payload` - Optional. Bot-specified paid media payload. Can be available only for “paid_media_payment” transactions.
-  * `gift` - Optional. The gift sent to the user by the bot; for “gift_purchase” transactions only
-  * `premium_subscription_duration` - Optional. Number of months the gifted Telegram Premium subscription will be active for; for “premium_purchase” transactions only
+  * `affiliate` - Optional. Information about the affiliate that received a commission via this transaction. Can be available only for `invoice_payment` and `paid_media_payment` transactions.
+  * `invoice_payload` - Optional. Bot-specified invoice payload. Can be available only for `invoice_payment` transactions.
+  * `subscription_period` - Optional. The duration of the paid subscription. Can be available only for `invoice_payment` transactions.
+  * `paid_media` - Optional. Information about the paid media bought by the user; for `paid_media_payment` transactions only
+  * `paid_media_payload` - Optional. Bot-specified paid media payload. Can be available only for `paid_media_payment` transactions.
+  * `gift` - Optional. The gift sent to the user by the bot; for `gift_purchase` transactions only
+  * `premium_subscription_duration` - Optional. Number of months the gifted Telegram Premium subscription will be active for; for `premium_purchase` transactions only
 """.
 -type 'TransactionPartnerUser'() :: #{
 	type := binary(),
@@ -4651,7 +4726,7 @@ Describes a transaction with a user.
 
 -doc """
 Describes a transaction with a chat.
-  * `type` - Type of the transaction partner, always “chat”
+  * `type` - Type of the transaction partner, always `chat`
   * `chat` - Information about the chat
   * `gift` - Optional. The gift sent to the chat by the bot
 """.
@@ -4663,9 +4738,9 @@ Describes a transaction with a chat.
 
 -doc """
 Describes the affiliate program that issued the affiliate commission received via this transaction.
-  * `type` - Type of the transaction partner, always “affiliate_program”
+  * `type` - Type of the transaction partner, always `affiliate_program`
   * `sponsor_user` - Optional. Information about the bot that sponsored the affiliate program
-  * `commission_per_mille` - The number of Telegram Stars received by the bot for each 1000 Telegram Stars received by the affiliate program sponsor from referred users
+  * `commission_per_mille` - The number of [Telegram Stars](https://t.me/BotNews/90) received by the bot for each 1000 [Telegram Stars](https://t.me/BotNews/90) received by the affiliate program sponsor from referred users
 """.
 -type 'TransactionPartnerAffiliateProgram'() :: #{
 	type := binary(),
@@ -4674,8 +4749,8 @@ Describes the affiliate program that issued the affiliate commission received vi
 }.
 
 -doc """
-Describes a withdrawal transaction with Fragment.
-  * `type` - Type of the transaction partner, always “fragment”
+Describes a withdrawal transaction with [Fragment](https://fragment.com).
+  * `type` - Type of the transaction partner, always `fragment`
   * `withdrawal_state` - Optional. State of the transaction if the transaction is outgoing
 """.
 -type 'TransactionPartnerFragment'() :: #{
@@ -4685,15 +4760,15 @@ Describes a withdrawal transaction with Fragment.
 
 -doc """
 Describes a withdrawal transaction to the Telegram Ads platform.
-  * `type` - Type of the transaction partner, always “telegram_ads”
+  * `type` - Type of the transaction partner, always `telegram_ads`
 """.
 -type 'TransactionPartnerTelegramAds'() :: #{
 	type := binary()
 }.
 
 -doc """
-Describes a transaction with payment for paid broadcasting.
-  * `type` - Type of the transaction partner, always “telegram_api”
+Describes a transaction with payment for [paid broadcasting](https://core.telegram.org/bots/api#paid-broadcasts).
+  * `type` - Type of the transaction partner, always `telegram_api`
   * `request_count` - The number of successful requests that exceeded regular limits and were therefore billed
 """.
 -type 'TransactionPartnerTelegramApi'() :: #{
@@ -4703,7 +4778,7 @@ Describes a transaction with payment for paid broadcasting.
 
 -doc """
 Describes a transaction with an unknown source or recipient.
-  * `type` - Type of the transaction partner, always “other”
+  * `type` - Type of the transaction partner, always `other`
 """.
 -type 'TransactionPartnerOther'() :: #{
 	type := binary()
@@ -4714,11 +4789,11 @@ Describes a Telegram Star transaction.
 Note that if the buyer initiates a chargeback with the payment provider from whom they acquired Stars (e.g., Apple, Google) following this transaction, the refunded Stars will be deducted from the bot's balance.  
 This is outside of Telegram's control.
   * `id` - Unique identifier of the transaction. Coincides with the identifier of the original transaction for refund transactions. Coincides with SuccessfulPayment.telegram_payment_charge_id for successful incoming payments from users.
-  * `amount` - Integer amount of Telegram Stars transferred by the transaction
-  * `nanostar_amount` - Optional. The number of 1/1000000000 shares of Telegram Stars transferred by the transaction; from 0 to 999999999
+  * `amount` - Integer amount of [Telegram Stars](https://t.me/BotNews/90) transferred by the transaction
+  * `nanostar_amount` - Optional. The number of 1/1000000000 shares of [Telegram Stars](https://t.me/BotNews/90) transferred by the transaction; from 0 to 999999999
   * `date` - Date the transaction was created in Unix time
-  * `source` - Optional. Source of an incoming transaction (e.g., a user purchasing goods or services, Fragment refunding a failed withdrawal). Only for incoming transactions
-  * `receiver` - Optional. Receiver of an outgoing transaction (e.g., a user for a purchase refund, Fragment for a withdrawal). Only for outgoing transactions
+  * `source` - Optional. Source of an incoming transaction (e.g., a user purchasing goods or services, [Fragment](https://fragment.com) refunding a failed withdrawal). Only for incoming transactions
+  * `receiver` - Optional. Receiver of an outgoing transaction (e.g., a user for a purchase refund, [Fragment](https://fragment.com) for a withdrawal). Only for outgoing transactions
 """.
 -type 'StarTransaction'() :: #{
 	id := binary(),
@@ -4764,15 +4839,15 @@ Currently all Telegram Passport files are in JPEG format when decrypted and don'
 
 -doc """
 Describes documents or other Telegram Passport elements shared with the bot by the user.
-  * `type` - Element type. One of “personal_details”, “passport”, “driver_license”, “identity_card”, “internal_passport”, “address”, “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration”, “phone_number”, “email”.
-  * `data` - Optional. Base64-encoded encrypted Telegram Passport element data provided by the user; available only for “personal_details”, “passport”, “driver_license”, “identity_card”, “internal_passport” and “address” types. Can be decrypted and verified using the accompanying EncryptedCredentials.
-  * `phone_number` - Optional. User's verified phone number; available only for “phone_number” type
-  * `email` - Optional. User's verified email address; available only for “email” type
-  * `files` - Optional. Array of encrypted files with documents provided by the user; available only for “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration” and “temporary_registration” types. Files can be decrypted and verified using the accompanying EncryptedCredentials.
-  * `front_side` - Optional. Encrypted file with the front side of the document, provided by the user; available only for “passport”, “driver_license”, “identity_card” and “internal_passport”. The file can be decrypted and verified using the accompanying EncryptedCredentials.
-  * `reverse_side` - Optional. Encrypted file with the reverse side of the document, provided by the user; available only for “driver_license” and “identity_card”. The file can be decrypted and verified using the accompanying EncryptedCredentials.
-  * `selfie` - Optional. Encrypted file with the selfie of the user holding a document, provided by the user; available if requested for “passport”, “driver_license”, “identity_card” and “internal_passport”. The file can be decrypted and verified using the accompanying EncryptedCredentials.
-  * `translation` - Optional. Array of encrypted files with translated versions of documents provided by the user; available if requested for “passport”, “driver_license”, “identity_card”, “internal_passport”, “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration” and “temporary_registration” types. Files can be decrypted and verified using the accompanying EncryptedCredentials.
+  * `type` - Element type. One of `personal_details`, `passport`, `driver_license`, `identity_card`, `internal_passport`, `address`, `utility_bill`, `bank_statement`, `rental_agreement`, `passport_registration`, `temporary_registration`, `phone_number`, `email`.
+  * `data` - Optional. Base64-encoded encrypted Telegram Passport element data provided by the user; available only for `personal_details`, `passport`, `driver_license`, `identity_card`, `internal_passport` and `address` types. Can be decrypted and verified using the accompanying EncryptedCredentials.
+  * `phone_number` - Optional. User's verified phone number; available only for `phone_number` type
+  * `email` - Optional. User's verified email address; available only for `email` type
+  * `files` - Optional. Array of encrypted files with documents provided by the user; available only for `utility_bill`, `bank_statement`, `rental_agreement`, `passport_registration` and `temporary_registration` types. Files can be decrypted and verified using the accompanying EncryptedCredentials.
+  * `front_side` - Optional. Encrypted file with the front side of the document, provided by the user; available only for `passport`, `driver_license`, `identity_card` and `internal_passport`. The file can be decrypted and verified using the accompanying EncryptedCredentials.
+  * `reverse_side` - Optional. Encrypted file with the reverse side of the document, provided by the user; available only for `driver_license` and `identity_card`. The file can be decrypted and verified using the accompanying EncryptedCredentials.
+  * `selfie` - Optional. Encrypted file with the selfie of the user holding a document, provided by the user; available if requested for `passport`, `driver_license`, `identity_card` and `internal_passport`. The file can be decrypted and verified using the accompanying EncryptedCredentials.
+  * `translation` - Optional. Array of encrypted files with translated versions of documents provided by the user; available if requested for `passport`, `driver_license`, `identity_card`, `internal_passport`, `utility_bill`, `bank_statement`, `rental_agreement`, `passport_registration` and `temporary_registration` types. Files can be decrypted and verified using the accompanying EncryptedCredentials.
   * `hash` - Base64-encoded element hash for using in PassportElementErrorUnspecified
 """.
 -type 'EncryptedPassportElement'() :: #{
@@ -4811,7 +4886,7 @@ It should be one of:
 Represents an issue in one of the data fields that was provided by the user.  
 The error is considered resolved when the field's value changes.
   * `source` - Error source, must be data
-  * `type` - The section of the user's Telegram Passport which has the error, one of “personal_details”, “passport”, “driver_license”, “identity_card”, “internal_passport”, “address”
+  * `type` - The section of the user's Telegram Passport which has the error, one of `personal_details`, `passport`, `driver_license`, `identity_card`, `internal_passport`, `address`
   * `field_name` - Name of the data field which has the error
   * `data_hash` - Base64-encoded data hash
   * `message` - Error message
@@ -4828,7 +4903,7 @@ The error is considered resolved when the field's value changes.
 Represents an issue with the front side of a document.  
 The error is considered resolved when the file with the front side of the document changes.
   * `source` - Error source, must be front_side
-  * `type` - The section of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport”
+  * `type` - The section of the user's Telegram Passport which has the issue, one of `passport`, `driver_license`, `identity_card`, `internal_passport`
   * `file_hash` - Base64-encoded hash of the file with the front side of the document
   * `message` - Error message
 """.
@@ -4843,7 +4918,7 @@ The error is considered resolved when the file with the front side of the docume
 Represents an issue with the reverse side of a document.  
 The error is considered resolved when the file with reverse side of the document changes.
   * `source` - Error source, must be reverse_side
-  * `type` - The section of the user's Telegram Passport which has the issue, one of “driver_license”, “identity_card”
+  * `type` - The section of the user's Telegram Passport which has the issue, one of `driver_license`, `identity_card`
   * `file_hash` - Base64-encoded hash of the file with the reverse side of the document
   * `message` - Error message
 """.
@@ -4858,7 +4933,7 @@ The error is considered resolved when the file with reverse side of the document
 Represents an issue with the selfie with a document.  
 The error is considered resolved when the file with the selfie changes.
   * `source` - Error source, must be selfie
-  * `type` - The section of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport”
+  * `type` - The section of the user's Telegram Passport which has the issue, one of `passport`, `driver_license`, `identity_card`, `internal_passport`
   * `file_hash` - Base64-encoded hash of the file with the selfie
   * `message` - Error message
 """.
@@ -4873,7 +4948,7 @@ The error is considered resolved when the file with the selfie changes.
 Represents an issue with a document scan.  
 The error is considered resolved when the file with the document scan changes.
   * `source` - Error source, must be file
-  * `type` - The section of the user's Telegram Passport which has the issue, one of “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration”
+  * `type` - The section of the user's Telegram Passport which has the issue, one of `utility_bill`, `bank_statement`, `rental_agreement`, `passport_registration`, `temporary_registration`
   * `file_hash` - Base64-encoded file hash
   * `message` - Error message
 """.
@@ -4888,7 +4963,7 @@ The error is considered resolved when the file with the document scan changes.
 Represents an issue with a list of scans.  
 The error is considered resolved when the list of files containing the scans changes.
   * `source` - Error source, must be files
-  * `type` - The section of the user's Telegram Passport which has the issue, one of “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration”
+  * `type` - The section of the user's Telegram Passport which has the issue, one of `utility_bill`, `bank_statement`, `rental_agreement`, `passport_registration`, `temporary_registration`
   * `file_hashes` - List of base64-encoded file hashes
   * `message` - Error message
 """.
@@ -4903,7 +4978,7 @@ The error is considered resolved when the list of files containing the scans cha
 Represents an issue with one of the files that constitute the translation of a document.  
 The error is considered resolved when the file changes.
   * `source` - Error source, must be translation_file
-  * `type` - Type of element of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport”, “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration”
+  * `type` - Type of element of the user's Telegram Passport which has the issue, one of `passport`, `driver_license`, `identity_card`, `internal_passport`, `utility_bill`, `bank_statement`, `rental_agreement`, `passport_registration`, `temporary_registration`
   * `file_hash` - Base64-encoded file hash
   * `message` - Error message
 """.
@@ -4918,7 +4993,7 @@ The error is considered resolved when the file changes.
 Represents an issue with the translated version of a document.  
 The error is considered resolved when a file with the document translation change.
   * `source` - Error source, must be translation_files
-  * `type` - Type of element of the user's Telegram Passport which has the issue, one of “passport”, “driver_license”, “identity_card”, “internal_passport”, “utility_bill”, “bank_statement”, “rental_agreement”, “passport_registration”, “temporary_registration”
+  * `type` - Type of element of the user's Telegram Passport which has the issue, one of `passport`, `driver_license`, `identity_card`, `internal_passport`, `utility_bill`, `bank_statement`, `rental_agreement`, `passport_registration`, `temporary_registration`
   * `file_hashes` - List of base64-encoded file hashes
   * `message` - Error message
 """.
@@ -4946,13 +5021,13 @@ The error is considered resolved when new data is added.
 
 -doc """
 This object represents a game.  
-Use BotFather to create and edit games, their short names will act as unique identifiers.
+Use [BotFather](https://t.me/botfather) to create and edit games, their short names will act as unique identifiers.
   * `title` - Title of the game
   * `description` - Description of the game
   * `photo` - Photo that will be displayed in the game message in chats.
   * `text` - Optional. Brief description of the game or high scores included in the game message. Can be automatically edited to include current high scores for the game when the bot calls setGameScore, or manually edited using editMessageText. 0-4096 characters.
   * `text_entities` - Optional. Special entities that appear in text, such as usernames, URLs, bot commands, etc.
-  * `animation` - Optional. Animation that will be displayed in the game message in chats. Upload via BotFather
+  * `animation` - Optional. Animation that will be displayed in the game message in chats. Upload via [BotFather](https://t.me/botfather)
 """.
 -type 'Game'() :: #{
 	title := binary(),
@@ -4965,7 +5040,7 @@ Use BotFather to create and edit games, their short names will act as unique ide
 
 -doc """
 A placeholder, currently holds no information.  
-Use BotFather to set up your game.
+Use [BotFather](https://t.me/botfather) to set up your game.
 """.
 -type 'CallbackGame'() :: empty_map().
 
@@ -4986,7 +5061,7 @@ This object represents one row of the high scores table for a game.
 
 
 -doc """
-Use this method to receive incoming updates using long polling (wiki).  
+Use this method to receive incoming updates using long polling ([wiki](https://en.wikipedia.org/wiki/Push_technology#Long_polling)).  
 Returns an Array of Update objects.  
 Notes
 1.  
@@ -5002,9 +5077,13 @@ In order to avoid getting duplicate updates, recalculate offset after each serve
 Please note that this parameter doesn't affect updates created before the call to getUpdates, so unwanted updates may be received for a short period of time.
 """.
 -doc (#{group=><<"Long Polling">>,since=><<"2.3">>}).
+-spec getUpdates(Pool :: pool_name(), Req :: #{offset => integer(), limit => integer(), timeout => integer(), allowed_updates => nonempty_list('update_type'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('Update'())).
+getUpdates(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getUpdates">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Long Polling">>,equiv=>getUpdates(Pool, Req, Async, 5000),since=><<"2.3">>}).
 -spec getUpdates(Pool :: pool_name(), Req :: #{offset => integer(), limit => integer(), timeout => integer(), allowed_updates => nonempty_list('update_type'())}, Async :: boolean()) -> Result :: result(nonempty_list('Update'())).
-getUpdates(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getUpdates">>, Req, Async}).
--doc (#{equiv=>getUpdates(Pool, Req, false),since=><<"2.3">>,group=><<"Sync Request">>}).
+getUpdates(Pool, Req, Async) -> getUpdates(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Long Polling">>,equiv=>getUpdates(Pool, Req, false),since=><<"2.3">>}).
+-spec getUpdates(Pool :: pool_name(), Req :: #{offset => integer(), limit => integer(), timeout => integer(), allowed_updates => nonempty_list('update_type'())}) -> Result :: result(nonempty_list('Update'())).
 getUpdates(Pool, Req) -> getUpdates(Pool, Req, false).
 
 
@@ -5023,21 +5102,25 @@ To use a self-signed certificate, you need to upload your public key certificate
 Please upload as InputFile, sending a String will not work.  
 3.  
 Ports currently supported for webhooks: 443, 80, 88, 8443.  
-If you're having any trouble setting up webhooks, please check out this amazing guide to webhooks.
+If you're having any trouble setting up webhooks, please check out this [amazing guide to webhooks](https://core.telegram.org/bots/webhooks).
 ## Parameters
   * `url` - HTTPS URL to send updates to. Use an empty string to remove webhook integration
-  * `certificate` - Upload your public key certificate so that the root certificate in use can be checked. See our self-signed guide for details.
+  * `certificate` - Upload your public key certificate so that the root certificate in use can be checked. See our [self-signed guide](https://core.telegram.org/bots/self-signed) for details.
   * `ip_address` - The fixed IP address which will be used to send webhook requests instead of the IP address resolved through DNS
   * `max_connections` - The maximum allowed number of simultaneous HTTPS connections to the webhook for update delivery, 1-100. Defaults to 40. Use lower values to limit the load on your bot's server, and higher values to increase your bot's throughput.
   * `allowed_updates` - A JSON-serialized list of the update types you want your bot to receive. For example, specify [message, edited_channel_post, callback_query] to only receive updates of these types. See Update for a complete list of available update types. Specify an empty list to receive all update types except chat_member, message_reaction, and message_reaction_count (default). If not specified, the previous setting will be used.
 Please note that this parameter doesn't affect updates created before the call to the setWebhook, so unwanted updates may be received for a short period of time.
   * `drop_pending_updates` - Pass True to drop all pending updates
-  * `secret_token` - A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token” in every webhook request, 1-256 characters. Only characters A-Z, a-z, 0-9, _ and - are allowed. The header is useful to ensure that the request comes from a webhook set by you.
+  * `secret_token` - A secret token to be sent in a header `X-Telegram-Bot-Api-Secret-Token` in every webhook request, 1-256 characters. Only characters A-Z, a-z, 0-9, _ and - are allowed. The header is useful to ensure that the request comes from a webhook set by you.
 """.
 -doc (#{group=><<"Webhook">>,since=><<"1.15">>}).
+-spec setWebhook(Pool :: pool_name(), Req :: #{url := binary(), certificate => 'InputFile'(), ip_address => binary(), max_connections => integer(), allowed_updates => nonempty_list('update_type'()), drop_pending_updates => boolean(), secret_token => secret_token()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setWebhook(Pool, #{url:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"setWebhook">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Webhook">>,equiv=>setWebhook(Pool, Req, Async, 5000),since=><<"1.15">>}).
 -spec setWebhook(Pool :: pool_name(), Req :: #{url := binary(), certificate => 'InputFile'(), ip_address => binary(), max_connections => integer(), allowed_updates => nonempty_list('update_type'()), drop_pending_updates => boolean(), secret_token => secret_token()}, Async :: boolean()) -> Result :: result(true).
-setWebhook(Pool, #{url:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"setWebhook">>, Req, Async}).
--doc (#{equiv=>setWebhook(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
+setWebhook(Pool, Req, Async) -> setWebhook(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Webhook">>,equiv=>setWebhook(Pool, Req, false),since=><<"1.15">>}).
+-spec setWebhook(Pool :: pool_name(), Req :: #{url := binary(), certificate => 'InputFile'(), ip_address => binary(), max_connections => integer(), allowed_updates => nonempty_list('update_type'()), drop_pending_updates => boolean(), secret_token => secret_token()}) -> Result :: result(true).
 setWebhook(Pool, Req) -> setWebhook(Pool, Req, false).
 
 
@@ -5048,9 +5131,13 @@ Returns True on success.
   * `drop_pending_updates` - Pass True to drop all pending updates
 """.
 -doc (#{group=><<"Webhook">>,since=><<"2.3">>}).
+-spec deleteWebhook(Pool :: pool_name(), Req :: #{drop_pending_updates => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteWebhook(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteWebhook">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Webhook">>,equiv=>deleteWebhook(Pool, Req, Async, 5000),since=><<"2.3">>}).
 -spec deleteWebhook(Pool :: pool_name(), Req :: #{drop_pending_updates => boolean()}, Async :: boolean()) -> Result :: result(true).
-deleteWebhook(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteWebhook">>, Req, Async}).
--doc (#{equiv=>deleteWebhook(Pool, Req, false),since=><<"2.3">>,group=><<"Sync Request">>}).
+deleteWebhook(Pool, Req, Async) -> deleteWebhook(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Webhook">>,equiv=>deleteWebhook(Pool, Req, false),since=><<"2.3">>}).
+-spec deleteWebhook(Pool :: pool_name(), Req :: #{drop_pending_updates => boolean()}) -> Result :: result(true).
 deleteWebhook(Pool, Req) -> deleteWebhook(Pool, Req, false).
 
 
@@ -5061,9 +5148,13 @@ On success, returns a WebhookInfo object.
 If the bot is using getUpdates, will return an object with the url field empty.
 """.
 -doc (#{group=><<"Webhook">>,since=><<"2.2">>}).
+-spec getWebhookInfo(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result('WebhookInfo'()).
+getWebhookInfo(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getWebhookInfo">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Webhook">>,equiv=>getWebhookInfo(Pool, Req, Async, 5000),since=><<"2.2">>}).
 -spec getWebhookInfo(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result('WebhookInfo'()).
-getWebhookInfo(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getWebhookInfo">>, Req, Async}).
--doc (#{equiv=>getWebhookInfo(Pool, Req, false),since=><<"2.2">>,group=><<"Sync Request">>}).
+getWebhookInfo(Pool, Req, Async) -> getWebhookInfo(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Webhook">>,equiv=>getWebhookInfo(Pool, Req, false),since=><<"2.2">>}).
+-spec getWebhookInfo(Pool :: pool_name(), Req :: empty_map()) -> Result :: result('WebhookInfo'()).
 getWebhookInfo(Pool, Req) -> getWebhookInfo(Pool, Req, false).
 
 
@@ -5073,23 +5164,31 @@ Requires no parameters.
 Returns basic information about the bot in form of a User object.
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"4.6">>}).
+-spec getMe(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result('User'()).
+getMe(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getMe">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMe(Pool, Req, Async, 5000),since=><<"4.6">>}).
 -spec getMe(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result('User'()).
-getMe(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getMe">>, Req, Async}).
--doc (#{equiv=>getMe(Pool, Req, false),since=><<"4.6">>,group=><<"Sync Request">>}).
+getMe(Pool, Req, Async) -> getMe(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMe(Pool, Req, false),since=><<"4.6">>}).
+-spec getMe(Pool :: pool_name(), Req :: empty_map()) -> Result :: result('User'()).
 getMe(Pool, Req) -> getMe(Pool, Req, false).
 
 
 -doc """
-Use this method to log out from the cloud Bot API server before launching the bot locally.  
+Use this method to log out from the cloud Bot [API](https://core.telegram.org/api) server before launching the bot locally.  
 You must log out the bot before running it locally, otherwise there is no guarantee that the bot will receive updates.  
-After a successful call, you can immediately log in on a local server, but will not be able to log in back to the cloud Bot API server for 10 minutes.  
+After a successful call, you can immediately log in on a local server, but will not be able to log in back to the cloud Bot [API](https://core.telegram.org/api) server for 10 minutes.  
 Returns True on success.  
 Requires no parameters.
 """.
 -doc (#{group=><<"Webhook">>,since=><<"5.0">>}).
+-spec logOut(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+logOut(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"logOut">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Webhook">>,equiv=>logOut(Pool, Req, Async, 5000),since=><<"5.0">>}).
 -spec logOut(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result(true).
-logOut(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"logOut">>, Req, Async}).
--doc (#{equiv=>logOut(Pool, Req, false),since=><<"5.0">>,group=><<"Sync Request">>}).
+logOut(Pool, Req, Async) -> logOut(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Webhook">>,equiv=>logOut(Pool, Req, false),since=><<"5.0">>}).
+-spec logOut(Pool :: pool_name(), Req :: empty_map()) -> Result :: result(true).
 logOut(Pool, Req) -> logOut(Pool, Req, false).
 
 
@@ -5099,12 +5198,16 @@ You need to delete the webhook before calling this method to ensure that the bot
 The method will return error 429 in the first 10 minutes after the bot is launched.  
 Returns True on success.  
 Requires no parameters.  
-[See moving a bot from one local server](https://github.com/tdlib/telegram-bot-api/tree/master?tab=readme-ov-file#moving-a-bot-from-one-local-server-to-another)
+See [telegram-bot-api](https://github.com/tdlib/telegram-bot-api)
 """.
 -doc (#{group=><<"Local Server">>,since=><<"4.6">>}).
+-spec close(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+close(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"close">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Local Server">>,equiv=>close(Pool, Req, Async, 5000),since=><<"4.6">>}).
 -spec close(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result(true).
-close(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"close">>, Req, Async}).
--doc (#{equiv=>close(Pool, Req, false),since=><<"4.6">>,group=><<"Sync Request">>}).
+close(Pool, Req, Async) -> close(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Local Server">>,equiv=>close(Pool, Req, false),since=><<"4.6">>}).
+-spec close(Pool :: pool_name(), Req :: empty_map()) -> Result :: result(true).
 close(Pool, Req) -> close(Pool, Req, false).
 
 
@@ -5117,21 +5220,25 @@ On success, the sent Message is returned.
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
   * `text` - Text of the message to be sent, 1-4096 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the message text. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `entities` - A JSON-serialized list of special entities that appear in message text, which can be specified instead of parse_mode
   * `link_preview_options` - Link preview generation options for the message
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"1.15">>}).
+-spec sendMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'()), link_preview_options => 'LinkPreviewOptions'(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendMessage(Pool, #{chat_id:=_,text:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendMessage(Pool, Req, Async, 5000),since=><<"1.15">>}).
 -spec sendMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'()), link_preview_options => 'LinkPreviewOptions'(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendMessage(Pool, #{chat_id:=_,text:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendMessage">>, Req, Async}).
--doc (#{equiv=>sendMessage(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
+sendMessage(Pool, Req, Async) -> sendMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendMessage(Pool, Req, false),since=><<"1.15">>}).
+-spec sendMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'()), link_preview_options => 'LinkPreviewOptions'(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendMessage(Pool, Req) -> sendMessage(Pool, Req, false).
 
 
@@ -5145,16 +5252,20 @@ On success, the sent Message is returned.
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be forwarded; required if the message is forwarded to a direct messages chat
   * `from_chat_id` - Unique identifier for the chat where the original message was sent (or channel username in the format @channelusername)
   * `video_start_timestamp` - New start timestamp for the forwarded video in the message
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the forwarded message from forwarding and saving
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; only available when forwarding to private chats
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only
   * `message_id` - Message identifier in the chat specified in from_chat_id
 """.
 -doc (#{group=><<"Message">>,since=><<"1.15">>}).
+-spec forwardMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), video_start_timestamp => integer(), disable_notification => boolean(), protect_content => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), message_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+forwardMessage(Pool, #{chat_id:=_,from_chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"forwardMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>forwardMessage(Pool, Req, Async, 5000),since=><<"1.15">>}).
 -spec forwardMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), video_start_timestamp => integer(), disable_notification => boolean(), protect_content => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), message_id := integer()}, Async :: boolean()) -> Result :: result('Message'()).
-forwardMessage(Pool, #{chat_id:=_,from_chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"forwardMessage">>, Req, Async}).
--doc (#{equiv=>forwardMessage(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
+forwardMessage(Pool, Req, Async) -> forwardMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>forwardMessage(Pool, Req, false),since=><<"1.15">>}).
+-spec forwardMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), video_start_timestamp => integer(), disable_notification => boolean(), protect_content => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), message_id := integer()}) -> Result :: result('Message'()).
 forwardMessage(Pool, Req) -> forwardMessage(Pool, Req, false).
 
 
@@ -5170,13 +5281,17 @@ On success, an array of MessageId of the sent messages is returned.
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the messages will be forwarded; required if the messages are forwarded to a direct messages chat
   * `from_chat_id` - Unique identifier for the chat where the original messages were sent (or channel username in the format @channelusername)
   * `message_ids` - A JSON-serialized list of 1-100 identifiers of messages in the chat from_chat_id to forward. The identifiers must be specified in a strictly increasing order.
-  * `disable_notification` - Sends the messages silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the messages [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the forwarded messages from forwarding and saving
 """.
 -doc (#{group=><<"Message">>,since=><<"7.0">>}).
+-spec forwardMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_ids := nonempty_list(integer()), disable_notification => boolean(), protect_content => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('MessageId'())).
+forwardMessages(Pool, #{chat_id:=_,from_chat_id:=_,message_ids:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"forwardMessages">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>forwardMessages(Pool, Req, Async, 5000),since=><<"7.0">>}).
 -spec forwardMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_ids := nonempty_list(integer()), disable_notification => boolean(), protect_content => boolean()}, Async :: boolean()) -> Result :: result(nonempty_list('MessageId'())).
-forwardMessages(Pool, #{chat_id:=_,from_chat_id:=_,message_ids:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"forwardMessages">>, Req, Async}).
--doc (#{equiv=>forwardMessages(Pool, Req, false),since=><<"7.0">>,group=><<"Sync Request">>}).
+forwardMessages(Pool, Req, Async) -> forwardMessages(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>forwardMessages(Pool, Req, false),since=><<"7.0">>}).
+-spec forwardMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_ids := nonempty_list(integer()), disable_notification => boolean(), protect_content => boolean()}) -> Result :: result(nonempty_list('MessageId'())).
 forwardMessages(Pool, Req) -> forwardMessages(Pool, Req, false).
 
 
@@ -5194,21 +5309,25 @@ Returns the MessageId of the sent message on success.
   * `message_id` - Message identifier in the chat specified in from_chat_id
   * `video_start_timestamp` - New start timestamp for the copied video in the message
   * `caption` - New caption for media, 0-1024 characters after entities parsing. If not specified, the original caption is kept
-  * `parse_mode` - Mode for parsing entities in the new caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the new caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the new caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Pass True, if the caption must be shown above the message media. Ignored if a new caption isn't specified.
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; only available when copying to private chats
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"5.0">>}).
+-spec copyMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_id := integer(), video_start_timestamp => integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('MessageId'()).
+copyMessage(Pool, #{chat_id:=_,from_chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"copyMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>copyMessage(Pool, Req, Async, 5000),since=><<"5.0">>}).
 -spec copyMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_id := integer(), video_start_timestamp => integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('MessageId'()).
-copyMessage(Pool, #{chat_id:=_,from_chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"copyMessage">>, Req, Async}).
--doc (#{equiv=>copyMessage(Pool, Req, false),since=><<"5.0">>,group=><<"Sync Request">>}).
+copyMessage(Pool, Req, Async) -> copyMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>copyMessage(Pool, Req, false),since=><<"5.0">>}).
+-spec copyMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_id := integer(), video_start_timestamp => integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('MessageId'()).
 copyMessage(Pool, Req) -> copyMessage(Pool, Req, false).
 
 
@@ -5226,14 +5345,18 @@ On success, an array of MessageId of the sent messages is returned.
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the messages will be sent; required if the messages are sent to a direct messages chat
   * `from_chat_id` - Unique identifier for the chat where the original messages were sent (or channel username in the format @channelusername)
   * `message_ids` - A JSON-serialized list of 1-100 identifiers of messages in the chat from_chat_id to copy. The identifiers must be specified in a strictly increasing order.
-  * `disable_notification` - Sends the messages silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the messages [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent messages from forwarding and saving
   * `remove_caption` - Pass True to copy the messages without their captions
 """.
 -doc (#{group=><<"Message">>,since=><<"7.0">>}).
+-spec copyMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_ids := nonempty_list(integer()), disable_notification => boolean(), protect_content => boolean(), remove_caption => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('MessageId'())).
+copyMessages(Pool, #{chat_id:=_,from_chat_id:=_,message_ids:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"copyMessages">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>copyMessages(Pool, Req, Async, 5000),since=><<"7.0">>}).
 -spec copyMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_ids := nonempty_list(integer()), disable_notification => boolean(), protect_content => boolean(), remove_caption => boolean()}, Async :: boolean()) -> Result :: result(nonempty_list('MessageId'())).
-copyMessages(Pool, #{chat_id:=_,from_chat_id:=_,message_ids:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"copyMessages">>, Req, Async}).
--doc (#{equiv=>copyMessages(Pool, Req, false),since=><<"7.0">>,group=><<"Sync Request">>}).
+copyMessages(Pool, Req, Async) -> copyMessages(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>copyMessages(Pool, Req, false),since=><<"7.0">>}).
+-spec copyMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), from_chat_id := integer() | binary(), message_ids := nonempty_list(integer()), disable_notification => boolean(), protect_content => boolean(), remove_caption => boolean()}) -> Result :: result(nonempty_list('MessageId'())).
 copyMessages(Pool, Req) -> copyMessages(Pool, Req, false).
 
 
@@ -5245,24 +5368,28 @@ On success, the sent Message is returned.
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `photo` - Photo to send. Pass a file_id as String to send a photo that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a photo from the Internet, or upload a new photo using multipart/form-data. The photo must be at most 10 MB in size. The photo's width and height must not exceed 10000 in total. Width and height ratio must be at most 20. More information on Sending Files »
+  * `photo` - Photo to send. Pass a file_id as String to send a photo that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a photo from the Internet, or upload a new photo using multipart/form-data. The photo must be at most 10 MB in size. The photo's width and height must not exceed 10000 in total. Width and height ratio must be at most 20. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Photo caption (may also be used when resending photos by file_id), 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the photo caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the photo caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Pass True, if the caption must be shown above the message media
   * `has_spoiler` - Pass True if the photo needs to be covered with a spoiler animation
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"5.0">>}).
+-spec sendPhoto(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), photo := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendPhoto(Pool, #{chat_id:=_,photo:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendPhoto">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendPhoto(Pool, Req, Async, 5000),since=><<"5.0">>}).
 -spec sendPhoto(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), photo := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendPhoto(Pool, #{chat_id:=_,photo:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendPhoto">>, Req, Async}).
--doc (#{equiv=>sendPhoto(Pool, Req, false),since=><<"5.0">>,group=><<"Sync Request">>}).
+sendPhoto(Pool, Req, Async) -> sendPhoto(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendPhoto(Pool, Req, false),since=><<"5.0">>}).
+-spec sendPhoto(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), photo := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendPhoto(Pool, Req) -> sendPhoto(Pool, Req, false).
 
 
@@ -5277,26 +5404,30 @@ For sending voice messages, use the sendVoice method instead.
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `audio` - Audio file to send. Pass a file_id as String to send an audio file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get an audio file from the Internet, or upload a new one using multipart/form-data. More information on Sending Files »
+  * `audio` - Audio file to send. Pass a file_id as String to send an audio file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get an audio file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Audio caption, 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the audio caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the audio caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `duration` - Duration of the audio in seconds
   * `performer` - Performer
   * `title` - Track name
-  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"1.15">>}).
+-spec sendAudio(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), audio := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), duration => integer(), performer => binary(), title => binary(), thumbnail => 'InputFile'() | binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendAudio(Pool, #{chat_id:=_,audio:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendAudio">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendAudio(Pool, Req, Async, 5000),since=><<"1.15">>}).
 -spec sendAudio(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), audio := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), duration => integer(), performer => binary(), title => binary(), thumbnail => 'InputFile'() | binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendAudio(Pool, #{chat_id:=_,audio:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendAudio">>, Req, Async}).
--doc (#{equiv=>sendAudio(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
+sendAudio(Pool, Req, Async) -> sendAudio(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendAudio(Pool, Req, false),since=><<"1.15">>}).
+-spec sendAudio(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), audio := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), duration => integer(), performer => binary(), title => binary(), thumbnail => 'InputFile'() | binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendAudio(Pool, Req) -> sendAudio(Pool, Req, false).
 
 
@@ -5309,24 +5440,28 @@ Bots can currently send files of any type of up to 50 MB in size, this limit may
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `document` - File to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. More information on Sending Files »
-  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `document` - File to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Document caption (may also be used when resending documents by file_id), 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the document caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the document caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `disable_content_type_detection` - Disables automatic server-side content type detection for files uploaded using multipart/form-data
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"4.0">>}).
+-spec sendDocument(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), document := 'InputFile'() | binary(), thumbnail => 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), disable_content_type_detection => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendDocument(Pool, #{chat_id:=_,document:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendDocument">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendDocument(Pool, Req, Async, 5000),since=><<"4.0">>}).
 -spec sendDocument(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), document := 'InputFile'() | binary(), thumbnail => 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), disable_content_type_detection => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendDocument(Pool, #{chat_id:=_,document:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendDocument">>, Req, Async}).
--doc (#{equiv=>sendDocument(Pool, Req, false),since=><<"4.0">>,group=><<"Sync Request">>}).
+sendDocument(Pool, Req, Async) -> sendDocument(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendDocument(Pool, Req, false),since=><<"4.0">>}).
+-spec sendDocument(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), document := 'InputFile'() | binary(), thumbnail => 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), disable_content_type_detection => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendDocument(Pool, Req) -> sendDocument(Pool, Req, false).
 
 
@@ -5339,31 +5474,35 @@ Bots can currently send video files of up to 50 MB in size, this limit may be ch
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `video` - Video to send. Pass a file_id as String to send a video that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a video from the Internet, or upload a new video using multipart/form-data. More information on Sending Files »
+  * `video` - Video to send. Pass a file_id as String to send a video that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a video from the Internet, or upload a new video using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `duration` - Duration of sent video in seconds
   * `width` - Video width
   * `height` - Video height
-  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
-  * `cover` - Cover for the video in the message. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass “attach://<file_attach_name>” to upload a new one using multipart/form-data under <file_attach_name> name. More information on Sending Files »
+  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `cover` - Cover for the video in the message. Pass a file_id to send a file that exists on the Telegram servers (recommended), pass an HTTP URL for Telegram to get a file from the Internet, or pass `attach://<file_attach_name>` to upload a new one using multipart/form-data under <file_attach_name> name. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `start_timestamp` - Start timestamp for the video in the message
   * `caption` - Video caption (may also be used when resending videos by file_id), 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the video caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the video caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Pass True, if the caption must be shown above the message media
   * `has_spoiler` - Pass True if the video needs to be covered with a spoiler animation
   * `supports_streaming` - Pass True if the uploaded video is suitable for streaming
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"1.15">>}).
+-spec sendVideo(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), video := 'InputFile'() | binary(), duration => integer(), width => integer(), height => integer(), thumbnail => 'InputFile'() | binary(), cover => 'InputFile'() | binary(), start_timestamp => integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), supports_streaming => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendVideo(Pool, #{chat_id:=_,video:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendVideo">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendVideo(Pool, Req, Async, 5000),since=><<"1.15">>}).
 -spec sendVideo(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), video := 'InputFile'() | binary(), duration => integer(), width => integer(), height => integer(), thumbnail => 'InputFile'() | binary(), cover => 'InputFile'() | binary(), start_timestamp => integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), supports_streaming => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendVideo(Pool, #{chat_id:=_,video:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendVideo">>, Req, Async}).
--doc (#{equiv=>sendVideo(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
+sendVideo(Pool, Req, Async) -> sendVideo(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendVideo(Pool, Req, false),since=><<"1.15">>}).
+-spec sendVideo(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), video := 'InputFile'() | binary(), duration => integer(), width => integer(), height => integer(), thumbnail => 'InputFile'() | binary(), cover => 'InputFile'() | binary(), start_timestamp => integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), supports_streaming => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendVideo(Pool, Req) -> sendVideo(Pool, Req, false).
 
 
@@ -5376,28 +5515,32 @@ Bots can currently send animation files of up to 50 MB in size, this limit may b
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `animation` - Animation to send. Pass a file_id as String to send an animation that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get an animation from the Internet, or upload a new animation using multipart/form-data. More information on Sending Files »
+  * `animation` - Animation to send. Pass a file_id as String to send an animation that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get an animation from the Internet, or upload a new animation using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `duration` - Duration of sent animation in seconds
   * `width` - Animation width
   * `height` - Animation height
-  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
+  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Animation caption (may also be used when resending animation by file_id), 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the animation caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the animation caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Pass True, if the caption must be shown above the message media
   * `has_spoiler` - Pass True if the animation needs to be covered with a spoiler animation
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"4.0">>}).
+-spec sendAnimation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), animation := 'InputFile'() | binary(), duration => integer(), width => integer(), height => integer(), thumbnail => 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendAnimation(Pool, #{chat_id:=_,animation:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendAnimation">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendAnimation(Pool, Req, Async, 5000),since=><<"4.0">>}).
 -spec sendAnimation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), animation := 'InputFile'() | binary(), duration => integer(), width => integer(), height => integer(), thumbnail => 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendAnimation(Pool, #{chat_id:=_,animation:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendAnimation">>, Req, Async}).
--doc (#{equiv=>sendAnimation(Pool, Req, false),since=><<"4.0">>,group=><<"Sync Request">>}).
+sendAnimation(Pool, Req, Async) -> sendAnimation(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendAnimation(Pool, Req, false),since=><<"4.0">>}).
+-spec sendAnimation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), animation := 'InputFile'() | binary(), duration => integer(), width => integer(), height => integer(), thumbnail => 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), has_spoiler => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendAnimation(Pool, Req) -> sendAnimation(Pool, Req, false).
 
 
@@ -5411,51 +5554,59 @@ Bots can currently send voice messages of up to 50 MB in size, this limit may be
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `voice` - Audio file to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. More information on Sending Files »
+  * `voice` - Audio file to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
   * `caption` - Voice message caption, 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the voice message caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the voice message caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `duration` - Duration of the voice message in seconds
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"1.15">>}).
+-spec sendVoice(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), voice := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), duration => integer(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendVoice(Pool, #{chat_id:=_,voice:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendVoice">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendVoice(Pool, Req, Async, 5000),since=><<"1.15">>}).
 -spec sendVoice(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), voice := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), duration => integer(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendVoice(Pool, #{chat_id:=_,voice:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendVoice">>, Req, Async}).
--doc (#{equiv=>sendVoice(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
+sendVoice(Pool, Req, Async) -> sendVoice(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendVoice(Pool, Req, false),since=><<"1.15">>}).
+-spec sendVoice(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), voice := 'InputFile'() | binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), duration => integer(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendVoice(Pool, Req) -> sendVoice(Pool, Req, false).
 
 
 -doc """
-As of v.4.0, Telegram clients support rounded square MPEG4 videos of up to 1 minute long.  
-Use this method to send video messages.  
+As of [v.4.0](https://telegram.org/blog/video-messages-and-telescope), Telegram clients support rounded square MPEG4 videos of up to 1 minute long.  
+Use this method to send [video message](https://telegram.org/blog/video-messages-and-telescope)s.  
 On success, the sent Message is returned.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message will be sent
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `video_note` - Video note to send. Pass a file_id as String to send a video note that exists on the Telegram servers (recommended) or upload a new video using multipart/form-data. More information on Sending Files ». Sending video notes by a URL is currently unsupported
+  * `video_note` - Video note to send. Pass a file_id as String to send a [video note](https://telegram.org/blog/video-messages-and-telescope) that exists on the Telegram servers (recommended) or upload a new video using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files). Sending [video note](https://telegram.org/blog/video-messages-and-telescope)s by a URL is currently unsupported
   * `duration` - Duration of sent video in seconds
-  * `length` - Video width and height, i.e. diameter of the video message
-  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass “attach://<file_attach_name>” if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. More information on Sending Files »
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `length` - Video width and height, i.e. diameter of the [video message](https://telegram.org/blog/video-messages-and-telescope)
+  * `thumbnail` - Thumbnail of the file sent; can be ignored if thumbnail generation for the file is supported server-side. The thumbnail should be in JPEG format and less than 200 kB in size. A thumbnail's width and height should not exceed 320. Ignored if the file is not uploaded using multipart/form-data. Thumbnails can't be reused and can be only uploaded as a new file, so you can pass `attach://<file_attach_name>` if the thumbnail was uploaded using multipart/form-data under <file_attach_name>. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"3.0">>}).
+-spec sendVideoNote(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), video_note := 'InputFile'() | binary(), duration => integer(), length => integer(), thumbnail => 'InputFile'() | binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendVideoNote(Pool, #{chat_id:=_,video_note:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendVideoNote">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendVideoNote(Pool, Req, Async, 5000),since=><<"3.0">>}).
 -spec sendVideoNote(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), video_note := 'InputFile'() | binary(), duration => integer(), length => integer(), thumbnail => 'InputFile'() | binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendVideoNote(Pool, #{chat_id:=_,video_note:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendVideoNote">>, Req, Async}).
--doc (#{equiv=>sendVideoNote(Pool, Req, false),since=><<"3.0">>,group=><<"Sync Request">>}).
+sendVideoNote(Pool, Req, Async) -> sendVideoNote(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendVideoNote(Pool, Req, false),since=><<"3.0">>}).
+-spec sendVideoNote(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), video_note := 'InputFile'() | binary(), duration => integer(), length => integer(), thumbnail => 'InputFile'() | binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendVideoNote(Pool, Req) -> sendVideoNote(Pool, Req, false).
 
 
@@ -5467,24 +5618,28 @@ On success, the sent Message is returned.
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername). If the chat is a channel, all Telegram Star proceeds from this media will be credited to the chat's balance. Otherwise, they will be credited to the bot's balance.
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `star_count` - The number of Telegram Stars that must be paid to buy access to the media; 1-25000
+  * `star_count` - The number of [Telegram Stars](https://t.me/BotNews/90) that must be paid to buy access to the media; 1-25000
   * `media` - A JSON-serialized array describing the media to be sent; up to 10 items
   * `payload` - Bot-defined paid media payload, 0-128 bytes. This will not be displayed to the user, use it for your internal processes.
   * `caption` - Media caption, 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the media caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the media caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `show_caption_above_media` - Pass True, if the caption must be shown above the message media
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"7.6">>}).
+-spec sendPaidMedia(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), star_count := integer(), media := nonempty_list('InputPaidMedia'()), payload => binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendPaidMedia(Pool, #{chat_id:=_,star_count:=_,media:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendPaidMedia">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendPaidMedia(Pool, Req, Async, 5000),since=><<"7.6">>}).
 -spec sendPaidMedia(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), star_count := integer(), media := nonempty_list('InputPaidMedia'()), payload => binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendPaidMedia(Pool, #{chat_id:=_,star_count:=_,media:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendPaidMedia">>, Req, Async}).
--doc (#{equiv=>sendPaidMedia(Pool, Req, false),since=><<"7.6">>,group=><<"Sync Request">>}).
+sendPaidMedia(Pool, Req, Async) -> sendPaidMedia(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendPaidMedia(Pool, Req, false),since=><<"7.6">>}).
+-spec sendPaidMedia(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), star_count := integer(), media := nonempty_list('InputPaidMedia'()), payload => binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendPaidMedia(Pool, Req) -> sendPaidMedia(Pool, Req, false).
 
 
@@ -5498,16 +5653,20 @@ On success, an array of Message objects that were sent is returned.
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the messages will be sent; required if the messages are sent to a direct messages chat
   * `media` - A JSON-serialized array describing messages to be sent, must include 2-10 items
-  * `disable_notification` - Sends messages silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends messages [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent messages from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `reply_parameters` - Description of the message to reply to
 """.
 -doc (#{group=><<"Message">>,since=><<"3.5">>}).
+-spec sendMediaGroup(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), media := nonempty_list('InputMediaAudio'()) | 'InputMediaDocument'() | 'InputMediaPhoto'() | 'InputMediaVideo'(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('Message'())).
+sendMediaGroup(Pool, #{chat_id:=_,media:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendMediaGroup">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendMediaGroup(Pool, Req, Async, 5000),since=><<"3.5">>}).
 -spec sendMediaGroup(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), media := nonempty_list('InputMediaAudio'()) | 'InputMediaDocument'() | 'InputMediaPhoto'() | 'InputMediaVideo'(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'()}, Async :: boolean()) -> Result :: result(nonempty_list('Message'())).
-sendMediaGroup(Pool, #{chat_id:=_,media:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendMediaGroup">>, Req, Async}).
--doc (#{equiv=>sendMediaGroup(Pool, Req, false),since=><<"3.5">>,group=><<"Sync Request">>}).
+sendMediaGroup(Pool, Req, Async) -> sendMediaGroup(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendMediaGroup(Pool, Req, false),since=><<"3.5">>}).
+-spec sendMediaGroup(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), media := nonempty_list('InputMediaAudio'()) | 'InputMediaDocument'() | 'InputMediaPhoto'() | 'InputMediaVideo'(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'()}) -> Result :: result(nonempty_list('Message'())).
 sendMediaGroup(Pool, Req) -> sendMediaGroup(Pool, Req, false).
 
 
@@ -5522,21 +5681,25 @@ On success, the sent Message is returned.
   * `latitude` - Latitude of the location
   * `longitude` - Longitude of the location
   * `horizontal_accuracy` - The radius of uncertainty for the location, measured in meters; 0-1500
-  * `live_period` - Period in seconds during which the location will be updated (see Live Locations, should be between 60 and 86400, or 0x7FFFFFFF for live locations that can be edited indefinitely.
+  * `live_period` - Period in seconds during which the location will be updated (see [Live Locations](https://telegram.org/blog/live-locations), should be between 60 and 86400, or 0x7FFFFFFF for live locations that can be edited indefinitely.
   * `heading` - For live locations, a direction in which the user is moving, in degrees. Must be between 1 and 360 if specified.
   * `proximity_alert_radius` - For live locations, a maximum distance for proximity alerts about approaching another chat member, in meters. Must be between 1 and 100000 if specified.
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"3.4">>}).
+-spec sendLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), latitude := float(), longitude := float(), horizontal_accuracy => float(), live_period => integer(), heading => integer(), proximity_alert_radius => integer(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendLocation(Pool, #{chat_id:=_,latitude:=_,longitude:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendLocation">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendLocation(Pool, Req, Async, 5000),since=><<"3.4">>}).
 -spec sendLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), latitude := float(), longitude := float(), horizontal_accuracy => float(), live_period => integer(), heading => integer(), proximity_alert_radius => integer(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendLocation(Pool, #{chat_id:=_,latitude:=_,longitude:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendLocation">>, Req, Async}).
--doc (#{equiv=>sendLocation(Pool, Req, false),since=><<"3.4">>,group=><<"Sync Request">>}).
+sendLocation(Pool, Req, Async) -> sendLocation(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendLocation(Pool, Req, false),since=><<"3.4">>}).
+-spec sendLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), latitude := float(), longitude := float(), horizontal_accuracy => float(), live_period => integer(), heading => integer(), proximity_alert_radius => integer(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendLocation(Pool, Req) -> sendLocation(Pool, Req, false).
 
 
@@ -5553,21 +5716,25 @@ On success, the sent Message is returned.
   * `title` - Name of the venue
   * `address` - Address of the venue
   * `foursquare_id` - Foursquare identifier of the venue
-  * `foursquare_type` - Foursquare type of the venue, if known. (For example, “arts_entertainment/default”, “arts_entertainment/aquarium” or “food/icecream”.)
+  * `foursquare_type` - Foursquare type of the venue, if known. (For example, `arts_entertainment/default`, `arts_entertainment/aquarium` or `food/icecream`.)
   * `google_place_id` - Google Places identifier of the venue
-  * `google_place_type` - Google Places type of the venue. (See supported types.)
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `google_place_type` - Google Places type of the venue. (See [supported types](https://developers.google.com/places/web-service/supported_types).)
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"2.0">>}).
+-spec sendVenue(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), latitude := float(), longitude := float(), title := binary(), address := binary(), foursquare_id => binary(), foursquare_type => binary(), google_place_id => binary(), google_place_type => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendVenue(Pool, #{chat_id:=_,latitude:=_,longitude:=_,title:=_,address:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendVenue">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendVenue(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec sendVenue(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), latitude := float(), longitude := float(), title := binary(), address := binary(), foursquare_id => binary(), foursquare_type => binary(), google_place_id => binary(), google_place_type => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendVenue(Pool, #{chat_id:=_,latitude:=_,longitude:=_,title:=_,address:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendVenue">>, Req, Async}).
--doc (#{equiv=>sendVenue(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+sendVenue(Pool, Req, Async) -> sendVenue(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendVenue(Pool, Req, false),since=><<"2.0">>}).
+-spec sendVenue(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), latitude := float(), longitude := float(), title := binary(), address := binary(), foursquare_id => binary(), foursquare_type => binary(), google_place_id => binary(), google_place_type => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendVenue(Pool, Req) -> sendVenue(Pool, Req, false).
 
 
@@ -5582,19 +5749,23 @@ On success, the sent Message is returned.
   * `phone_number` - Contact's phone number
   * `first_name` - Contact's first name
   * `last_name` - Contact's last name
-  * `vcard` - Additional data about the contact in the form of a vCard, 0-2048 bytes
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `vcard` - Additional data about the contact in the form of a [vCard](https://en.wikipedia.org/wiki/VCard), 0-2048 bytes
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"2.0">>}).
+-spec sendContact(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), phone_number := binary(), first_name := binary(), last_name => binary(), vcard => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendContact(Pool, #{chat_id:=_,phone_number:=_,first_name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendContact">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendContact(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec sendContact(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), phone_number := binary(), first_name := binary(), last_name => binary(), vcard => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendContact(Pool, #{chat_id:=_,phone_number:=_,first_name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendContact">>, Req, Async}).
--doc (#{equiv=>sendContact(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+sendContact(Pool, Req, Async) -> sendContact(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendContact(Pool, Req, false),since=><<"2.0">>}).
+-spec sendContact(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), phone_number := binary(), first_name := binary(), last_name => binary(), vcard => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendContact(Pool, Req) -> sendContact(Pool, Req, false).
 
 
@@ -5606,30 +5777,34 @@ On success, the sent Message is returned.
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername). Polls can't be sent to channel direct messages chats.
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `question` - Poll question, 1-300 characters
-  * `question_parse_mode` - Mode for parsing entities in the question. See formatting options for more details. Currently, only custom emoji entities are allowed
+  * `question_parse_mode` - Mode for parsing entities in the question. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Currently, only custom emoji entities are allowed
   * `question_entities` - A JSON-serialized list of special entities that appear in the poll question. It can be specified instead of question_parse_mode
   * `options` - A JSON-serialized list of 2-12 answer options
   * `is_anonymous` - True, if the poll needs to be anonymous, defaults to True
-  * `type` - Poll type, “quiz” or “regular”, defaults to “regular”
+  * `type` - Poll type, `quiz` or `regular`, defaults to `regular`
   * `allows_multiple_answers` - True, if the poll allows multiple answers, ignored for polls in quiz mode, defaults to False
   * `correct_option_id` - 0-based identifier of the correct answer option, required for polls in quiz mode
   * `explanation` - Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters with at most 2 line feeds after entities parsing
-  * `explanation_parse_mode` - Mode for parsing entities in the explanation. See formatting options for more details.
+  * `explanation_parse_mode` - Mode for parsing entities in the explanation. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `explanation_entities` - A JSON-serialized list of special entities that appear in the poll explanation. It can be specified instead of explanation_parse_mode
   * `open_period` - Amount of time in seconds the poll will be active after creation, 5-600. Can't be used together with close_date.
   * `close_date` - Point in time (Unix timestamp) when the poll will be automatically closed. Must be at least 5 and no more than 600 seconds in the future. Can't be used together with open_period.
   * `is_closed` - Pass True if the poll needs to be immediately closed. This can be useful for poll preview.
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"4.2">>}).
+-spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), correct_option_id => integer(), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendPoll(Pool, #{chat_id:=_,question:=_,options:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendPoll">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendPoll(Pool, Req, Async, 5000),since=><<"4.2">>}).
 -spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), correct_option_id => integer(), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendPoll(Pool, #{chat_id:=_,question:=_,options:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendPoll">>, Req, Async}).
--doc (#{equiv=>sendPoll(Pool, Req, false),since=><<"4.2">>,group=><<"Sync Request">>}).
+sendPoll(Pool, Req, Async) -> sendPoll(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendPoll(Pool, Req, false),since=><<"4.2">>}).
+-spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), correct_option_id => integer(), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendPoll(Pool, Req) -> sendPoll(Pool, Req, false).
 
 
@@ -5640,40 +5815,48 @@ On success, the sent Message is returned.
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message will be sent
   * `chat_id` - Unique identifier for the target chat
   * `checklist` - A JSON-serialized object for the checklist to send
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
   * `message_effect_id` - Unique identifier of the message effect to be added to the message
   * `reply_parameters` - A JSON-serialized object for description of the message to reply to
-  * `reply_markup` - A JSON-serialized object for an inline keyboard
+  * `reply_markup` - A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards)
 """.
 -doc (#{group=><<"Message">>,since=><<"9.1">>}).
+-spec sendChecklist(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), checklist := 'InputChecklist'(), disable_notification => boolean(), protect_content => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendChecklist(Pool, #{business_connection_id:=_,chat_id:=_,checklist:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendChecklist">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendChecklist(Pool, Req, Async, 5000),since=><<"9.1">>}).
 -spec sendChecklist(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), checklist := 'InputChecklist'(), disable_notification => boolean(), protect_content => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendChecklist(Pool, #{business_connection_id:=_,chat_id:=_,checklist:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendChecklist">>, Req, Async}).
--doc (#{equiv=>sendChecklist(Pool, Req, false),since=><<"9.1">>,group=><<"Sync Request">>}).
+sendChecklist(Pool, Req, Async) -> sendChecklist(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendChecklist(Pool, Req, false),since=><<"9.1">>}).
+-spec sendChecklist(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), checklist := 'InputChecklist'(), disable_notification => boolean(), protect_content => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result('Message'()).
 sendChecklist(Pool, Req) -> sendChecklist(Pool, Req, false).
 
 
 -doc """
-Use this method to send an animated emoji that will display a random value.  
+Use this method to send an [animated](https://telegram.org/blog/animated-stickers) emoji that will display a random value.  
 On success, the sent Message is returned.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message will be sent
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `emoji` - Emoji on which the dice throw animation is based. Currently, must be one of “”, “”, “”, “”, “”, or “”. Dice can have values 1-6 for “”, “” and “”, values 1-5 for “” and “”, and values 1-64 for “”. Defaults to “”
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `emoji` - Emoji on which the dice throw animation is based. Currently, must be one of `🎲`, `🎯`, `🏀`, `⚽`, `🎳`, or `🎰`. Dice can have values 1-6 for `🎲`, `🎯` and `🎳`, values 1-5 for `🏀` and `⚽`, and values 1-64 for `🎰`. Defaults to `🎲`
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"4.7">>}).
+-spec sendDice(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), emoji => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendDice(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendDice">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendDice(Pool, Req, Async, 5000),since=><<"4.7">>}).
 -spec sendDice(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), emoji => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendDice(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendDice">>, Req, Async}).
--doc (#{equiv=>sendDice(Pool, Req, false),since=><<"4.7">>,group=><<"Sync Request">>}).
+sendDice(Pool, Req, Async) -> sendDice(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendDice(Pool, Req, false),since=><<"4.7">>}).
+-spec sendDice(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), emoji => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendDice(Pool, Req) -> sendDice(Pool, Req, false).
 
 
@@ -5683,15 +5866,19 @@ Returns True on success.
 ## Parameters
   * `chat_id` - Unique identifier for the target private chat
   * `message_thread_id` - Unique identifier for the target message thread
-  * `draft_id` - Unique identifier of the message draft; must be non-zero. Changes of drafts with the same identifier are animated
+  * `draft_id` - Unique identifier of the message draft; must be non-zero. Changes of drafts with the same identifier are [animated](https://telegram.org/blog/animated-stickers)
   * `text` - Text of the message to be sent, 1-4096 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the message text. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `entities` - A JSON-serialized list of special entities that appear in message text, which can be specified instead of parse_mode
 """.
 -doc (#{group=><<"Message">>,since=><<"9.3">>}).
+-spec sendMessageDraft(Pool :: pool_name(), Req :: #{chat_id := integer(), message_thread_id => integer(), draft_id := integer(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+sendMessageDraft(Pool, #{chat_id:=_,draft_id:=_,text:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendMessageDraft">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendMessageDraft(Pool, Req, Async, 5000),since=><<"9.3">>}).
 -spec sendMessageDraft(Pool :: pool_name(), Req :: #{chat_id := integer(), message_thread_id => integer(), draft_id := integer(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'())}, Async :: boolean()) -> Result :: result(true).
-sendMessageDraft(Pool, #{chat_id:=_,draft_id:=_,text:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendMessageDraft">>, Req, Async}).
--doc (#{equiv=>sendMessageDraft(Pool, Req, false),since=><<"9.3">>,group=><<"Sync Request">>}).
+sendMessageDraft(Pool, Req, Async) -> sendMessageDraft(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendMessageDraft(Pool, Req, false),since=><<"9.3">>}).
+-spec sendMessageDraft(Pool :: pool_name(), Req :: #{chat_id := integer(), message_thread_id => integer(), draft_id := integer(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'())}) -> Result :: result(true).
 sendMessageDraft(Pool, Req) -> sendMessageDraft(Pool, Req, false).
 
 
@@ -5700,19 +5887,23 @@ Use this method when you need to tell the user that something is happening on th
 The status is set for 5 seconds or less (when a message arrives from your bot, Telegram clients clear its typing status).  
 Returns True on success.  
 We only recommend using this method when a response from the bot will take a noticeable amount of time to arrive.  
-Example: The ImageBot needs some time to process a request and upload the image.  
+Example: The [ImageBot](https://t.me/imagebot) needs some time to process a request and upload the image.  
 Instead of sending a text message along the lines of “Retrieving image, please wait…”, the bot may use sendChatAction with action = upload_photo.  
 The user will see a “sending photo” status for the bot.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the action will be sent
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername). Channel chats and channel direct messages chats aren't supported.
   * `message_thread_id` - Unique identifier for the target message thread or topic of a forum; for supergroups and private chats of bots with forum topic mode enabled only
-  * `action` - Type of action to broadcast. Choose one, depending on what the user is about to receive: typing for text messages, upload_photo for photos, record_video or upload_video for videos, record_voice or upload_voice for voice notes, upload_document for general files, choose_sticker for stickers, find_location for location data, record_video_note or upload_video_note for video notes.
+  * `action` - Type of action to broadcast. Choose one, depending on what the user is about to receive: typing for text messages, upload_photo for photos, record_video or upload_video for videos, record_voice or upload_voice for voice notes, upload_document for general files, choose_sticker for stickers, find_location for location data, record_video_note or upload_video_note for [video note](https://telegram.org/blog/video-messages-and-telescope)s.
 """.
 -doc (#{group=><<"Message">>,since=><<"3.0">>}).
+-spec sendChatAction(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), action := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+sendChatAction(Pool, #{chat_id:=_,action:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendChatAction">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>sendChatAction(Pool, Req, Async, 5000),since=><<"3.0">>}).
 -spec sendChatAction(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), action := binary()}, Async :: boolean()) -> Result :: result(true).
-sendChatAction(Pool, #{chat_id:=_,action:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendChatAction">>, Req, Async}).
--doc (#{equiv=>sendChatAction(Pool, Req, false),since=><<"3.0">>,group=><<"Sync Request">>}).
+sendChatAction(Pool, Req, Async) -> sendChatAction(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>sendChatAction(Pool, Req, false),since=><<"3.0">>}).
+-spec sendChatAction(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), action := binary()}) -> Result :: result(true).
 sendChatAction(Pool, Req) -> sendChatAction(Pool, Req, false).
 
 
@@ -5729,9 +5920,13 @@ Returns True on success.
   * `is_big` - Pass True to set the reaction with a big animation
 """.
 -doc (#{group=><<"Message">>,since=><<"7.0">>}).
+-spec setMessageReaction(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_id := integer(), reaction => nonempty_list('ReactionType'()), is_big => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setMessageReaction(Pool, #{chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setMessageReaction">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>setMessageReaction(Pool, Req, Async, 5000),since=><<"7.0">>}).
 -spec setMessageReaction(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_id := integer(), reaction => nonempty_list('ReactionType'()), is_big => boolean()}, Async :: boolean()) -> Result :: result(true).
-setMessageReaction(Pool, #{chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setMessageReaction">>, Req, Async}).
--doc (#{equiv=>setMessageReaction(Pool, Req, false),since=><<"7.0">>,group=><<"Sync Request">>}).
+setMessageReaction(Pool, Req, Async) -> setMessageReaction(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>setMessageReaction(Pool, Req, false),since=><<"7.0">>}).
+-spec setMessageReaction(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_id := integer(), reaction => nonempty_list('ReactionType'()), is_big => boolean()}) -> Result :: result(true).
 setMessageReaction(Pool, Req) -> setMessageReaction(Pool, Req, false).
 
 
@@ -5744,14 +5939,37 @@ Returns a UserProfilePhotos object.
   * `limit` - Limits the number of photos to be retrieved. Values between 1-100 are accepted. Defaults to 100.
 """.
 -doc (#{group=><<"User">>,since=><<"">>}).
+-spec getUserProfilePhotos(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('UserProfilePhotos'()).
+getUserProfilePhotos(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getUserProfilePhotos">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"User">>,equiv=>getUserProfilePhotos(Pool, Req, Async, 5000),since=><<"">>}).
 -spec getUserProfilePhotos(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}, Async :: boolean()) -> Result :: result('UserProfilePhotos'()).
-getUserProfilePhotos(Pool, #{user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getUserProfilePhotos">>, Req, Async}).
--doc (#{equiv=>getUserProfilePhotos(Pool, Req, false),since=><<"">>,group=><<"Sync Request">>}).
+getUserProfilePhotos(Pool, Req, Async) -> getUserProfilePhotos(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"User">>,equiv=>getUserProfilePhotos(Pool, Req, false),since=><<"">>}).
+-spec getUserProfilePhotos(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}) -> Result :: result('UserProfilePhotos'()).
 getUserProfilePhotos(Pool, Req) -> getUserProfilePhotos(Pool, Req, false).
 
 
 -doc """
-Changes the emoji status for a given user that previously allowed the bot to manage their emoji status via the Mini App method requestEmojiStatusAccess.  
+Use this method to get a list of profile audios for a user.  
+Returns a UserProfileAudios object.
+## Parameters
+  * `user_id` - Unique identifier of the target user
+  * `offset` - Sequential number of the first audio to be returned. By default, all audios are returned.
+  * `limit` - Limits the number of audios to be retrieved. Values between 1-100 are accepted. Defaults to 100.
+""".
+-doc (#{group=><<"User">>,since=><<"9.4">>}).
+-spec getUserProfileAudios(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('UserProfileAudios'()).
+getUserProfileAudios(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getUserProfileAudios">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"User">>,equiv=>getUserProfileAudios(Pool, Req, Async, 5000),since=><<"9.4">>}).
+-spec getUserProfileAudios(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}, Async :: boolean()) -> Result :: result('UserProfileAudios'()).
+getUserProfileAudios(Pool, Req, Async) -> getUserProfileAudios(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"User">>,equiv=>getUserProfileAudios(Pool, Req, false),since=><<"9.4">>}).
+-spec getUserProfileAudios(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}) -> Result :: result('UserProfileAudios'()).
+getUserProfileAudios(Pool, Req) -> getUserProfileAudios(Pool, Req, false).
+
+
+-doc """
+Changes the emoji status for a given user that previously allowed the bot to manage their emoji status via the Mini App method [requestEmojiStatusAccess](https://core.telegram.org/bots/webapps#initializing-mini-apps).  
 Returns True on success.
 ## Parameters
   * `user_id` - Unique identifier of the target user
@@ -5759,9 +5977,13 @@ Returns True on success.
   * `emoji_status_expiration_date` - Expiration date of the emoji status, if any
 """.
 -doc (#{group=><<"User">>,since=><<"8.0">>}).
+-spec setUserEmojiStatus(Pool :: pool_name(), Req :: #{user_id := integer(), emoji_status_custom_emoji_id => binary(), emoji_status_expiration_date => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setUserEmojiStatus(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setUserEmojiStatus">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"User">>,equiv=>setUserEmojiStatus(Pool, Req, Async, 5000),since=><<"8.0">>}).
 -spec setUserEmojiStatus(Pool :: pool_name(), Req :: #{user_id := integer(), emoji_status_custom_emoji_id => binary(), emoji_status_expiration_date => integer()}, Async :: boolean()) -> Result :: result(true).
-setUserEmojiStatus(Pool, #{user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setUserEmojiStatus">>, Req, Async}).
--doc (#{equiv=>setUserEmojiStatus(Pool, Req, false),since=><<"8.0">>,group=><<"Sync Request">>}).
+setUserEmojiStatus(Pool, Req, Async) -> setUserEmojiStatus(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"User">>,equiv=>setUserEmojiStatus(Pool, Req, false),since=><<"8.0">>}).
+-spec setUserEmojiStatus(Pool :: pool_name(), Req :: #{user_id := integer(), emoji_status_custom_emoji_id => binary(), emoji_status_expiration_date => integer()}) -> Result :: result(true).
 setUserEmojiStatus(Pool, Req) -> setUserEmojiStatus(Pool, Req, false).
 
 
@@ -5778,9 +6000,13 @@ You should save the file's MIME type and name (if available) when the File objec
   * `file_id` - File identifier to get information about
 """.
 -doc (#{group=><<"File">>,since=><<"1.15">>}).
+-spec getFile(Pool :: pool_name(), Req :: #{file_id := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('File'()).
+getFile(Pool, #{file_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getFile">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"File">>,equiv=>getFile(Pool, Req, Async, 5000),since=><<"1.15">>}).
 -spec getFile(Pool :: pool_name(), Req :: #{file_id := binary()}, Async :: boolean()) -> Result :: result('File'()).
-getFile(Pool, #{file_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getFile">>, Req, Async}).
--doc (#{equiv=>getFile(Pool, Req, false),since=><<"1.15">>,group=><<"Sync Request">>}).
+getFile(Pool, Req, Async) -> getFile(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"File">>,equiv=>getFile(Pool, Req, false),since=><<"1.15">>}).
+-spec getFile(Pool :: pool_name(), Req :: #{file_id := binary()}) -> Result :: result('File'()).
 getFile(Pool, Req) -> getFile(Pool, Req, false).
 
 
@@ -5796,9 +6022,13 @@ Returns True on success.
   * `revoke_messages` - Pass True to delete all messages from the chat for the user that is being removed. If False, the user will be able to see messages in the group that were sent before the user was removed. Always True for supergroups and channels.
 """.
 -doc (#{group=><<"Chat">>,since=><<"2.0">>}).
+-spec banChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), until_date => integer(), revoke_messages => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+banChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"banChatMember">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>banChatMember(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec banChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), until_date => integer(), revoke_messages => boolean()}, Async :: boolean()) -> Result :: result(true).
-banChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"banChatMember">>, Req, Async}).
--doc (#{equiv=>banChatMember(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+banChatMember(Pool, Req, Async) -> banChatMember(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>banChatMember(Pool, Req, false),since=><<"2.0">>}).
+-spec banChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), until_date => integer(), revoke_messages => boolean()}) -> Result :: result(true).
 banChatMember(Pool, Req) -> banChatMember(Pool, Req, false).
 
 
@@ -5816,9 +6046,13 @@ Returns True on success.
   * `only_if_banned` - Do nothing if the user is not banned
 """.
 -doc (#{group=><<"Chat">>,since=><<"2.0">>}).
+-spec unbanChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), only_if_banned => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+unbanChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"unbanChatMember">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>unbanChatMember(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec unbanChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), only_if_banned => boolean()}, Async :: boolean()) -> Result :: result(true).
-unbanChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"unbanChatMember">>, Req, Async}).
--doc (#{equiv=>unbanChatMember(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+unbanChatMember(Pool, Req, Async) -> unbanChatMember(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>unbanChatMember(Pool, Req, false),since=><<"2.0">>}).
+-spec unbanChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), only_if_banned => boolean()}) -> Result :: result(true).
 unbanChatMember(Pool, Req) -> unbanChatMember(Pool, Req, false).
 
 
@@ -5835,9 +6069,13 @@ Returns True on success.
   * `until_date` - Date when restrictions will be lifted for the user; Unix time. If user is restricted for more than 366 days or less than 30 seconds from the current time, they are considered to be restricted forever
 """.
 -doc (#{group=><<"Chat">>,since=><<"3.1">>}).
+-spec restrictChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), permissions := 'ChatPermissions'(), use_independent_chat_permissions => boolean(), until_date => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+restrictChatMember(Pool, #{chat_id:=_,user_id:=_,permissions:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"restrictChatMember">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>restrictChatMember(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec restrictChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), permissions := 'ChatPermissions'(), use_independent_chat_permissions => boolean(), until_date => integer()}, Async :: boolean()) -> Result :: result(true).
-restrictChatMember(Pool, #{chat_id:=_,user_id:=_,permissions:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"restrictChatMember">>, Req, Async}).
--doc (#{equiv=>restrictChatMember(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+restrictChatMember(Pool, Req, Async) -> restrictChatMember(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>restrictChatMember(Pool, Req, false),since=><<"3.1">>}).
+-spec restrictChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), permissions := 'ChatPermissions'(), use_independent_chat_permissions => boolean(), until_date => integer()}) -> Result :: result(true).
 restrictChatMember(Pool, Req) -> restrictChatMember(Pool, Req, false).
 
 
@@ -5850,7 +6088,7 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `user_id` - Unique identifier of the target user
   * `is_anonymous` - Pass True if the administrator's presence in the chat is hidden
-  * `can_manage_chat` - Pass True if the administrator can access the chat event log, get boost list, see hidden supergroup and channel members, report spam messages, ignore slow mode, and send messages to the chat without paying Telegram Stars. Implied by any other administrator privilege.
+  * `can_manage_chat` - Pass True if the administrator can access the chat event log, get boost list, see hidden supergroup and channel members, report spam messages, ignore slow mode, and send messages to the chat without paying [Telegram Stars](https://t.me/BotNews/90). Implied by any other administrator privilege.
   * `can_delete_messages` - Pass True if the administrator can delete messages of other users
   * `can_manage_video_chats` - Pass True if the administrator can manage video chats
   * `can_restrict_members` - Pass True if the administrator can restrict, ban or unban chat members, or access supergroup statistics. For backward compatibility, defaults to True for promotions of channel administrators
@@ -5867,9 +6105,13 @@ Returns True on success.
   * `can_manage_direct_messages` - Pass True if the administrator can manage direct messages within the channel and decline suggested posts; for channels only
 """.
 -doc (#{group=><<"Chat">>,since=><<"3.1">>}).
+-spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+promoteChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"promoteChatMember">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>promoteChatMember(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean()}, Async :: boolean()) -> Result :: result(true).
-promoteChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"promoteChatMember">>, Req, Async}).
--doc (#{equiv=>promoteChatMember(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+promoteChatMember(Pool, Req, Async) -> promoteChatMember(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>promoteChatMember(Pool, Req, false),since=><<"3.1">>}).
+-spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean()}) -> Result :: result(true).
 promoteChatMember(Pool, Req) -> promoteChatMember(Pool, Req, false).
 
 
@@ -5882,9 +6124,13 @@ Returns True on success.
   * `custom_title` - New custom title for the administrator; 0-16 characters, emoji are not allowed
 """.
 -doc (#{group=><<"Chat">>,since=><<"4.5">>}).
+-spec setChatAdministratorCustomTitle(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), custom_title := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatAdministratorCustomTitle(Pool, #{chat_id:=_,user_id:=_,custom_title:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setChatAdministratorCustomTitle">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>setChatAdministratorCustomTitle(Pool, Req, Async, 5000),since=><<"4.5">>}).
 -spec setChatAdministratorCustomTitle(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), custom_title := binary()}, Async :: boolean()) -> Result :: result(true).
-setChatAdministratorCustomTitle(Pool, #{chat_id:=_,user_id:=_,custom_title:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setChatAdministratorCustomTitle">>, Req, Async}).
--doc (#{equiv=>setChatAdministratorCustomTitle(Pool, Req, false),since=><<"4.5">>,group=><<"Sync Request">>}).
+setChatAdministratorCustomTitle(Pool, Req, Async) -> setChatAdministratorCustomTitle(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>setChatAdministratorCustomTitle(Pool, Req, false),since=><<"4.5">>}).
+-spec setChatAdministratorCustomTitle(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), custom_title := binary()}) -> Result :: result(true).
 setChatAdministratorCustomTitle(Pool, Req) -> setChatAdministratorCustomTitle(Pool, Req, false).
 
 
@@ -5898,9 +6144,13 @@ Returns True on success.
   * `sender_chat_id` - Unique identifier of the target sender chat
 """.
 -doc (#{group=><<"Chat">>,since=><<"5.5">>}).
+-spec banChatSenderChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sender_chat_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+banChatSenderChat(Pool, #{chat_id:=_,sender_chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"banChatSenderChat">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>banChatSenderChat(Pool, Req, Async, 5000),since=><<"5.5">>}).
 -spec banChatSenderChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sender_chat_id := integer()}, Async :: boolean()) -> Result :: result(true).
-banChatSenderChat(Pool, #{chat_id:=_,sender_chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"banChatSenderChat">>, Req, Async}).
--doc (#{equiv=>banChatSenderChat(Pool, Req, false),since=><<"5.5">>,group=><<"Sync Request">>}).
+banChatSenderChat(Pool, Req, Async) -> banChatSenderChat(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>banChatSenderChat(Pool, Req, false),since=><<"5.5">>}).
+-spec banChatSenderChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sender_chat_id := integer()}) -> Result :: result(true).
 banChatSenderChat(Pool, Req) -> banChatSenderChat(Pool, Req, false).
 
 
@@ -5913,9 +6163,13 @@ Returns True on success.
   * `sender_chat_id` - Unique identifier of the target sender chat
 """.
 -doc (#{group=><<"Chat">>,since=><<"5.5">>}).
+-spec unbanChatSenderChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sender_chat_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+unbanChatSenderChat(Pool, #{chat_id:=_,sender_chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"unbanChatSenderChat">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>unbanChatSenderChat(Pool, Req, Async, 5000),since=><<"5.5">>}).
 -spec unbanChatSenderChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sender_chat_id := integer()}, Async :: boolean()) -> Result :: result(true).
-unbanChatSenderChat(Pool, #{chat_id:=_,sender_chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"unbanChatSenderChat">>, Req, Async}).
--doc (#{equiv=>unbanChatSenderChat(Pool, Req, false),since=><<"5.5">>,group=><<"Sync Request">>}).
+unbanChatSenderChat(Pool, Req, Async) -> unbanChatSenderChat(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>unbanChatSenderChat(Pool, Req, false),since=><<"5.5">>}).
+-spec unbanChatSenderChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sender_chat_id := integer()}) -> Result :: result(true).
 unbanChatSenderChat(Pool, Req) -> unbanChatSenderChat(Pool, Req, false).
 
 
@@ -5929,9 +6183,13 @@ Returns True on success.
   * `use_independent_chat_permissions` - Pass True if chat permissions are set independently. Otherwise, the can_send_other_messages and can_add_web_page_previews permissions will imply the can_send_messages, can_send_audios, can_send_documents, can_send_photos, can_send_videos, can_send_video_notes, and can_send_voice_notes permissions; the can_send_polls permission will imply the can_send_messages permission.
 """.
 -doc (#{group=><<"Chat">>,since=><<"4.4">>}).
+-spec setChatPermissions(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), permissions := 'ChatPermissions'(), use_independent_chat_permissions => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatPermissions(Pool, #{chat_id:=_,permissions:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setChatPermissions">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>setChatPermissions(Pool, Req, Async, 5000),since=><<"4.4">>}).
 -spec setChatPermissions(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), permissions := 'ChatPermissions'(), use_independent_chat_permissions => boolean()}, Async :: boolean()) -> Result :: result(true).
-setChatPermissions(Pool, #{chat_id:=_,permissions:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setChatPermissions">>, Req, Async}).
--doc (#{equiv=>setChatPermissions(Pool, Req, false),since=><<"4.4">>,group=><<"Sync Request">>}).
+setChatPermissions(Pool, Req, Async) -> setChatPermissions(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>setChatPermissions(Pool, Req, false),since=><<"4.4">>}).
+-spec setChatPermissions(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), permissions := 'ChatPermissions'(), use_independent_chat_permissions => boolean()}) -> Result :: result(true).
 setChatPermissions(Pool, Req) -> setChatPermissions(Pool, Req, false).
 
 
@@ -5947,9 +6205,13 @@ If your bot needs to generate a new primary invite link replacing its previous o
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
 """.
 -doc (#{group=><<"Chat invite">>,since=><<"3.1">>}).
+-spec exportChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(binary()).
+exportChatInviteLink(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"exportChatInviteLink">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat invite">>,equiv=>exportChatInviteLink(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec exportChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(binary()).
-exportChatInviteLink(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"exportChatInviteLink">>, Req, Async}).
--doc (#{equiv=>exportChatInviteLink(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+exportChatInviteLink(Pool, Req, Async) -> exportChatInviteLink(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat invite">>,equiv=>exportChatInviteLink(Pool, Req, false),since=><<"3.1">>}).
+-spec exportChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(binary()).
 exportChatInviteLink(Pool, Req) -> exportChatInviteLink(Pool, Req, false).
 
 
@@ -5966,9 +6228,13 @@ Returns the new invite link as ChatInviteLink object.
   * `creates_join_request` - True, if users joining the chat via the link need to be approved by chat administrators. If True, member_limit can't be specified
 """.
 -doc (#{group=><<"Chat invite">>,since=><<"5.1">>}).
+-spec createChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name => binary(), expire_date => integer(), member_limit => integer(), creates_join_request => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatInviteLink'()).
+createChatInviteLink(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"createChatInviteLink">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat invite">>,equiv=>createChatInviteLink(Pool, Req, Async, 5000),since=><<"5.1">>}).
 -spec createChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name => binary(), expire_date => integer(), member_limit => integer(), creates_join_request => boolean()}, Async :: boolean()) -> Result :: result('ChatInviteLink'()).
-createChatInviteLink(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"createChatInviteLink">>, Req, Async}).
--doc (#{equiv=>createChatInviteLink(Pool, Req, false),since=><<"5.1">>,group=><<"Sync Request">>}).
+createChatInviteLink(Pool, Req, Async) -> createChatInviteLink(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat invite">>,equiv=>createChatInviteLink(Pool, Req, false),since=><<"5.1">>}).
+-spec createChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name => binary(), expire_date => integer(), member_limit => integer(), creates_join_request => boolean()}) -> Result :: result('ChatInviteLink'()).
 createChatInviteLink(Pool, Req) -> createChatInviteLink(Pool, Req, false).
 
 
@@ -5985,14 +6251,18 @@ Returns the edited invite link as a ChatInviteLink object.
   * `creates_join_request` - True, if users joining the chat via the link need to be approved by chat administrators. If True, member_limit can't be specified
 """.
 -doc (#{group=><<"Chat invite">>,since=><<"5.1">>}).
+-spec editChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary(), name => binary(), expire_date => integer(), member_limit => integer(), creates_join_request => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatInviteLink'()).
+editChatInviteLink(Pool, #{chat_id:=_,invite_link:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editChatInviteLink">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat invite">>,equiv=>editChatInviteLink(Pool, Req, Async, 5000),since=><<"5.1">>}).
 -spec editChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary(), name => binary(), expire_date => integer(), member_limit => integer(), creates_join_request => boolean()}, Async :: boolean()) -> Result :: result('ChatInviteLink'()).
-editChatInviteLink(Pool, #{chat_id:=_,invite_link:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editChatInviteLink">>, Req, Async}).
--doc (#{equiv=>editChatInviteLink(Pool, Req, false),since=><<"5.1">>,group=><<"Sync Request">>}).
+editChatInviteLink(Pool, Req, Async) -> editChatInviteLink(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat invite">>,equiv=>editChatInviteLink(Pool, Req, false),since=><<"5.1">>}).
+-spec editChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary(), name => binary(), expire_date => integer(), member_limit => integer(), creates_join_request => boolean()}) -> Result :: result('ChatInviteLink'()).
 editChatInviteLink(Pool, Req) -> editChatInviteLink(Pool, Req, false).
 
 
 -doc """
-Use this method to create a subscription invite link for a channel chat.  
+Use this method to create a [subscription invite link](https://telegram.org/blog/superchannels-star-reactions-subscriptions#star-subscriptions) for a channel chat.  
 The bot must have the can_invite_users administrator rights.  
 The link can be edited using the method editChatSubscriptionInviteLink or revoked using the method revokeChatInviteLink.  
 Returns the new invite link as a ChatInviteLink object.
@@ -6000,17 +6270,21 @@ Returns the new invite link as a ChatInviteLink object.
   * `chat_id` - Unique identifier for the target channel chat or username of the target channel (in the format @channelusername)
   * `name` - Invite link name; 0-32 characters
   * `subscription_period` - The number of seconds the subscription will be active for before the next payment. Currently, it must always be 2592000 (30 days).
-  * `subscription_price` - The amount of Telegram Stars a user must pay initially and after each subsequent subscription period to be a member of the chat; 1-10000
+  * `subscription_price` - The amount of [Telegram Stars](https://t.me/BotNews/90) a user must pay initially and after each subsequent subscription period to be a member of the chat; 1-10000
 """.
 -doc (#{group=><<"Chat invite">>,since=><<"7.9">>}).
+-spec createChatSubscriptionInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name => binary(), subscription_period := integer(), subscription_price := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatInviteLink'()).
+createChatSubscriptionInviteLink(Pool, #{chat_id:=_,subscription_period:=_,subscription_price:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"createChatSubscriptionInviteLink">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat invite">>,equiv=>createChatSubscriptionInviteLink(Pool, Req, Async, 5000),since=><<"7.9">>}).
 -spec createChatSubscriptionInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name => binary(), subscription_period := integer(), subscription_price := integer()}, Async :: boolean()) -> Result :: result('ChatInviteLink'()).
-createChatSubscriptionInviteLink(Pool, #{chat_id:=_,subscription_period:=_,subscription_price:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"createChatSubscriptionInviteLink">>, Req, Async}).
--doc (#{equiv=>createChatSubscriptionInviteLink(Pool, Req, false),since=><<"7.9">>,group=><<"Sync Request">>}).
+createChatSubscriptionInviteLink(Pool, Req, Async) -> createChatSubscriptionInviteLink(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat invite">>,equiv=>createChatSubscriptionInviteLink(Pool, Req, false),since=><<"7.9">>}).
+-spec createChatSubscriptionInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name => binary(), subscription_period := integer(), subscription_price := integer()}) -> Result :: result('ChatInviteLink'()).
 createChatSubscriptionInviteLink(Pool, Req) -> createChatSubscriptionInviteLink(Pool, Req, false).
 
 
 -doc """
-Use this method to edit a subscription invite link created by the bot.  
+Use this method to edit a [subscription invite link](https://telegram.org/blog/superchannels-star-reactions-subscriptions#star-subscriptions) created by the bot.  
 The bot must have the can_invite_users administrator rights.  
 Returns the edited invite link as a ChatInviteLink object.
 ## Parameters
@@ -6019,9 +6293,13 @@ Returns the edited invite link as a ChatInviteLink object.
   * `name` - Invite link name; 0-32 characters
 """.
 -doc (#{group=><<"Chat invite">>,since=><<"7.9">>}).
+-spec editChatSubscriptionInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary(), name => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatInviteLink'()).
+editChatSubscriptionInviteLink(Pool, #{chat_id:=_,invite_link:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editChatSubscriptionInviteLink">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat invite">>,equiv=>editChatSubscriptionInviteLink(Pool, Req, Async, 5000),since=><<"7.9">>}).
 -spec editChatSubscriptionInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary(), name => binary()}, Async :: boolean()) -> Result :: result('ChatInviteLink'()).
-editChatSubscriptionInviteLink(Pool, #{chat_id:=_,invite_link:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editChatSubscriptionInviteLink">>, Req, Async}).
--doc (#{equiv=>editChatSubscriptionInviteLink(Pool, Req, false),since=><<"7.9">>,group=><<"Sync Request">>}).
+editChatSubscriptionInviteLink(Pool, Req, Async) -> editChatSubscriptionInviteLink(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat invite">>,equiv=>editChatSubscriptionInviteLink(Pool, Req, false),since=><<"7.9">>}).
+-spec editChatSubscriptionInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary(), name => binary()}) -> Result :: result('ChatInviteLink'()).
 editChatSubscriptionInviteLink(Pool, Req) -> editChatSubscriptionInviteLink(Pool, Req, false).
 
 
@@ -6035,9 +6313,13 @@ Returns the revoked invite link as ChatInviteLink object.
   * `invite_link` - The invite link to revoke
 """.
 -doc (#{group=><<"Chat invite">>,since=><<"5.1">>}).
+-spec revokeChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatInviteLink'()).
+revokeChatInviteLink(Pool, #{chat_id:=_,invite_link:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"revokeChatInviteLink">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat invite">>,equiv=>revokeChatInviteLink(Pool, Req, Async, 5000),since=><<"5.1">>}).
 -spec revokeChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary()}, Async :: boolean()) -> Result :: result('ChatInviteLink'()).
-revokeChatInviteLink(Pool, #{chat_id:=_,invite_link:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"revokeChatInviteLink">>, Req, Async}).
--doc (#{equiv=>revokeChatInviteLink(Pool, Req, false),since=><<"5.1">>,group=><<"Sync Request">>}).
+revokeChatInviteLink(Pool, Req, Async) -> revokeChatInviteLink(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat invite">>,equiv=>revokeChatInviteLink(Pool, Req, false),since=><<"5.1">>}).
+-spec revokeChatInviteLink(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), invite_link := binary()}) -> Result :: result('ChatInviteLink'()).
 revokeChatInviteLink(Pool, Req) -> revokeChatInviteLink(Pool, Req, false).
 
 
@@ -6050,9 +6332,13 @@ Returns True on success.
   * `user_id` - Unique identifier of the target user
 """.
 -doc (#{group=><<"Chat">>,since=><<"5.4">>}).
+-spec approveChatJoinRequest(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+approveChatJoinRequest(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"approveChatJoinRequest">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>approveChatJoinRequest(Pool, Req, Async, 5000),since=><<"5.4">>}).
 -spec approveChatJoinRequest(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean()) -> Result :: result(true).
-approveChatJoinRequest(Pool, #{chat_id:=_,user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"approveChatJoinRequest">>, Req, Async}).
--doc (#{equiv=>approveChatJoinRequest(Pool, Req, false),since=><<"5.4">>,group=><<"Sync Request">>}).
+approveChatJoinRequest(Pool, Req, Async) -> approveChatJoinRequest(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>approveChatJoinRequest(Pool, Req, false),since=><<"5.4">>}).
+-spec approveChatJoinRequest(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}) -> Result :: result(true).
 approveChatJoinRequest(Pool, Req) -> approveChatJoinRequest(Pool, Req, false).
 
 
@@ -6065,9 +6351,13 @@ Returns True on success.
   * `user_id` - Unique identifier of the target user
 """.
 -doc (#{group=><<"Chat">>,since=><<"5.4">>}).
+-spec declineChatJoinRequest(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+declineChatJoinRequest(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"declineChatJoinRequest">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>declineChatJoinRequest(Pool, Req, Async, 5000),since=><<"5.4">>}).
 -spec declineChatJoinRequest(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean()) -> Result :: result(true).
-declineChatJoinRequest(Pool, #{chat_id:=_,user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"declineChatJoinRequest">>, Req, Async}).
--doc (#{equiv=>declineChatJoinRequest(Pool, Req, false),since=><<"5.4">>,group=><<"Sync Request">>}).
+declineChatJoinRequest(Pool, Req, Async) -> declineChatJoinRequest(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>declineChatJoinRequest(Pool, Req, false),since=><<"5.4">>}).
+-spec declineChatJoinRequest(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}) -> Result :: result(true).
 declineChatJoinRequest(Pool, Req) -> declineChatJoinRequest(Pool, Req, false).
 
 
@@ -6081,9 +6371,13 @@ Returns True on success.
   * `photo` - New chat photo, uploaded using multipart/form-data
 """.
 -doc (#{group=><<"Chat">>,since=><<"3.1">>}).
+-spec setChatPhoto(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), photo := 'InputFile'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatPhoto(Pool, #{chat_id:=_,photo:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"setChatPhoto">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>setChatPhoto(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec setChatPhoto(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), photo := 'InputFile'()}, Async :: boolean()) -> Result :: result(true).
-setChatPhoto(Pool, #{chat_id:=_,photo:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"setChatPhoto">>, Req, Async}).
--doc (#{equiv=>setChatPhoto(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+setChatPhoto(Pool, Req, Async) -> setChatPhoto(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>setChatPhoto(Pool, Req, false),since=><<"3.1">>}).
+-spec setChatPhoto(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), photo := 'InputFile'()}) -> Result :: result(true).
 setChatPhoto(Pool, Req) -> setChatPhoto(Pool, Req, false).
 
 
@@ -6096,9 +6390,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
 """.
 -doc (#{group=><<"Chat">>,since=><<"3.1">>}).
+-spec deleteChatPhoto(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteChatPhoto(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteChatPhoto">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>deleteChatPhoto(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec deleteChatPhoto(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-deleteChatPhoto(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteChatPhoto">>, Req, Async}).
--doc (#{equiv=>deleteChatPhoto(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+deleteChatPhoto(Pool, Req, Async) -> deleteChatPhoto(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>deleteChatPhoto(Pool, Req, false),since=><<"3.1">>}).
+-spec deleteChatPhoto(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 deleteChatPhoto(Pool, Req) -> deleteChatPhoto(Pool, Req, false).
 
 
@@ -6112,9 +6410,13 @@ Returns True on success.
   * `title` - New chat title, 1-128 characters
 """.
 -doc (#{group=><<"Chat">>,since=><<"3.1">>}).
+-spec setChatTitle(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), title := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatTitle(Pool, #{chat_id:=_,title:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setChatTitle">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>setChatTitle(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec setChatTitle(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), title := binary()}, Async :: boolean()) -> Result :: result(true).
-setChatTitle(Pool, #{chat_id:=_,title:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setChatTitle">>, Req, Async}).
--doc (#{equiv=>setChatTitle(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+setChatTitle(Pool, Req, Async) -> setChatTitle(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>setChatTitle(Pool, Req, false),since=><<"3.1">>}).
+-spec setChatTitle(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), title := binary()}) -> Result :: result(true).
 setChatTitle(Pool, Req) -> setChatTitle(Pool, Req, false).
 
 
@@ -6127,9 +6429,13 @@ Returns True on success.
   * `description` - New chat description, 0-255 characters
 """.
 -doc (#{group=><<"Chat">>,since=><<"3.1">>}).
+-spec setChatDescription(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), description => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatDescription(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setChatDescription">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>setChatDescription(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec setChatDescription(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), description => binary()}, Async :: boolean()) -> Result :: result(true).
-setChatDescription(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setChatDescription">>, Req, Async}).
--doc (#{equiv=>setChatDescription(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+setChatDescription(Pool, Req, Async) -> setChatDescription(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>setChatDescription(Pool, Req, false),since=><<"3.1">>}).
+-spec setChatDescription(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), description => binary()}) -> Result :: result(true).
 setChatDescription(Pool, Req) -> setChatDescription(Pool, Req, false).
 
 
@@ -6145,9 +6451,13 @@ Returns True on success.
   * `disable_notification` - Pass True if it is not necessary to send a notification to all chat members about the new pinned message. Notifications are always disabled in channels and private chats.
 """.
 -doc (#{group=><<"Message">>,since=><<"3.1">>}).
+-spec pinChatMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id := integer(), disable_notification => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+pinChatMessage(Pool, #{chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"pinChatMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>pinChatMessage(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec pinChatMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id := integer(), disable_notification => boolean()}, Async :: boolean()) -> Result :: result(true).
-pinChatMessage(Pool, #{chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"pinChatMessage">>, Req, Async}).
--doc (#{equiv=>pinChatMessage(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+pinChatMessage(Pool, Req, Async) -> pinChatMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>pinChatMessage(Pool, Req, false),since=><<"3.1">>}).
+-spec pinChatMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id := integer(), disable_notification => boolean()}) -> Result :: result(true).
 pinChatMessage(Pool, Req) -> pinChatMessage(Pool, Req, false).
 
 
@@ -6162,9 +6472,13 @@ Returns True on success.
   * `message_id` - Identifier of the message to unpin. Required if business_connection_id is specified. If not specified, the most recent pinned message (by sending date) will be unpinned.
 """.
 -doc (#{group=><<"Message">>,since=><<"3.1">>}).
+-spec unpinChatMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+unpinChatMessage(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"unpinChatMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>unpinChatMessage(Pool, Req, Async, 5000),since=><<"3.1">>}).
 -spec unpinChatMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id => integer()}, Async :: boolean()) -> Result :: result(true).
-unpinChatMessage(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"unpinChatMessage">>, Req, Async}).
--doc (#{equiv=>unpinChatMessage(Pool, Req, false),since=><<"3.1">>,group=><<"Sync Request">>}).
+unpinChatMessage(Pool, Req, Async) -> unpinChatMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>unpinChatMessage(Pool, Req, false),since=><<"3.1">>}).
+-spec unpinChatMessage(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id => integer()}) -> Result :: result(true).
 unpinChatMessage(Pool, Req) -> unpinChatMessage(Pool, Req, false).
 
 
@@ -6177,9 +6491,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
 """.
 -doc (#{group=><<"Message">>,since=><<"5.0">>}).
+-spec unpinAllChatMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+unpinAllChatMessages(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"unpinAllChatMessages">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>unpinAllChatMessages(Pool, Req, Async, 5000),since=><<"5.0">>}).
 -spec unpinAllChatMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-unpinAllChatMessages(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"unpinAllChatMessages">>, Req, Async}).
--doc (#{equiv=>unpinAllChatMessages(Pool, Req, false),since=><<"5.0">>,group=><<"Sync Request">>}).
+unpinAllChatMessages(Pool, Req, Async) -> unpinAllChatMessages(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>unpinAllChatMessages(Pool, Req, false),since=><<"5.0">>}).
+-spec unpinAllChatMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 unpinAllChatMessages(Pool, Req) -> unpinAllChatMessages(Pool, Req, false).
 
 
@@ -6190,9 +6508,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup or channel (in the format @channelusername). Channel direct messages chats aren't supported; leave the corresponding channel instead.
 """.
 -doc (#{group=><<"Chat">>,since=><<"2.1">>}).
+-spec leaveChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+leaveChat(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"leaveChat">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>leaveChat(Pool, Req, Async, 5000),since=><<"2.1">>}).
 -spec leaveChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-leaveChat(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"leaveChat">>, Req, Async}).
--doc (#{equiv=>leaveChat(Pool, Req, false),since=><<"2.1">>,group=><<"Sync Request">>}).
+leaveChat(Pool, Req, Async) -> leaveChat(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>leaveChat(Pool, Req, false),since=><<"2.1">>}).
+-spec leaveChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 leaveChat(Pool, Req) -> leaveChat(Pool, Req, false).
 
 
@@ -6203,9 +6525,13 @@ Returns a ChatFullInfo object on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup or channel (in the format @channelusername)
 """.
 -doc (#{group=><<"Chat">>,since=><<"2.1">>}).
+-spec getChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatFullInfo'()).
+getChat(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getChat">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>getChat(Pool, Req, Async, 5000),since=><<"2.1">>}).
 -spec getChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result('ChatFullInfo'()).
-getChat(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getChat">>, Req, Async}).
--doc (#{equiv=>getChat(Pool, Req, false),since=><<"2.1">>,group=><<"Sync Request">>}).
+getChat(Pool, Req, Async) -> getChat(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>getChat(Pool, Req, false),since=><<"2.1">>}).
+-spec getChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result('ChatFullInfo'()).
 getChat(Pool, Req) -> getChat(Pool, Req, false).
 
 
@@ -6216,9 +6542,13 @@ Returns an Array of ChatMember objects.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup or channel (in the format @channelusername)
 """.
 -doc (#{group=><<"Chat">>,since=><<"2.1">>}).
+-spec getChatAdministrators(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('ChatMember'())).
+getChatAdministrators(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getChatAdministrators">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>getChatAdministrators(Pool, Req, Async, 5000),since=><<"2.1">>}).
 -spec getChatAdministrators(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(nonempty_list('ChatMember'())).
-getChatAdministrators(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getChatAdministrators">>, Req, Async}).
--doc (#{equiv=>getChatAdministrators(Pool, Req, false),since=><<"2.1">>,group=><<"Sync Request">>}).
+getChatAdministrators(Pool, Req, Async) -> getChatAdministrators(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>getChatAdministrators(Pool, Req, false),since=><<"2.1">>}).
+-spec getChatAdministrators(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(nonempty_list('ChatMember'())).
 getChatAdministrators(Pool, Req) -> getChatAdministrators(Pool, Req, false).
 
 
@@ -6229,9 +6559,13 @@ Returns Int on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup or channel (in the format @channelusername)
 """.
 -doc (#{group=><<"Chat">>,since=><<"5.3">>}).
+-spec getChatMemberCount(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(integer()).
+getChatMemberCount(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getChatMemberCount">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>getChatMemberCount(Pool, Req, Async, 5000),since=><<"5.3">>}).
 -spec getChatMemberCount(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(integer()).
-getChatMemberCount(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getChatMemberCount">>, Req, Async}).
--doc (#{equiv=>getChatMemberCount(Pool, Req, false),since=><<"5.3">>,group=><<"Sync Request">>}).
+getChatMemberCount(Pool, Req, Async) -> getChatMemberCount(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>getChatMemberCount(Pool, Req, false),since=><<"5.3">>}).
+-spec getChatMemberCount(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(integer()).
 getChatMemberCount(Pool, Req) -> getChatMemberCount(Pool, Req, false).
 
 
@@ -6244,9 +6578,13 @@ Returns a ChatMember object on success.
   * `user_id` - Unique identifier of the target user
 """.
 -doc (#{group=><<"Chat">>,since=><<"2.1">>}).
+-spec getChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatMember'()).
+getChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getChatMember">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>getChatMember(Pool, Req, Async, 5000),since=><<"2.1">>}).
 -spec getChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean()) -> Result :: result('ChatMember'()).
-getChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getChatMember">>, Req, Async}).
--doc (#{equiv=>getChatMember(Pool, Req, false),since=><<"2.1">>,group=><<"Sync Request">>}).
+getChatMember(Pool, Req, Async) -> getChatMember(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>getChatMember(Pool, Req, false),since=><<"2.1">>}).
+-spec getChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}) -> Result :: result('ChatMember'()).
 getChatMember(Pool, Req) -> getChatMember(Pool, Req, false).
 
 
@@ -6260,9 +6598,13 @@ Returns True on success.
   * `sticker_set_name` - Name of the sticker set to be set as the group sticker set
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.4">>}).
+-spec setChatStickerSet(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sticker_set_name := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatStickerSet(Pool, #{chat_id:=_,sticker_set_name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setChatStickerSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setChatStickerSet(Pool, Req, Async, 5000),since=><<"3.4">>}).
 -spec setChatStickerSet(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sticker_set_name := binary()}, Async :: boolean()) -> Result :: result(true).
-setChatStickerSet(Pool, #{chat_id:=_,sticker_set_name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setChatStickerSet">>, Req, Async}).
--doc (#{equiv=>setChatStickerSet(Pool, Req, false),since=><<"3.4">>,group=><<"Sync Request">>}).
+setChatStickerSet(Pool, Req, Async) -> setChatStickerSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setChatStickerSet(Pool, Req, false),since=><<"3.4">>}).
+-spec setChatStickerSet(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), sticker_set_name := binary()}) -> Result :: result(true).
 setChatStickerSet(Pool, Req) -> setChatStickerSet(Pool, Req, false).
 
 
@@ -6275,9 +6617,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.4">>}).
+-spec deleteChatStickerSet(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteChatStickerSet(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteChatStickerSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>deleteChatStickerSet(Pool, Req, Async, 5000),since=><<"3.4">>}).
 -spec deleteChatStickerSet(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-deleteChatStickerSet(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteChatStickerSet">>, Req, Async}).
--doc (#{equiv=>deleteChatStickerSet(Pool, Req, false),since=><<"3.4">>,group=><<"Sync Request">>}).
+deleteChatStickerSet(Pool, Req, Async) -> deleteChatStickerSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>deleteChatStickerSet(Pool, Req, false),since=><<"3.4">>}).
+-spec deleteChatStickerSet(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 deleteChatStickerSet(Pool, Req) -> deleteChatStickerSet(Pool, Req, false).
 
 
@@ -6287,15 +6633,19 @@ Requires no parameters.
 Returns an Array of Sticker objects.
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.3">>}).
+-spec getForumTopicIconStickers(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('Sticker'())).
+getForumTopicIconStickers(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getForumTopicIconStickers">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>getForumTopicIconStickers(Pool, Req, Async, 5000),since=><<"6.3">>}).
 -spec getForumTopicIconStickers(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result(nonempty_list('Sticker'())).
-getForumTopicIconStickers(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getForumTopicIconStickers">>, Req, Async}).
--doc (#{equiv=>getForumTopicIconStickers(Pool, Req, false),since=><<"6.3">>,group=><<"Sync Request">>}).
+getForumTopicIconStickers(Pool, Req, Async) -> getForumTopicIconStickers(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>getForumTopicIconStickers(Pool, Req, false),since=><<"6.3">>}).
+-spec getForumTopicIconStickers(Pool :: pool_name(), Req :: empty_map()) -> Result :: result(nonempty_list('Sticker'())).
 getForumTopicIconStickers(Pool, Req) -> getForumTopicIconStickers(Pool, Req, false).
 
 
 -doc """
-Use this method to create a topic in a forum supergroup chat.  
-The bot must be an administrator in the chat for this to work and must have the can_manage_topics administrator rights.  
+Use this method to create a topic in a forum supergroup chat or a private chat with a user.  
+In the case of a supergroup chat the bot must be an administrator in the chat for this to work and must have the can_manage_topics administrator right.  
 Returns information about the created topic as a ForumTopic object.
 ## Parameters
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
@@ -6304,9 +6654,13 @@ Returns information about the created topic as a ForumTopic object.
   * `icon_custom_emoji_id` - Unique identifier of the custom emoji shown as the topic icon. Use getForumTopicIconStickers to get all allowed custom emoji identifiers.
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.3">>}).
+-spec createForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name := binary(), icon_color => integer(), icon_custom_emoji_id => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ForumTopic'()).
+createForumTopic(Pool, #{chat_id:=_,name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"createForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>createForumTopic(Pool, Req, Async, 5000),since=><<"6.3">>}).
 -spec createForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name := binary(), icon_color => integer(), icon_custom_emoji_id => binary()}, Async :: boolean()) -> Result :: result('ForumTopic'()).
-createForumTopic(Pool, #{chat_id:=_,name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"createForumTopic">>, Req, Async}).
--doc (#{equiv=>createForumTopic(Pool, Req, false),since=><<"6.3">>,group=><<"Sync Request">>}).
+createForumTopic(Pool, Req, Async) -> createForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>createForumTopic(Pool, Req, false),since=><<"6.3">>}).
+-spec createForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name := binary(), icon_color => integer(), icon_custom_emoji_id => binary()}) -> Result :: result('ForumTopic'()).
 createForumTopic(Pool, Req) -> createForumTopic(Pool, Req, false).
 
 
@@ -6321,9 +6675,13 @@ Returns True on success.
   * `icon_custom_emoji_id` - New unique identifier of the custom emoji shown as the topic icon. Use getForumTopicIconStickers to get all allowed custom emoji identifiers. Pass an empty string to remove the icon. If not specified, the current icon will be kept
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.3">>}).
+-spec editForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer(), name => binary(), icon_custom_emoji_id => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+editForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>editForumTopic(Pool, Req, Async, 5000),since=><<"6.3">>}).
 -spec editForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer(), name => binary(), icon_custom_emoji_id => binary()}, Async :: boolean()) -> Result :: result(true).
-editForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editForumTopic">>, Req, Async}).
--doc (#{equiv=>editForumTopic(Pool, Req, false),since=><<"6.3">>,group=><<"Sync Request">>}).
+editForumTopic(Pool, Req, Async) -> editForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>editForumTopic(Pool, Req, false),since=><<"6.3">>}).
+-spec editForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer(), name => binary(), icon_custom_emoji_id => binary()}) -> Result :: result(true).
 editForumTopic(Pool, Req) -> editForumTopic(Pool, Req, false).
 
 
@@ -6336,9 +6694,13 @@ Returns True on success.
   * `message_thread_id` - Unique identifier for the target message thread of the forum topic
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.3">>}).
+-spec closeForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+closeForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"closeForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>closeForumTopic(Pool, Req, Async, 5000),since=><<"6.3">>}).
 -spec closeForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean()) -> Result :: result(true).
-closeForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"closeForumTopic">>, Req, Async}).
--doc (#{equiv=>closeForumTopic(Pool, Req, false),since=><<"6.3">>,group=><<"Sync Request">>}).
+closeForumTopic(Pool, Req, Async) -> closeForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>closeForumTopic(Pool, Req, false),since=><<"6.3">>}).
+-spec closeForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}) -> Result :: result(true).
 closeForumTopic(Pool, Req) -> closeForumTopic(Pool, Req, false).
 
 
@@ -6351,9 +6713,13 @@ Returns True on success.
   * `message_thread_id` - Unique identifier for the target message thread of the forum topic
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.3">>}).
+-spec reopenForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+reopenForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"reopenForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>reopenForumTopic(Pool, Req, Async, 5000),since=><<"6.3">>}).
 -spec reopenForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean()) -> Result :: result(true).
-reopenForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"reopenForumTopic">>, Req, Async}).
--doc (#{equiv=>reopenForumTopic(Pool, Req, false),since=><<"6.3">>,group=><<"Sync Request">>}).
+reopenForumTopic(Pool, Req, Async) -> reopenForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>reopenForumTopic(Pool, Req, false),since=><<"6.3">>}).
+-spec reopenForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}) -> Result :: result(true).
 reopenForumTopic(Pool, Req) -> reopenForumTopic(Pool, Req, false).
 
 
@@ -6366,9 +6732,13 @@ Returns True on success.
   * `message_thread_id` - Unique identifier for the target message thread of the forum topic
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.3">>}).
+-spec deleteForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>deleteForumTopic(Pool, Req, Async, 5000),since=><<"6.3">>}).
 -spec deleteForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean()) -> Result :: result(true).
-deleteForumTopic(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteForumTopic">>, Req, Async}).
--doc (#{equiv=>deleteForumTopic(Pool, Req, false),since=><<"6.3">>,group=><<"Sync Request">>}).
+deleteForumTopic(Pool, Req, Async) -> deleteForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>deleteForumTopic(Pool, Req, false),since=><<"6.3">>}).
+-spec deleteForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}) -> Result :: result(true).
 deleteForumTopic(Pool, Req) -> deleteForumTopic(Pool, Req, false).
 
 
@@ -6381,9 +6751,13 @@ Returns True on success.
   * `message_thread_id` - Unique identifier for the target message thread of the forum topic
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.3">>}).
+-spec unpinAllForumTopicMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+unpinAllForumTopicMessages(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"unpinAllForumTopicMessages">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>unpinAllForumTopicMessages(Pool, Req, Async, 5000),since=><<"6.3">>}).
 -spec unpinAllForumTopicMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}, Async :: boolean()) -> Result :: result(true).
-unpinAllForumTopicMessages(Pool, #{chat_id:=_,message_thread_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"unpinAllForumTopicMessages">>, Req, Async}).
--doc (#{equiv=>unpinAllForumTopicMessages(Pool, Req, false),since=><<"6.3">>,group=><<"Sync Request">>}).
+unpinAllForumTopicMessages(Pool, Req, Async) -> unpinAllForumTopicMessages(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>unpinAllForumTopicMessages(Pool, Req, false),since=><<"6.3">>}).
+-spec unpinAllForumTopicMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id := integer()}) -> Result :: result(true).
 unpinAllForumTopicMessages(Pool, Req) -> unpinAllForumTopicMessages(Pool, Req, false).
 
 
@@ -6396,9 +6770,13 @@ Returns True on success.
   * `name` - New topic name, 1-128 characters
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.4">>}).
+-spec editGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+editGeneralForumTopic(Pool, #{chat_id:=_,name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editGeneralForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>editGeneralForumTopic(Pool, Req, Async, 5000),since=><<"6.4">>}).
 -spec editGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name := binary()}, Async :: boolean()) -> Result :: result(true).
-editGeneralForumTopic(Pool, #{chat_id:=_,name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editGeneralForumTopic">>, Req, Async}).
--doc (#{equiv=>editGeneralForumTopic(Pool, Req, false),since=><<"6.4">>,group=><<"Sync Request">>}).
+editGeneralForumTopic(Pool, Req, Async) -> editGeneralForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>editGeneralForumTopic(Pool, Req, false),since=><<"6.4">>}).
+-spec editGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), name := binary()}) -> Result :: result(true).
 editGeneralForumTopic(Pool, Req) -> editGeneralForumTopic(Pool, Req, false).
 
 
@@ -6410,9 +6788,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.4">>}).
+-spec closeGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+closeGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"closeGeneralForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>closeGeneralForumTopic(Pool, Req, Async, 5000),since=><<"6.4">>}).
 -spec closeGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-closeGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"closeGeneralForumTopic">>, Req, Async}).
--doc (#{equiv=>closeGeneralForumTopic(Pool, Req, false),since=><<"6.4">>,group=><<"Sync Request">>}).
+closeGeneralForumTopic(Pool, Req, Async) -> closeGeneralForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>closeGeneralForumTopic(Pool, Req, false),since=><<"6.4">>}).
+-spec closeGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 closeGeneralForumTopic(Pool, Req) -> closeGeneralForumTopic(Pool, Req, false).
 
 
@@ -6425,9 +6807,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.4">>}).
+-spec reopenGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+reopenGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"reopenGeneralForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>reopenGeneralForumTopic(Pool, Req, Async, 5000),since=><<"6.4">>}).
 -spec reopenGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-reopenGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"reopenGeneralForumTopic">>, Req, Async}).
--doc (#{equiv=>reopenGeneralForumTopic(Pool, Req, false),since=><<"6.4">>,group=><<"Sync Request">>}).
+reopenGeneralForumTopic(Pool, Req, Async) -> reopenGeneralForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>reopenGeneralForumTopic(Pool, Req, false),since=><<"6.4">>}).
+-spec reopenGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 reopenGeneralForumTopic(Pool, Req) -> reopenGeneralForumTopic(Pool, Req, false).
 
 
@@ -6440,9 +6826,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.4">>}).
+-spec hideGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+hideGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"hideGeneralForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>hideGeneralForumTopic(Pool, Req, Async, 5000),since=><<"6.4">>}).
 -spec hideGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-hideGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"hideGeneralForumTopic">>, Req, Async}).
--doc (#{equiv=>hideGeneralForumTopic(Pool, Req, false),since=><<"6.4">>,group=><<"Sync Request">>}).
+hideGeneralForumTopic(Pool, Req, Async) -> hideGeneralForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>hideGeneralForumTopic(Pool, Req, false),since=><<"6.4">>}).
+-spec hideGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 hideGeneralForumTopic(Pool, Req) -> hideGeneralForumTopic(Pool, Req, false).
 
 
@@ -6454,9 +6844,13 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.4">>}).
+-spec unhideGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+unhideGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"unhideGeneralForumTopic">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>unhideGeneralForumTopic(Pool, Req, Async, 5000),since=><<"6.4">>}).
 -spec unhideGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-unhideGeneralForumTopic(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"unhideGeneralForumTopic">>, Req, Async}).
--doc (#{equiv=>unhideGeneralForumTopic(Pool, Req, false),since=><<"6.4">>,group=><<"Sync Request">>}).
+unhideGeneralForumTopic(Pool, Req, Async) -> unhideGeneralForumTopic(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>unhideGeneralForumTopic(Pool, Req, false),since=><<"6.4">>}).
+-spec unhideGeneralForumTopic(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 unhideGeneralForumTopic(Pool, Req) -> unhideGeneralForumTopic(Pool, Req, false).
 
 
@@ -6468,32 +6862,40 @@ Returns True on success.
   * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
 """.
 -doc (#{group=><<"Forum">>,since=><<"6.8">>}).
+-spec unpinAllGeneralForumTopicMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+unpinAllGeneralForumTopicMessages(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"unpinAllGeneralForumTopicMessages">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Forum">>,equiv=>unpinAllGeneralForumTopicMessages(Pool, Req, Async, 5000),since=><<"6.8">>}).
 -spec unpinAllGeneralForumTopicMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-unpinAllGeneralForumTopicMessages(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"unpinAllGeneralForumTopicMessages">>, Req, Async}).
--doc (#{equiv=>unpinAllGeneralForumTopicMessages(Pool, Req, false),since=><<"6.8">>,group=><<"Sync Request">>}).
+unpinAllGeneralForumTopicMessages(Pool, Req, Async) -> unpinAllGeneralForumTopicMessages(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Forum">>,equiv=>unpinAllGeneralForumTopicMessages(Pool, Req, false),since=><<"6.8">>}).
+-spec unpinAllGeneralForumTopicMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 unpinAllGeneralForumTopicMessages(Pool, Req) -> unpinAllGeneralForumTopicMessages(Pool, Req, false).
 
 
 -doc """
-Use this method to send answers to callback queries sent from inline keyboards.  
+Use this method to send answers to callback queries sent from [inline keyboards](https://core.telegram.org/bots/features#inline-keyboards).  
 The answer will be displayed to the user as a notification at the top of the chat screen or as an alert.  
 On success, True is returned.  
 Alternatively, the user can be redirected to the specified Game URL.  
-For this option to work, you must first create a game for your bot via @BotFather and accept the terms.  
+For this option to work, you must first create a game for your bot via [@BotFather](https://t.me/botfather) and accept the terms.  
 Otherwise, you may use links like t.me/your_bot?start=XXXX that open your bot with a parameter.
 ## Parameters
   * `callback_query_id` - Unique identifier for the query to be answered
   * `text` - Text of the notification. If not specified, nothing will be shown to the user, 0-200 characters
   * `show_alert` - If True, an alert will be shown by the client instead of a notification at the top of the chat screen. Defaults to false.
-  * `url` - URL that will be opened by the user's client. If you have created a Game and accepted the conditions via @BotFather, specify the URL that opens your game - note that this will only work if the query comes from a callback_game button.
+  * `url` - URL that will be opened by the user's client. If you have created a Game and accepted the conditions via [@BotFather](https://t.me/botfather), specify the URL that opens your game - note that this will only work if the query comes from a callback_game button.
 
 Otherwise, you may use links like t.me/your_bot?start=XXXX that open your bot with a parameter.
-  * `cache_time` - The maximum amount of time in seconds that the result of the callback query may be cached client-side. Telegram apps will support caching starting in version 3.14. Defaults to 0.
+  * `cache_time` - The maximum amount of time in seconds that the result of the [callback query](https://core.telegram.org/bots/api#callbackquery) may be cached client-side. Telegram apps will support caching starting in version 3.14. Defaults to 0.
 """.
 -doc (#{group=><<"Inline Mode">>,since=><<"2.0">>}).
+-spec answerCallbackQuery(Pool :: pool_name(), Req :: #{callback_query_id := binary(), text => binary(), show_alert => boolean(), url => binary(), cache_time => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+answerCallbackQuery(Pool, #{callback_query_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"answerCallbackQuery">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerCallbackQuery(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec answerCallbackQuery(Pool :: pool_name(), Req :: #{callback_query_id := binary(), text => binary(), show_alert => boolean(), url => binary(), cache_time => integer()}, Async :: boolean()) -> Result :: result(true).
-answerCallbackQuery(Pool, #{callback_query_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"answerCallbackQuery">>, Req, Async}).
--doc (#{equiv=>answerCallbackQuery(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+answerCallbackQuery(Pool, Req, Async) -> answerCallbackQuery(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerCallbackQuery(Pool, Req, false),since=><<"2.0">>}).
+-spec answerCallbackQuery(Pool :: pool_name(), Req :: #{callback_query_id := binary(), text => binary(), show_alert => boolean(), url => binary(), cache_time => integer()}) -> Result :: result(true).
 answerCallbackQuery(Pool, Req) -> answerCallbackQuery(Pool, Req, false).
 
 
@@ -6506,9 +6908,13 @@ Returns a UserChatBoosts object.
   * `user_id` - Unique identifier of the target user
 """.
 -doc (#{group=><<"Chat">>,since=><<"7.0">>}).
+-spec getUserChatBoosts(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('UserChatBoosts'()).
+getUserChatBoosts(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getUserChatBoosts">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>getUserChatBoosts(Pool, Req, Async, 5000),since=><<"7.0">>}).
 -spec getUserChatBoosts(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}, Async :: boolean()) -> Result :: result('UserChatBoosts'()).
-getUserChatBoosts(Pool, #{chat_id:=_,user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getUserChatBoosts">>, Req, Async}).
--doc (#{equiv=>getUserChatBoosts(Pool, Req, false),since=><<"7.0">>,group=><<"Sync Request">>}).
+getUserChatBoosts(Pool, Req, Async) -> getUserChatBoosts(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>getUserChatBoosts(Pool, Req, false),since=><<"7.0">>}).
+-spec getUserChatBoosts(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer()}) -> Result :: result('UserChatBoosts'()).
 getUserChatBoosts(Pool, Req) -> getUserChatBoosts(Pool, Req, false).
 
 
@@ -6519,15 +6925,19 @@ Returns a BusinessConnection object on success.
   * `business_connection_id` - Unique identifier of the business connection
 """.
 -doc (#{group=><<"Business Account">>,since=><<"7.2">>}).
+-spec getBusinessConnection(Pool :: pool_name(), Req :: #{business_connection_id := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('BusinessConnection'()).
+getBusinessConnection(Pool, #{business_connection_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getBusinessConnection">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Business Account">>,equiv=>getBusinessConnection(Pool, Req, Async, 5000),since=><<"7.2">>}).
 -spec getBusinessConnection(Pool :: pool_name(), Req :: #{business_connection_id := binary()}, Async :: boolean()) -> Result :: result('BusinessConnection'()).
-getBusinessConnection(Pool, #{business_connection_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getBusinessConnection">>, Req, Async}).
--doc (#{equiv=>getBusinessConnection(Pool, Req, false),since=><<"7.2">>,group=><<"Sync Request">>}).
+getBusinessConnection(Pool, Req, Async) -> getBusinessConnection(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Business Account">>,equiv=>getBusinessConnection(Pool, Req, false),since=><<"7.2">>}).
+-spec getBusinessConnection(Pool :: pool_name(), Req :: #{business_connection_id := binary()}) -> Result :: result('BusinessConnection'()).
 getBusinessConnection(Pool, Req) -> getBusinessConnection(Pool, Req, false).
 
 
 -doc """
 Use this method to change the list of the bot's commands.  
-See this manual for more details about bot commands.  
+See [this manual](https://core.telegram.org/bots/features#commands) for more details about bot commands.  
 Returns True on success.
 ## Parameters
   * `commands` - A JSON-serialized list of bot commands to be set as the list of the bot's commands. At most 100 commands can be specified.
@@ -6535,24 +6945,32 @@ Returns True on success.
   * `language_code` - A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope, for whose language there are no dedicated commands
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"4.7">>}).
+-spec setMyCommands(Pool :: pool_name(), Req :: #{commands := nonempty_list('BotCommand'()), scope => 'BotCommandScope'(), language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setMyCommands(Pool, #{commands:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setMyCommands">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyCommands(Pool, Req, Async, 5000),since=><<"4.7">>}).
 -spec setMyCommands(Pool :: pool_name(), Req :: #{commands := nonempty_list('BotCommand'()), scope => 'BotCommandScope'(), language_code => binary()}, Async :: boolean()) -> Result :: result(true).
-setMyCommands(Pool, #{commands:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setMyCommands">>, Req, Async}).
--doc (#{equiv=>setMyCommands(Pool, Req, false),since=><<"4.7">>,group=><<"Sync Request">>}).
+setMyCommands(Pool, Req, Async) -> setMyCommands(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyCommands(Pool, Req, false),since=><<"4.7">>}).
+-spec setMyCommands(Pool :: pool_name(), Req :: #{commands := nonempty_list('BotCommand'()), scope => 'BotCommandScope'(), language_code => binary()}) -> Result :: result(true).
 setMyCommands(Pool, Req) -> setMyCommands(Pool, Req, false).
 
 
 -doc """
 Use this method to delete the list of the bot's commands for the given scope and user language.  
-After deletion, higher level commands will be shown to affected users.  
+After deletion, [higher level commands](https://core.telegram.org/bots/api#determining-list-of-commands) will be shown to affected users.  
 Returns True on success.
 ## Parameters
   * `scope` - A JSON-serialized object, describing scope of users for which the commands are relevant. Defaults to BotCommandScopeDefault.
   * `language_code` - A two-letter ISO 639-1 language code. If empty, commands will be applied to all users from the given scope, for whose language there are no dedicated commands
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"5.3">>}).
+-spec deleteMyCommands(Pool :: pool_name(), Req :: #{scope => 'BotCommandScope'(), language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteMyCommands(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteMyCommands">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>deleteMyCommands(Pool, Req, Async, 5000),since=><<"5.3">>}).
 -spec deleteMyCommands(Pool :: pool_name(), Req :: #{scope => 'BotCommandScope'(), language_code => binary()}, Async :: boolean()) -> Result :: result(true).
-deleteMyCommands(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteMyCommands">>, Req, Async}).
--doc (#{equiv=>deleteMyCommands(Pool, Req, false),since=><<"5.3">>,group=><<"Sync Request">>}).
+deleteMyCommands(Pool, Req, Async) -> deleteMyCommands(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>deleteMyCommands(Pool, Req, false),since=><<"5.3">>}).
+-spec deleteMyCommands(Pool :: pool_name(), Req :: #{scope => 'BotCommandScope'(), language_code => binary()}) -> Result :: result(true).
 deleteMyCommands(Pool, Req) -> deleteMyCommands(Pool, Req, false).
 
 
@@ -6565,9 +6983,13 @@ If commands aren't set, an empty list is returned.
   * `language_code` - A two-letter ISO 639-1 language code or an empty string
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"4.7">>}).
+-spec getMyCommands(Pool :: pool_name(), Req :: #{scope => 'BotCommandScope'(), language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('BotCommand'())).
+getMyCommands(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getMyCommands">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyCommands(Pool, Req, Async, 5000),since=><<"4.7">>}).
 -spec getMyCommands(Pool :: pool_name(), Req :: #{scope => 'BotCommandScope'(), language_code => binary()}, Async :: boolean()) -> Result :: result(nonempty_list('BotCommand'())).
-getMyCommands(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getMyCommands">>, Req, Async}).
--doc (#{equiv=>getMyCommands(Pool, Req, false),since=><<"4.7">>,group=><<"Sync Request">>}).
+getMyCommands(Pool, Req, Async) -> getMyCommands(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyCommands(Pool, Req, false),since=><<"4.7">>}).
+-spec getMyCommands(Pool :: pool_name(), Req :: #{scope => 'BotCommandScope'(), language_code => binary()}) -> Result :: result(nonempty_list('BotCommand'())).
 getMyCommands(Pool, Req) -> getMyCommands(Pool, Req, false).
 
 
@@ -6579,9 +7001,13 @@ Returns True on success.
   * `language_code` - A two-letter ISO 639-1 language code. If empty, the name will be shown to all users for whose language there is no dedicated name.
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.7">>}).
+-spec setMyName(Pool :: pool_name(), Req :: #{name => binary(), language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setMyName(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setMyName">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyName(Pool, Req, Async, 5000),since=><<"6.7">>}).
 -spec setMyName(Pool :: pool_name(), Req :: #{name => binary(), language_code => binary()}, Async :: boolean()) -> Result :: result(true).
-setMyName(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"setMyName">>, Req, Async}).
--doc (#{equiv=>setMyName(Pool, Req, false),since=><<"6.7">>,group=><<"Sync Request">>}).
+setMyName(Pool, Req, Async) -> setMyName(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyName(Pool, Req, false),since=><<"6.7">>}).
+-spec setMyName(Pool :: pool_name(), Req :: #{name => binary(), language_code => binary()}) -> Result :: result(true).
 setMyName(Pool, Req) -> setMyName(Pool, Req, false).
 
 
@@ -6592,9 +7018,13 @@ Returns BotName on success.
   * `language_code` - A two-letter ISO 639-1 language code or an empty string
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.7">>}).
+-spec getMyName(Pool :: pool_name(), Req :: #{language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('BotName'()).
+getMyName(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getMyName">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyName(Pool, Req, Async, 5000),since=><<"6.7">>}).
 -spec getMyName(Pool :: pool_name(), Req :: #{language_code => binary()}, Async :: boolean()) -> Result :: result('BotName'()).
-getMyName(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getMyName">>, Req, Async}).
--doc (#{equiv=>getMyName(Pool, Req, false),since=><<"6.7">>,group=><<"Sync Request">>}).
+getMyName(Pool, Req, Async) -> getMyName(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyName(Pool, Req, false),since=><<"6.7">>}).
+-spec getMyName(Pool :: pool_name(), Req :: #{language_code => binary()}) -> Result :: result('BotName'()).
 getMyName(Pool, Req) -> getMyName(Pool, Req, false).
 
 
@@ -6606,9 +7036,13 @@ Returns True on success.
   * `language_code` - A two-letter ISO 639-1 language code. If empty, the description will be applied to all users for whose language there is no dedicated description.
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.6">>}).
+-spec setMyDescription(Pool :: pool_name(), Req :: #{description => binary(), language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setMyDescription(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setMyDescription">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyDescription(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setMyDescription(Pool :: pool_name(), Req :: #{description => binary(), language_code => binary()}, Async :: boolean()) -> Result :: result(true).
-setMyDescription(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"setMyDescription">>, Req, Async}).
--doc (#{equiv=>setMyDescription(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setMyDescription(Pool, Req, Async) -> setMyDescription(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyDescription(Pool, Req, false),since=><<"6.6">>}).
+-spec setMyDescription(Pool :: pool_name(), Req :: #{description => binary(), language_code => binary()}) -> Result :: result(true).
 setMyDescription(Pool, Req) -> setMyDescription(Pool, Req, false).
 
 
@@ -6619,9 +7053,13 @@ Returns BotDescription on success.
   * `language_code` - A two-letter ISO 639-1 language code or an empty string
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.6">>}).
+-spec getMyDescription(Pool :: pool_name(), Req :: #{language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('BotDescription'()).
+getMyDescription(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getMyDescription">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyDescription(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec getMyDescription(Pool :: pool_name(), Req :: #{language_code => binary()}, Async :: boolean()) -> Result :: result('BotDescription'()).
-getMyDescription(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getMyDescription">>, Req, Async}).
--doc (#{equiv=>getMyDescription(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+getMyDescription(Pool, Req, Async) -> getMyDescription(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyDescription(Pool, Req, false),since=><<"6.6">>}).
+-spec getMyDescription(Pool :: pool_name(), Req :: #{language_code => binary()}) -> Result :: result('BotDescription'()).
 getMyDescription(Pool, Req) -> getMyDescription(Pool, Req, false).
 
 
@@ -6633,9 +7071,13 @@ Returns True on success.
   * `language_code` - A two-letter ISO 639-1 language code. If empty, the short description will be applied to all users for whose language there is no dedicated short description.
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.6">>}).
+-spec setMyShortDescription(Pool :: pool_name(), Req :: #{short_description => binary(), language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setMyShortDescription(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setMyShortDescription">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyShortDescription(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setMyShortDescription(Pool :: pool_name(), Req :: #{short_description => binary(), language_code => binary()}, Async :: boolean()) -> Result :: result(true).
-setMyShortDescription(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"setMyShortDescription">>, Req, Async}).
--doc (#{equiv=>setMyShortDescription(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setMyShortDescription(Pool, Req, Async) -> setMyShortDescription(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyShortDescription(Pool, Req, false),since=><<"6.6">>}).
+-spec setMyShortDescription(Pool :: pool_name(), Req :: #{short_description => binary(), language_code => binary()}) -> Result :: result(true).
 setMyShortDescription(Pool, Req) -> setMyShortDescription(Pool, Req, false).
 
 
@@ -6646,10 +7088,47 @@ Returns BotShortDescription on success.
   * `language_code` - A two-letter ISO 639-1 language code or an empty string
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.6">>}).
+-spec getMyShortDescription(Pool :: pool_name(), Req :: #{language_code => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('BotShortDescription'()).
+getMyShortDescription(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getMyShortDescription">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyShortDescription(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec getMyShortDescription(Pool :: pool_name(), Req :: #{language_code => binary()}, Async :: boolean()) -> Result :: result('BotShortDescription'()).
-getMyShortDescription(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getMyShortDescription">>, Req, Async}).
--doc (#{equiv=>getMyShortDescription(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+getMyShortDescription(Pool, Req, Async) -> getMyShortDescription(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyShortDescription(Pool, Req, false),since=><<"6.6">>}).
+-spec getMyShortDescription(Pool :: pool_name(), Req :: #{language_code => binary()}) -> Result :: result('BotShortDescription'()).
 getMyShortDescription(Pool, Req) -> getMyShortDescription(Pool, Req, false).
+
+
+-doc """
+Changes the profile photo of the bot.  
+Returns True on success.
+## Parameters
+  * `photo` - The new profile photo to set
+""".
+-doc (#{group=><<"Bot Settings">>,since=><<"9.4">>}).
+-spec setMyProfilePhoto(Pool :: pool_name(), Req :: #{photo := 'InputProfilePhoto'(), file_attach_name() => multipart_file()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setMyProfilePhoto(Pool, #{photo:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"setMyProfilePhoto">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyProfilePhoto(Pool, Req, Async, 5000),since=><<"9.4">>}).
+-spec setMyProfilePhoto(Pool :: pool_name(), Req :: #{photo := 'InputProfilePhoto'(), file_attach_name() => multipart_file()}, Async :: boolean()) -> Result :: result(true).
+setMyProfilePhoto(Pool, Req, Async) -> setMyProfilePhoto(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyProfilePhoto(Pool, Req, false),since=><<"9.4">>}).
+-spec setMyProfilePhoto(Pool :: pool_name(), Req :: #{photo := 'InputProfilePhoto'(), file_attach_name() => multipart_file()}) -> Result :: result(true).
+setMyProfilePhoto(Pool, Req) -> setMyProfilePhoto(Pool, Req, false).
+
+
+-doc """
+Removes the profile photo of the bot.  
+Requires no parameters.  
+Returns True on success.
+""".
+-doc (#{group=><<"Bot Settings">>,since=><<"9.4">>}).
+-spec removeMyProfilePhoto(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+removeMyProfilePhoto(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"removeMyProfilePhoto">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>removeMyProfilePhoto(Pool, Req, Async, 5000),since=><<"9.4">>}).
+-spec removeMyProfilePhoto(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result(true).
+removeMyProfilePhoto(Pool, Req, Async) -> removeMyProfilePhoto(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>removeMyProfilePhoto(Pool, Req, false),since=><<"9.4">>}).
+-spec removeMyProfilePhoto(Pool :: pool_name(), Req :: empty_map()) -> Result :: result(true).
+removeMyProfilePhoto(Pool, Req) -> removeMyProfilePhoto(Pool, Req, false).
 
 
 -doc """
@@ -6660,9 +7139,13 @@ Returns True on success.
   * `menu_button` - A JSON-serialized object for the bot's new menu button. Defaults to MenuButtonDefault
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.0">>}).
+-spec setChatMenuButton(Pool :: pool_name(), Req :: #{chat_id => integer(), menu_button => 'MenuButton'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatMenuButton(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setChatMenuButton">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>setChatMenuButton(Pool, Req, Async, 5000),since=><<"6.0">>}).
 -spec setChatMenuButton(Pool :: pool_name(), Req :: #{chat_id => integer(), menu_button => 'MenuButton'()}, Async :: boolean()) -> Result :: result(true).
-setChatMenuButton(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"setChatMenuButton">>, Req, Async}).
--doc (#{equiv=>setChatMenuButton(Pool, Req, false),since=><<"6.0">>,group=><<"Sync Request">>}).
+setChatMenuButton(Pool, Req, Async) -> setChatMenuButton(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>setChatMenuButton(Pool, Req, false),since=><<"6.0">>}).
+-spec setChatMenuButton(Pool :: pool_name(), Req :: #{chat_id => integer(), menu_button => 'MenuButton'()}) -> Result :: result(true).
 setChatMenuButton(Pool, Req) -> setChatMenuButton(Pool, Req, false).
 
 
@@ -6673,9 +7156,13 @@ Returns MenuButton on success.
   * `chat_id` - Unique identifier for the target private chat. If not specified, default bot's menu button will be returned
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.0">>}).
+-spec getChatMenuButton(Pool :: pool_name(), Req :: #{chat_id => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('MenuButton'()).
+getChatMenuButton(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getChatMenuButton">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>getChatMenuButton(Pool, Req, Async, 5000),since=><<"6.0">>}).
 -spec getChatMenuButton(Pool :: pool_name(), Req :: #{chat_id => integer()}, Async :: boolean()) -> Result :: result('MenuButton'()).
-getChatMenuButton(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getChatMenuButton">>, Req, Async}).
--doc (#{equiv=>getChatMenuButton(Pool, Req, false),since=><<"6.0">>,group=><<"Sync Request">>}).
+getChatMenuButton(Pool, Req, Async) -> getChatMenuButton(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>getChatMenuButton(Pool, Req, false),since=><<"6.0">>}).
+-spec getChatMenuButton(Pool :: pool_name(), Req :: #{chat_id => integer()}) -> Result :: result('MenuButton'()).
 getChatMenuButton(Pool, Req) -> getChatMenuButton(Pool, Req, false).
 
 
@@ -6688,9 +7175,13 @@ Returns True on success.
   * `for_channels` - Pass True to change the default administrator rights of the bot in channels. Otherwise, the default administrator rights of the bot for groups and supergroups will be changed.
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.0">>}).
+-spec setMyDefaultAdministratorRights(Pool :: pool_name(), Req :: #{rights => 'ChatAdministratorRights'(), for_channels => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setMyDefaultAdministratorRights(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setMyDefaultAdministratorRights">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyDefaultAdministratorRights(Pool, Req, Async, 5000),since=><<"6.0">>}).
 -spec setMyDefaultAdministratorRights(Pool :: pool_name(), Req :: #{rights => 'ChatAdministratorRights'(), for_channels => boolean()}, Async :: boolean()) -> Result :: result(true).
-setMyDefaultAdministratorRights(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"setMyDefaultAdministratorRights">>, Req, Async}).
--doc (#{equiv=>setMyDefaultAdministratorRights(Pool, Req, false),since=><<"6.0">>,group=><<"Sync Request">>}).
+setMyDefaultAdministratorRights(Pool, Req, Async) -> setMyDefaultAdministratorRights(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>setMyDefaultAdministratorRights(Pool, Req, false),since=><<"6.0">>}).
+-spec setMyDefaultAdministratorRights(Pool :: pool_name(), Req :: #{rights => 'ChatAdministratorRights'(), for_channels => boolean()}) -> Result :: result(true).
 setMyDefaultAdministratorRights(Pool, Req) -> setMyDefaultAdministratorRights(Pool, Req, false).
 
 
@@ -6701,9 +7192,13 @@ Returns ChatAdministratorRights on success.
   * `for_channels` - Pass True to get default administrator rights of the bot in channels. Otherwise, default administrator rights of the bot for groups and supergroups will be returned.
 """.
 -doc (#{group=><<"Bot Settings">>,since=><<"6.0">>}).
+-spec getMyDefaultAdministratorRights(Pool :: pool_name(), Req :: #{for_channels => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('ChatAdministratorRights'()).
+getMyDefaultAdministratorRights(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getMyDefaultAdministratorRights">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyDefaultAdministratorRights(Pool, Req, Async, 5000),since=><<"6.0">>}).
 -spec getMyDefaultAdministratorRights(Pool :: pool_name(), Req :: #{for_channels => boolean()}, Async :: boolean()) -> Result :: result('ChatAdministratorRights'()).
-getMyDefaultAdministratorRights(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getMyDefaultAdministratorRights">>, Req, Async}).
--doc (#{equiv=>getMyDefaultAdministratorRights(Pool, Req, false),since=><<"6.0">>,group=><<"Sync Request">>}).
+getMyDefaultAdministratorRights(Pool, Req, Async) -> getMyDefaultAdministratorRights(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Bot Settings">>,equiv=>getMyDefaultAdministratorRights(Pool, Req, false),since=><<"6.0">>}).
+-spec getMyDefaultAdministratorRights(Pool :: pool_name(), Req :: #{for_channels => boolean()}) -> Result :: result('ChatAdministratorRights'()).
 getMyDefaultAdministratorRights(Pool, Req) -> getMyDefaultAdministratorRights(Pool, Req, false).
 
 
@@ -6713,15 +7208,19 @@ Requires no parameters.
 Returns a Gifts object.
 """.
 -doc (#{group=><<"Gift">>,since=><<"8.0">>}).
+-spec getAvailableGifts(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result('Gifts'()).
+getAvailableGifts(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getAvailableGifts">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>getAvailableGifts(Pool, Req, Async, 5000),since=><<"8.0">>}).
 -spec getAvailableGifts(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result('Gifts'()).
-getAvailableGifts(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getAvailableGifts">>, Req, Async}).
--doc (#{equiv=>getAvailableGifts(Pool, Req, false),since=><<"8.0">>,group=><<"Sync Request">>}).
+getAvailableGifts(Pool, Req, Async) -> getAvailableGifts(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>getAvailableGifts(Pool, Req, false),since=><<"8.0">>}).
+-spec getAvailableGifts(Pool :: pool_name(), Req :: empty_map()) -> Result :: result('Gifts'()).
 getAvailableGifts(Pool, Req) -> getAvailableGifts(Pool, Req, false).
 
 
 -doc """
 Sends a gift to the given user or channel chat.  
-The gift can't be converted to Telegram Stars by the receiver.  
+The gift can't be converted to [Telegram Stars](https://t.me/BotNews/90) by the receiver.  
 Returns True on success.
 ## Parameters
   * `user_id` - Required if chat_id is not specified. Unique identifier of the target user who will receive the gift.
@@ -6729,13 +7228,17 @@ Returns True on success.
   * `gift_id` - Identifier of the gift; limited gifts can't be sent to channel chats
   * `pay_for_upgrade` - Pass True to pay for the gift upgrade from the bot's balance, thereby making the upgrade free for the receiver
   * `text` - Text that will be shown along with the gift; 0-128 characters
-  * `text_parse_mode` - Mode for parsing entities in the text. See formatting options for more details. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, and “custom_emoji” are ignored.
-  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, and “custom_emoji” are ignored.
+  * `text_parse_mode` - Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
+  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
 """.
 -doc (#{group=><<"Gift">>,since=><<"8.0">>}).
+-spec sendGift(Pool :: pool_name(), Req :: #{user_id => integer(), chat_id => integer() | binary(), gift_id := binary(), pay_for_upgrade => boolean(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+sendGift(Pool, #{gift_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendGift">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>sendGift(Pool, Req, Async, 5000),since=><<"8.0">>}).
 -spec sendGift(Pool :: pool_name(), Req :: #{user_id => integer(), chat_id => integer() | binary(), gift_id := binary(), pay_for_upgrade => boolean(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}, Async :: boolean()) -> Result :: result(true).
-sendGift(Pool, #{gift_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendGift">>, Req, Async}).
--doc (#{equiv=>sendGift(Pool, Req, false),since=><<"8.0">>,group=><<"Sync Request">>}).
+sendGift(Pool, Req, Async) -> sendGift(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>sendGift(Pool, Req, false),since=><<"8.0">>}).
+-spec sendGift(Pool :: pool_name(), Req :: #{user_id => integer(), chat_id => integer() | binary(), gift_id := binary(), pay_for_upgrade => boolean(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}) -> Result :: result(true).
 sendGift(Pool, Req) -> sendGift(Pool, Req, false).
 
 
@@ -6745,69 +7248,89 @@ Returns True on success.
 ## Parameters
   * `user_id` - Unique identifier of the target user who will receive a Telegram Premium subscription
   * `month_count` - Number of months the Telegram Premium subscription will be active for the user; must be one of 3, 6, or 12
-  * `star_count` - Number of Telegram Stars to pay for the Telegram Premium subscription; must be 1000 for 3 months, 1500 for 6 months, and 2500 for 12 months
+  * `star_count` - Number of [Telegram Stars](https://t.me/BotNews/90) to pay for the Telegram Premium subscription; must be 1000 for 3 months, 1500 for 6 months, and 2500 for 12 months
   * `text` - Text that will be shown along with the service message about the subscription; 0-128 characters
-  * `text_parse_mode` - Mode for parsing entities in the text. See formatting options for more details. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, and “custom_emoji” are ignored.
-  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than “bold”, “italic”, “underline”, “strikethrough”, “spoiler”, and “custom_emoji” are ignored.
+  * `text_parse_mode` - Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
+  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.0">>}).
+-spec giftPremiumSubscription(Pool :: pool_name(), Req :: #{user_id := integer(), month_count := integer(), star_count := integer(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+giftPremiumSubscription(Pool, #{user_id:=_,month_count:=_,star_count:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"giftPremiumSubscription">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>giftPremiumSubscription(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec giftPremiumSubscription(Pool :: pool_name(), Req :: #{user_id := integer(), month_count := integer(), star_count := integer(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}, Async :: boolean()) -> Result :: result(true).
-giftPremiumSubscription(Pool, #{user_id:=_,month_count:=_,star_count:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"giftPremiumSubscription">>, Req, Async}).
--doc (#{equiv=>giftPremiumSubscription(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+giftPremiumSubscription(Pool, Req, Async) -> giftPremiumSubscription(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>giftPremiumSubscription(Pool, Req, false),since=><<"9.0">>}).
+-spec giftPremiumSubscription(Pool :: pool_name(), Req :: #{user_id := integer(), month_count := integer(), star_count := integer(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}) -> Result :: result(true).
 giftPremiumSubscription(Pool, Req) -> giftPremiumSubscription(Pool, Req, false).
 
 
 -doc """
-Verifies a user on behalf of the organization which is represented by the bot.  
+Verifies a user [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot.  
 Returns True on success.
 ## Parameters
   * `user_id` - Unique identifier of the target user
   * `custom_description` - Custom description for the verification; 0-70 characters. Must be empty if the organization isn't allowed to provide a custom verification description.
 """.
 -doc (#{group=><<"Verification">>,since=><<"8.2">>}).
+-spec verifyUser(Pool :: pool_name(), Req :: #{user_id := integer(), custom_description => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+verifyUser(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"verifyUser">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Verification">>,equiv=>verifyUser(Pool, Req, Async, 5000),since=><<"8.2">>}).
 -spec verifyUser(Pool :: pool_name(), Req :: #{user_id := integer(), custom_description => binary()}, Async :: boolean()) -> Result :: result(true).
-verifyUser(Pool, #{user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"verifyUser">>, Req, Async}).
--doc (#{equiv=>verifyUser(Pool, Req, false),since=><<"8.2">>,group=><<"Sync Request">>}).
+verifyUser(Pool, Req, Async) -> verifyUser(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Verification">>,equiv=>verifyUser(Pool, Req, false),since=><<"8.2">>}).
+-spec verifyUser(Pool :: pool_name(), Req :: #{user_id := integer(), custom_description => binary()}) -> Result :: result(true).
 verifyUser(Pool, Req) -> verifyUser(Pool, Req, false).
 
 
 -doc """
-Verifies a chat on behalf of the organization which is represented by the bot.  
+Verifies a chat [on behalf of the organization](https://telegram.org/verify#third-party-verification) which is represented by the bot.  
 Returns True on success.
 ## Parameters
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername). Channel direct messages chats can't be verified.
   * `custom_description` - Custom description for the verification; 0-70 characters. Must be empty if the organization isn't allowed to provide a custom verification description.
 """.
 -doc (#{group=><<"Verification">>,since=><<"8.2">>}).
+-spec verifyChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), custom_description => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+verifyChat(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"verifyChat">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Verification">>,equiv=>verifyChat(Pool, Req, Async, 5000),since=><<"8.2">>}).
 -spec verifyChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), custom_description => binary()}, Async :: boolean()) -> Result :: result(true).
-verifyChat(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"verifyChat">>, Req, Async}).
--doc (#{equiv=>verifyChat(Pool, Req, false),since=><<"8.2">>,group=><<"Sync Request">>}).
+verifyChat(Pool, Req, Async) -> verifyChat(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Verification">>,equiv=>verifyChat(Pool, Req, false),since=><<"8.2">>}).
+-spec verifyChat(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), custom_description => binary()}) -> Result :: result(true).
 verifyChat(Pool, Req) -> verifyChat(Pool, Req, false).
 
 
 -doc """
-Removes verification from a user who is currently verified on behalf of the organization represented by the bot.  
+Removes verification from a user who is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot.  
 Returns True on success.
 ## Parameters
   * `user_id` - Unique identifier of the target user
 """.
 -doc (#{group=><<"Verification">>,since=><<"8.2">>}).
+-spec removeUserVerification(Pool :: pool_name(), Req :: #{user_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+removeUserVerification(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"removeUserVerification">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Verification">>,equiv=>removeUserVerification(Pool, Req, Async, 5000),since=><<"8.2">>}).
 -spec removeUserVerification(Pool :: pool_name(), Req :: #{user_id := integer()}, Async :: boolean()) -> Result :: result(true).
-removeUserVerification(Pool, #{user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"removeUserVerification">>, Req, Async}).
--doc (#{equiv=>removeUserVerification(Pool, Req, false),since=><<"8.2">>,group=><<"Sync Request">>}).
+removeUserVerification(Pool, Req, Async) -> removeUserVerification(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Verification">>,equiv=>removeUserVerification(Pool, Req, false),since=><<"8.2">>}).
+-spec removeUserVerification(Pool :: pool_name(), Req :: #{user_id := integer()}) -> Result :: result(true).
 removeUserVerification(Pool, Req) -> removeUserVerification(Pool, Req, false).
 
 
 -doc """
-Removes verification from a chat that is currently verified on behalf of the organization represented by the bot.  
+Removes verification from a chat that is currently verified [on behalf of the organization](https://telegram.org/verify#third-party-verification) represented by the bot.  
 Returns True on success.
 ## Parameters
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
 """.
 -doc (#{group=><<"Verification">>,since=><<"8.2">>}).
+-spec removeChatVerification(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+removeChatVerification(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"removeChatVerification">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Verification">>,equiv=>removeChatVerification(Pool, Req, Async, 5000),since=><<"8.2">>}).
 -spec removeChatVerification(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}, Async :: boolean()) -> Result :: result(true).
-removeChatVerification(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"removeChatVerification">>, Req, Async}).
--doc (#{equiv=>removeChatVerification(Pool, Req, false),since=><<"8.2">>,group=><<"Sync Request">>}).
+removeChatVerification(Pool, Req, Async) -> removeChatVerification(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Verification">>,equiv=>removeChatVerification(Pool, Req, false),since=><<"8.2">>}).
+-spec removeChatVerification(Pool :: pool_name(), Req :: #{chat_id := integer() | binary()}) -> Result :: result(true).
 removeChatVerification(Pool, Req) -> removeChatVerification(Pool, Req, false).
 
 
@@ -6821,9 +7344,13 @@ Returns True on success.
   * `message_id` - Unique identifier of the message to mark as read
 """.
 -doc (#{group=><<"Message">>,since=><<"9.0">>}).
+-spec readBusinessMessage(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), message_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+readBusinessMessage(Pool, #{business_connection_id:=_,chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"readBusinessMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>readBusinessMessage(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec readBusinessMessage(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), message_id := integer()}, Async :: boolean()) -> Result :: result(true).
-readBusinessMessage(Pool, #{business_connection_id:=_,chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"readBusinessMessage">>, Req, Async}).
--doc (#{equiv=>readBusinessMessage(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+readBusinessMessage(Pool, Req, Async) -> readBusinessMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>readBusinessMessage(Pool, Req, false),since=><<"9.0">>}).
+-spec readBusinessMessage(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), message_id := integer()}) -> Result :: result(true).
 readBusinessMessage(Pool, Req) -> readBusinessMessage(Pool, Req, false).
 
 
@@ -6836,9 +7363,13 @@ Returns True on success.
   * `message_ids` - A JSON-serialized list of 1-100 identifiers of messages to delete. All messages must be from the same chat. See deleteMessage for limitations on which messages can be deleted
 """.
 -doc (#{group=><<"Message">>,since=><<"9.0">>}).
+-spec deleteBusinessMessages(Pool :: pool_name(), Req :: #{business_connection_id := binary(), message_ids := nonempty_list(integer())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteBusinessMessages(Pool, #{business_connection_id:=_,message_ids:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteBusinessMessages">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>deleteBusinessMessages(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec deleteBusinessMessages(Pool :: pool_name(), Req :: #{business_connection_id := binary(), message_ids := nonempty_list(integer())}, Async :: boolean()) -> Result :: result(true).
-deleteBusinessMessages(Pool, #{business_connection_id:=_,message_ids:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteBusinessMessages">>, Req, Async}).
--doc (#{equiv=>deleteBusinessMessages(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+deleteBusinessMessages(Pool, Req, Async) -> deleteBusinessMessages(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>deleteBusinessMessages(Pool, Req, false),since=><<"9.0">>}).
+-spec deleteBusinessMessages(Pool :: pool_name(), Req :: #{business_connection_id := binary(), message_ids := nonempty_list(integer())}) -> Result :: result(true).
 deleteBusinessMessages(Pool, Req) -> deleteBusinessMessages(Pool, Req, false).
 
 
@@ -6852,9 +7383,13 @@ Returns True on success.
   * `last_name` - The new value of the last name for the business account; 0-64 characters
 """.
 -doc (#{group=><<"Business Account">>,since=><<"9.0">>}).
+-spec setBusinessAccountName(Pool :: pool_name(), Req :: #{business_connection_id := binary(), first_name := binary(), last_name => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setBusinessAccountName(Pool, #{business_connection_id:=_,first_name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setBusinessAccountName">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountName(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec setBusinessAccountName(Pool :: pool_name(), Req :: #{business_connection_id := binary(), first_name := binary(), last_name => binary()}, Async :: boolean()) -> Result :: result(true).
-setBusinessAccountName(Pool, #{business_connection_id:=_,first_name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setBusinessAccountName">>, Req, Async}).
--doc (#{equiv=>setBusinessAccountName(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+setBusinessAccountName(Pool, Req, Async) -> setBusinessAccountName(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountName(Pool, Req, false),since=><<"9.0">>}).
+-spec setBusinessAccountName(Pool :: pool_name(), Req :: #{business_connection_id := binary(), first_name := binary(), last_name => binary()}) -> Result :: result(true).
 setBusinessAccountName(Pool, Req) -> setBusinessAccountName(Pool, Req, false).
 
 
@@ -6867,9 +7402,13 @@ Returns True on success.
   * `username` - The new value of the username for the business account; 0-32 characters
 """.
 -doc (#{group=><<"Business Account">>,since=><<"9.0">>}).
+-spec setBusinessAccountUsername(Pool :: pool_name(), Req :: #{business_connection_id := binary(), username => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setBusinessAccountUsername(Pool, #{business_connection_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setBusinessAccountUsername">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountUsername(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec setBusinessAccountUsername(Pool :: pool_name(), Req :: #{business_connection_id := binary(), username => binary()}, Async :: boolean()) -> Result :: result(true).
-setBusinessAccountUsername(Pool, #{business_connection_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setBusinessAccountUsername">>, Req, Async}).
--doc (#{equiv=>setBusinessAccountUsername(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+setBusinessAccountUsername(Pool, Req, Async) -> setBusinessAccountUsername(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountUsername(Pool, Req, false),since=><<"9.0">>}).
+-spec setBusinessAccountUsername(Pool :: pool_name(), Req :: #{business_connection_id := binary(), username => binary()}) -> Result :: result(true).
 setBusinessAccountUsername(Pool, Req) -> setBusinessAccountUsername(Pool, Req, false).
 
 
@@ -6882,9 +7421,13 @@ Returns True on success.
   * `bio` - The new value of the bio for the business account; 0-140 characters
 """.
 -doc (#{group=><<"Business Account">>,since=><<"9.0">>}).
+-spec setBusinessAccountBio(Pool :: pool_name(), Req :: #{business_connection_id := binary(), bio => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setBusinessAccountBio(Pool, #{business_connection_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setBusinessAccountBio">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountBio(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec setBusinessAccountBio(Pool :: pool_name(), Req :: #{business_connection_id := binary(), bio => binary()}, Async :: boolean()) -> Result :: result(true).
-setBusinessAccountBio(Pool, #{business_connection_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setBusinessAccountBio">>, Req, Async}).
--doc (#{equiv=>setBusinessAccountBio(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+setBusinessAccountBio(Pool, Req, Async) -> setBusinessAccountBio(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountBio(Pool, Req, false),since=><<"9.0">>}).
+-spec setBusinessAccountBio(Pool :: pool_name(), Req :: #{business_connection_id := binary(), bio => binary()}) -> Result :: result(true).
 setBusinessAccountBio(Pool, Req) -> setBusinessAccountBio(Pool, Req, false).
 
 
@@ -6898,9 +7441,13 @@ Returns True on success.
   * `is_public` - Pass True to set the public photo, which will be visible even if the main photo is hidden by the business account's privacy settings. An account can have only one public photo.
 """.
 -doc (#{group=><<"Business Account">>,since=><<"9.0">>}).
--spec setBusinessAccountProfilePhoto(Pool :: pool_name(), Req :: #{business_connection_id := binary(), photo := 'InputProfilePhoto'(), is_public => boolean()}, Async :: boolean()) -> Result :: result(true).
-setBusinessAccountProfilePhoto(Pool, #{business_connection_id:=_,photo:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setBusinessAccountProfilePhoto">>, Req, Async}).
--doc (#{equiv=>setBusinessAccountProfilePhoto(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+-spec setBusinessAccountProfilePhoto(Pool :: pool_name(), Req :: #{business_connection_id := binary(), photo := 'InputProfilePhoto'(), is_public => boolean(), file_attach_name() => multipart_file()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setBusinessAccountProfilePhoto(Pool, #{business_connection_id:=_,photo:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"setBusinessAccountProfilePhoto">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountProfilePhoto(Pool, Req, Async, 5000),since=><<"9.0">>}).
+-spec setBusinessAccountProfilePhoto(Pool :: pool_name(), Req :: #{business_connection_id := binary(), photo := 'InputProfilePhoto'(), is_public => boolean(), file_attach_name() => multipart_file()}, Async :: boolean()) -> Result :: result(true).
+setBusinessAccountProfilePhoto(Pool, Req, Async) -> setBusinessAccountProfilePhoto(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Business Account">>,equiv=>setBusinessAccountProfilePhoto(Pool, Req, false),since=><<"9.0">>}).
+-spec setBusinessAccountProfilePhoto(Pool :: pool_name(), Req :: #{business_connection_id := binary(), photo := 'InputProfilePhoto'(), is_public => boolean(), file_attach_name() => multipart_file()}) -> Result :: result(true).
 setBusinessAccountProfilePhoto(Pool, Req) -> setBusinessAccountProfilePhoto(Pool, Req, false).
 
 
@@ -6913,9 +7460,13 @@ Returns True on success.
   * `is_public` - Pass True to remove the public photo, which is visible even if the main photo is hidden by the business account's privacy settings. After the main photo is removed, the previous profile photo (if present) becomes the main photo.
 """.
 -doc (#{group=><<"Business Account">>,since=><<"9.0">>}).
+-spec removeBusinessAccountProfilePhoto(Pool :: pool_name(), Req :: #{business_connection_id := binary(), is_public => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+removeBusinessAccountProfilePhoto(Pool, #{business_connection_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"removeBusinessAccountProfilePhoto">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Business Account">>,equiv=>removeBusinessAccountProfilePhoto(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec removeBusinessAccountProfilePhoto(Pool :: pool_name(), Req :: #{business_connection_id := binary(), is_public => boolean()}, Async :: boolean()) -> Result :: result(true).
-removeBusinessAccountProfilePhoto(Pool, #{business_connection_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"removeBusinessAccountProfilePhoto">>, Req, Async}).
--doc (#{equiv=>removeBusinessAccountProfilePhoto(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+removeBusinessAccountProfilePhoto(Pool, Req, Async) -> removeBusinessAccountProfilePhoto(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Business Account">>,equiv=>removeBusinessAccountProfilePhoto(Pool, Req, false),since=><<"9.0">>}).
+-spec removeBusinessAccountProfilePhoto(Pool :: pool_name(), Req :: #{business_connection_id := binary(), is_public => boolean()}) -> Result :: result(true).
 removeBusinessAccountProfilePhoto(Pool, Req) -> removeBusinessAccountProfilePhoto(Pool, Req, false).
 
 
@@ -6929,38 +7480,50 @@ Returns True on success.
   * `accepted_gift_types` - Types of gifts accepted by the business account
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.0">>}).
+-spec setBusinessAccountGiftSettings(Pool :: pool_name(), Req :: #{business_connection_id := binary(), show_gift_button := boolean(), accepted_gift_types := 'AcceptedGiftTypes'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setBusinessAccountGiftSettings(Pool, #{business_connection_id:=_,show_gift_button:=_,accepted_gift_types:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setBusinessAccountGiftSettings">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>setBusinessAccountGiftSettings(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec setBusinessAccountGiftSettings(Pool :: pool_name(), Req :: #{business_connection_id := binary(), show_gift_button := boolean(), accepted_gift_types := 'AcceptedGiftTypes'()}, Async :: boolean()) -> Result :: result(true).
-setBusinessAccountGiftSettings(Pool, #{business_connection_id:=_,show_gift_button:=_,accepted_gift_types:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setBusinessAccountGiftSettings">>, Req, Async}).
--doc (#{equiv=>setBusinessAccountGiftSettings(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+setBusinessAccountGiftSettings(Pool, Req, Async) -> setBusinessAccountGiftSettings(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>setBusinessAccountGiftSettings(Pool, Req, false),since=><<"9.0">>}).
+-spec setBusinessAccountGiftSettings(Pool :: pool_name(), Req :: #{business_connection_id := binary(), show_gift_button := boolean(), accepted_gift_types := 'AcceptedGiftTypes'()}) -> Result :: result(true).
 setBusinessAccountGiftSettings(Pool, Req) -> setBusinessAccountGiftSettings(Pool, Req, false).
 
 
 -doc """
-Returns the amount of Telegram Stars owned by a managed business account.  
+Returns the amount of [Telegram Stars](https://t.me/BotNews/90) owned by a managed business account.  
 Requires the can_view_gifts_and_stars business bot right.  
 Returns StarAmount on success.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection
 """.
 -doc (#{group=><<"Payments">>,since=><<"9.0">>}).
+-spec getBusinessAccountStarBalance(Pool :: pool_name(), Req :: #{business_connection_id := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('StarAmount'()).
+getBusinessAccountStarBalance(Pool, #{business_connection_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getBusinessAccountStarBalance">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>getBusinessAccountStarBalance(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec getBusinessAccountStarBalance(Pool :: pool_name(), Req :: #{business_connection_id := binary()}, Async :: boolean()) -> Result :: result('StarAmount'()).
-getBusinessAccountStarBalance(Pool, #{business_connection_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getBusinessAccountStarBalance">>, Req, Async}).
--doc (#{equiv=>getBusinessAccountStarBalance(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+getBusinessAccountStarBalance(Pool, Req, Async) -> getBusinessAccountStarBalance(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>getBusinessAccountStarBalance(Pool, Req, false),since=><<"9.0">>}).
+-spec getBusinessAccountStarBalance(Pool :: pool_name(), Req :: #{business_connection_id := binary()}) -> Result :: result('StarAmount'()).
 getBusinessAccountStarBalance(Pool, Req) -> getBusinessAccountStarBalance(Pool, Req, false).
 
 
 -doc """
-Transfers Telegram Stars from the business account balance to the bot's balance.  
+Transfers [Telegram Stars](https://t.me/BotNews/90) from the business account balance to the bot's balance.  
 Requires the can_transfer_stars business bot right.  
 Returns True on success.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection
-  * `star_count` - Number of Telegram Stars to transfer; 1-10000
+  * `star_count` - Number of [Telegram Stars](https://t.me/BotNews/90) to transfer; 1-10000
 """.
 -doc (#{group=><<"Payments">>,since=><<"9.0">>}).
+-spec transferBusinessAccountStars(Pool :: pool_name(), Req :: #{business_connection_id := binary(), star_count := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+transferBusinessAccountStars(Pool, #{business_connection_id:=_,star_count:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"transferBusinessAccountStars">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>transferBusinessAccountStars(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec transferBusinessAccountStars(Pool :: pool_name(), Req :: #{business_connection_id := binary(), star_count := integer()}, Async :: boolean()) -> Result :: result(true).
-transferBusinessAccountStars(Pool, #{business_connection_id:=_,star_count:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"transferBusinessAccountStars">>, Req, Async}).
--doc (#{equiv=>transferBusinessAccountStars(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+transferBusinessAccountStars(Pool, Req, Async) -> transferBusinessAccountStars(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>transferBusinessAccountStars(Pool, Req, false),since=><<"9.0">>}).
+-spec transferBusinessAccountStars(Pool :: pool_name(), Req :: #{business_connection_id := binary(), star_count := integer()}) -> Result :: result(true).
 transferBusinessAccountStars(Pool, Req) -> transferBusinessAccountStars(Pool, Req, false).
 
 
@@ -6982,9 +7545,13 @@ Returns OwnedGifts on success.
   * `limit` - The maximum number of gifts to be returned; 1-100. Defaults to 100
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.0">>}).
+-spec getBusinessAccountGifts(Pool :: pool_name(), Req :: #{business_connection_id := binary(), exclude_unsaved => boolean(), exclude_saved => boolean(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_unique => boolean(), exclude_from_blockchain => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('OwnedGifts'()).
+getBusinessAccountGifts(Pool, #{business_connection_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getBusinessAccountGifts">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>getBusinessAccountGifts(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec getBusinessAccountGifts(Pool :: pool_name(), Req :: #{business_connection_id := binary(), exclude_unsaved => boolean(), exclude_saved => boolean(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_unique => boolean(), exclude_from_blockchain => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}, Async :: boolean()) -> Result :: result('OwnedGifts'()).
-getBusinessAccountGifts(Pool, #{business_connection_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getBusinessAccountGifts">>, Req, Async}).
--doc (#{equiv=>getBusinessAccountGifts(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+getBusinessAccountGifts(Pool, Req, Async) -> getBusinessAccountGifts(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>getBusinessAccountGifts(Pool, Req, false),since=><<"9.0">>}).
+-spec getBusinessAccountGifts(Pool :: pool_name(), Req :: #{business_connection_id := binary(), exclude_unsaved => boolean(), exclude_saved => boolean(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_unique => boolean(), exclude_from_blockchain => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}) -> Result :: result('OwnedGifts'()).
 getBusinessAccountGifts(Pool, Req) -> getBusinessAccountGifts(Pool, Req, false).
 
 
@@ -7003,9 +7570,13 @@ Returns OwnedGifts on success.
   * `limit` - The maximum number of gifts to be returned; 1-100. Defaults to 100
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.3">>}).
+-spec getUserGifts(Pool :: pool_name(), Req :: #{user_id := integer(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_from_blockchain => boolean(), exclude_unique => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('OwnedGifts'()).
+getUserGifts(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getUserGifts">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>getUserGifts(Pool, Req, Async, 5000),since=><<"9.3">>}).
 -spec getUserGifts(Pool :: pool_name(), Req :: #{user_id := integer(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_from_blockchain => boolean(), exclude_unique => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}, Async :: boolean()) -> Result :: result('OwnedGifts'()).
-getUserGifts(Pool, #{user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getUserGifts">>, Req, Async}).
--doc (#{equiv=>getUserGifts(Pool, Req, false),since=><<"9.3">>,group=><<"Sync Request">>}).
+getUserGifts(Pool, Req, Async) -> getUserGifts(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>getUserGifts(Pool, Req, false),since=><<"9.3">>}).
+-spec getUserGifts(Pool :: pool_name(), Req :: #{user_id := integer(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_from_blockchain => boolean(), exclude_unique => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}) -> Result :: result('OwnedGifts'()).
 getUserGifts(Pool, Req) -> getUserGifts(Pool, Req, false).
 
 
@@ -7026,24 +7597,32 @@ Returns OwnedGifts on success.
   * `limit` - The maximum number of gifts to be returned; 1-100. Defaults to 100
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.3">>}).
+-spec getChatGifts(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), exclude_unsaved => boolean(), exclude_saved => boolean(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_from_blockchain => boolean(), exclude_unique => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('OwnedGifts'()).
+getChatGifts(Pool, #{chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getChatGifts">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>getChatGifts(Pool, Req, Async, 5000),since=><<"9.3">>}).
 -spec getChatGifts(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), exclude_unsaved => boolean(), exclude_saved => boolean(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_from_blockchain => boolean(), exclude_unique => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}, Async :: boolean()) -> Result :: result('OwnedGifts'()).
-getChatGifts(Pool, #{chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getChatGifts">>, Req, Async}).
--doc (#{equiv=>getChatGifts(Pool, Req, false),since=><<"9.3">>,group=><<"Sync Request">>}).
+getChatGifts(Pool, Req, Async) -> getChatGifts(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>getChatGifts(Pool, Req, false),since=><<"9.3">>}).
+-spec getChatGifts(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), exclude_unsaved => boolean(), exclude_saved => boolean(), exclude_unlimited => boolean(), exclude_limited_upgradable => boolean(), exclude_limited_non_upgradable => boolean(), exclude_from_blockchain => boolean(), exclude_unique => boolean(), sort_by_price => boolean(), offset => binary(), limit => integer()}) -> Result :: result('OwnedGifts'()).
 getChatGifts(Pool, Req) -> getChatGifts(Pool, Req, false).
 
 
 -doc """
-Converts a given regular gift to Telegram Stars.  
+Converts a given regular gift to [Telegram Stars](https://t.me/BotNews/90).  
 Requires the can_convert_gifts_to_stars business bot right.  
 Returns True on success.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection
-  * `owned_gift_id` - Unique identifier of the regular gift that should be converted to Telegram Stars
+  * `owned_gift_id` - Unique identifier of the regular gift that should be converted to [Telegram Stars](https://t.me/BotNews/90)
 """.
 -doc (#{group=><<"Payments">>,since=><<"9.0">>}).
+-spec convertGiftToStars(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+convertGiftToStars(Pool, #{business_connection_id:=_,owned_gift_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"convertGiftToStars">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>convertGiftToStars(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec convertGiftToStars(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary()}, Async :: boolean()) -> Result :: result(true).
-convertGiftToStars(Pool, #{business_connection_id:=_,owned_gift_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"convertGiftToStars">>, Req, Async}).
--doc (#{equiv=>convertGiftToStars(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+convertGiftToStars(Pool, Req, Async) -> convertGiftToStars(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>convertGiftToStars(Pool, Req, false),since=><<"9.0">>}).
+-spec convertGiftToStars(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary()}) -> Result :: result(true).
 convertGiftToStars(Pool, Req) -> convertGiftToStars(Pool, Req, false).
 
 
@@ -7056,12 +7635,16 @@ Returns True on success.
   * `business_connection_id` - Unique identifier of the business connection
   * `owned_gift_id` - Unique identifier of the regular gift that should be upgraded to a unique one
   * `keep_original_details` - Pass True to keep the original gift text, sender and receiver in the upgraded gift
-  * `star_count` - The amount of Telegram Stars that will be paid for the upgrade from the business account balance. If gift.prepaid_upgrade_star_count > 0, then pass 0, otherwise, the can_transfer_stars business bot right is required and gift.upgrade_star_count must be passed.
+  * `star_count` - The amount of [Telegram Stars](https://t.me/BotNews/90) that will be paid for the upgrade from the business account balance. If gift.prepaid_upgrade_star_count > 0, then pass 0, otherwise, the can_transfer_stars business bot right is required and gift.upgrade_star_count must be passed.
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.0">>}).
+-spec upgradeGift(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary(), keep_original_details => boolean(), star_count => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+upgradeGift(Pool, #{business_connection_id:=_,owned_gift_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"upgradeGift">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>upgradeGift(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec upgradeGift(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary(), keep_original_details => boolean(), star_count => integer()}, Async :: boolean()) -> Result :: result(true).
-upgradeGift(Pool, #{business_connection_id:=_,owned_gift_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"upgradeGift">>, Req, Async}).
--doc (#{equiv=>upgradeGift(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+upgradeGift(Pool, Req, Async) -> upgradeGift(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>upgradeGift(Pool, Req, false),since=><<"9.0">>}).
+-spec upgradeGift(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary(), keep_original_details => boolean(), star_count => integer()}) -> Result :: result(true).
 upgradeGift(Pool, Req) -> upgradeGift(Pool, Req, false).
 
 
@@ -7074,12 +7657,16 @@ Returns True on success.
   * `business_connection_id` - Unique identifier of the business connection
   * `owned_gift_id` - Unique identifier of the regular gift that should be transferred
   * `new_owner_chat_id` - Unique identifier of the chat which will own the gift. The chat must be active in the last 24 hours.
-  * `star_count` - The amount of Telegram Stars that will be paid for the transfer from the business account balance. If positive, then the can_transfer_stars business bot right is required.
+  * `star_count` - The amount of [Telegram Stars](https://t.me/BotNews/90) that will be paid for the transfer from the business account balance. If positive, then the can_transfer_stars business bot right is required.
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.0">>}).
+-spec transferGift(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary(), new_owner_chat_id := integer(), star_count => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+transferGift(Pool, #{business_connection_id:=_,owned_gift_id:=_,new_owner_chat_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"transferGift">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Gift">>,equiv=>transferGift(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec transferGift(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary(), new_owner_chat_id := integer(), star_count => integer()}, Async :: boolean()) -> Result :: result(true).
-transferGift(Pool, #{business_connection_id:=_,owned_gift_id:=_,new_owner_chat_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"transferGift">>, Req, Async}).
--doc (#{equiv=>transferGift(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+transferGift(Pool, Req, Async) -> transferGift(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Gift">>,equiv=>transferGift(Pool, Req, false),since=><<"9.0">>}).
+-spec transferGift(Pool :: pool_name(), Req :: #{business_connection_id := binary(), owned_gift_id := binary(), new_owner_chat_id := integer(), star_count => integer()}) -> Result :: result(true).
 transferGift(Pool, Req) -> transferGift(Pool, Req, false).
 
 
@@ -7092,16 +7679,20 @@ Returns Story on success.
   * `content` - Content of the story
   * `active_period` - Period after which the story is moved to the archive, in seconds; must be one of 6 * 3600, 12 * 3600, 86400, or 2 * 86400
   * `caption` - Caption of the story, 0-2048 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the story caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the story caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `areas` - A JSON-serialized list of clickable areas to be shown on the story
   * `post_to_chat_page` - Pass True to keep the story accessible after it expires
   * `protect_content` - Pass True if the content of the story must be protected from forwarding and screenshotting
 """.
 -doc (#{group=><<"Story">>,since=><<"9.0">>}).
--spec postStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), content := 'InputStoryContent'(), active_period := integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'()), post_to_chat_page => boolean(), protect_content => boolean()}, Async :: boolean()) -> Result :: result('Story'()).
-postStory(Pool, #{business_connection_id:=_,content:=_,active_period:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"postStory">>, Req, Async}).
--doc (#{equiv=>postStory(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+-spec postStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), content := 'InputStoryContent'(), active_period := integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'()), post_to_chat_page => boolean(), protect_content => boolean(), file_attach_name() => multipart_file()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Story'()).
+postStory(Pool, #{business_connection_id:=_,content:=_,active_period:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"postStory">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Story">>,equiv=>postStory(Pool, Req, Async, 5000),since=><<"9.0">>}).
+-spec postStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), content := 'InputStoryContent'(), active_period := integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'()), post_to_chat_page => boolean(), protect_content => boolean(), file_attach_name() => multipart_file()}, Async :: boolean()) -> Result :: result('Story'()).
+postStory(Pool, Req, Async) -> postStory(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Story">>,equiv=>postStory(Pool, Req, false),since=><<"9.0">>}).
+-spec postStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), content := 'InputStoryContent'(), active_period := integer(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'()), post_to_chat_page => boolean(), protect_content => boolean(), file_attach_name() => multipart_file()}) -> Result :: result('Story'()).
 postStory(Pool, Req) -> postStory(Pool, Req, false).
 
 
@@ -7119,9 +7710,13 @@ Returns Story on success.
   * `protect_content` - Pass True if the content of the story must be protected from forwarding and screenshotting
 """.
 -doc (#{group=><<"Story">>,since=><<"9.3">>}).
+-spec repostStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), from_chat_id := integer(), from_story_id := integer(), active_period := integer(), post_to_chat_page => boolean(), protect_content => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Story'()).
+repostStory(Pool, #{business_connection_id:=_,from_chat_id:=_,from_story_id:=_,active_period:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"repostStory">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Story">>,equiv=>repostStory(Pool, Req, Async, 5000),since=><<"9.3">>}).
 -spec repostStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), from_chat_id := integer(), from_story_id := integer(), active_period := integer(), post_to_chat_page => boolean(), protect_content => boolean()}, Async :: boolean()) -> Result :: result('Story'()).
-repostStory(Pool, #{business_connection_id:=_,from_chat_id:=_,from_story_id:=_,active_period:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"repostStory">>, Req, Async}).
--doc (#{equiv=>repostStory(Pool, Req, false),since=><<"9.3">>,group=><<"Sync Request">>}).
+repostStory(Pool, Req, Async) -> repostStory(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Story">>,equiv=>repostStory(Pool, Req, false),since=><<"9.3">>}).
+-spec repostStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), from_chat_id := integer(), from_story_id := integer(), active_period := integer(), post_to_chat_page => boolean(), protect_content => boolean()}) -> Result :: result('Story'()).
 repostStory(Pool, Req) -> repostStory(Pool, Req, false).
 
 
@@ -7134,14 +7729,18 @@ Returns Story on success.
   * `story_id` - Unique identifier of the story to edit
   * `content` - Content of the story
   * `caption` - Caption of the story, 0-2048 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the story caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the story caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
   * `areas` - A JSON-serialized list of clickable areas to be shown on the story
 """.
 -doc (#{group=><<"Story">>,since=><<"9.0">>}).
--spec editStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer(), content := 'InputStoryContent'(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'())}, Async :: boolean()) -> Result :: result('Story'()).
-editStory(Pool, #{business_connection_id:=_,story_id:=_,content:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editStory">>, Req, Async}).
--doc (#{equiv=>editStory(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+-spec editStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer(), content := 'InputStoryContent'(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'()), file_attach_name() => multipart_file()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Story'()).
+editStory(Pool, #{business_connection_id:=_,story_id:=_,content:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"editStory">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Story">>,equiv=>editStory(Pool, Req, Async, 5000),since=><<"9.0">>}).
+-spec editStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer(), content := 'InputStoryContent'(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'()), file_attach_name() => multipart_file()}, Async :: boolean()) -> Result :: result('Story'()).
+editStory(Pool, Req, Async) -> editStory(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Story">>,equiv=>editStory(Pool, Req, false),since=><<"9.0">>}).
+-spec editStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer(), content := 'InputStoryContent'(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), areas => nonempty_list('StoryArea'()), file_attach_name() => multipart_file()}) -> Result :: result('Story'()).
 editStory(Pool, Req) -> editStory(Pool, Req, false).
 
 
@@ -7154,74 +7753,90 @@ Returns True on success.
   * `story_id` - Unique identifier of the story to delete
 """.
 -doc (#{group=><<"Story">>,since=><<"9.0">>}).
+-spec deleteStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteStory(Pool, #{business_connection_id:=_,story_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteStory">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Story">>,equiv=>deleteStory(Pool, Req, Async, 5000),since=><<"9.0">>}).
 -spec deleteStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer()}, Async :: boolean()) -> Result :: result(true).
-deleteStory(Pool, #{business_connection_id:=_,story_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteStory">>, Req, Async}).
--doc (#{equiv=>deleteStory(Pool, Req, false),since=><<"9.0">>,group=><<"Sync Request">>}).
+deleteStory(Pool, Req, Async) -> deleteStory(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Story">>,equiv=>deleteStory(Pool, Req, false),since=><<"9.0">>}).
+-spec deleteStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer()}) -> Result :: result(true).
 deleteStory(Pool, Req) -> deleteStory(Pool, Req, false).
 
 
 -doc """
 Use this method to edit text and game messages.  
 On success, if the edited message is not an inline message, the edited Message is returned, otherwise True is returned.  
-Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48 hours from the time they were sent.
+Note that business messages that were not sent by the bot and do not contain an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) can only be edited within 48 hours from the time they were sent.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message to be edited was sent
   * `chat_id` - Required if inline_message_id is not specified. Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_id` - Required if inline_message_id is not specified. Identifier of the message to edit
   * `inline_message_id` - Required if chat_id and message_id are not specified. Identifier of the inline message
   * `text` - New text of the message, 1-4096 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the message text. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the message text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `entities` - A JSON-serialized list of special entities that appear in message text, which can be specified instead of parse_mode
   * `link_preview_options` - Link preview generation options for the message
-  * `reply_markup` - A JSON-serialized object for an inline keyboard.
+  * `reply_markup` - A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).
 """.
 -doc (#{group=><<"Message">>,since=><<"2.0">>}).
+-spec editMessageText(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'()), link_preview_options => 'LinkPreviewOptions'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true | 'Message'()).
+editMessageText(Pool, #{text:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editMessageText">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>editMessageText(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec editMessageText(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'()), link_preview_options => 'LinkPreviewOptions'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
-editMessageText(Pool, #{text:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editMessageText">>, Req, Async}).
--doc (#{equiv=>editMessageText(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+editMessageText(Pool, Req, Async) -> editMessageText(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>editMessageText(Pool, Req, false),since=><<"2.0">>}).
+-spec editMessageText(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), text := binary(), parse_mode => binary(), entities => nonempty_list('MessageEntity'()), link_preview_options => 'LinkPreviewOptions'(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result(true | 'Message'()).
 editMessageText(Pool, Req) -> editMessageText(Pool, Req, false).
 
 
 -doc """
 Use this method to edit captions of messages.  
 On success, if the edited message is not an inline message, the edited Message is returned, otherwise True is returned.  
-Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48 hours from the time they were sent.
+Note that business messages that were not sent by the bot and do not contain an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) can only be edited within 48 hours from the time they were sent.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message to be edited was sent
   * `chat_id` - Required if inline_message_id is not specified. Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_id` - Required if inline_message_id is not specified. Identifier of the message to edit
   * `inline_message_id` - Required if chat_id and message_id are not specified. Identifier of the inline message
   * `caption` - New caption of the message, 0-1024 characters after entities parsing
-  * `parse_mode` - Mode for parsing entities in the message caption. See formatting options for more details.
+  * `parse_mode` - Mode for parsing entities in the message caption. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `caption_entities` - A JSON-serialized list of special entities that appear in the caption, which can be specified instead of parse_mode
-  * `show_caption_above_media` - Pass True, if the caption must be shown above the message media. Supported only for animation, photo and video messages.
-  * `reply_markup` - A JSON-serialized object for an inline keyboard.
+  * `show_caption_above_media` - Pass True, if the caption must be shown above the message media. Supported only for animation, photo and [video message](https://telegram.org/blog/video-messages-and-telescope)s.
+  * `reply_markup` - A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).
 """.
 -doc (#{group=><<"Message">>,since=><<"2.0">>}).
+-spec editMessageCaption(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true | 'Message'()).
+editMessageCaption(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editMessageCaption">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>editMessageCaption(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec editMessageCaption(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
-editMessageCaption(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"editMessageCaption">>, Req, Async}).
--doc (#{equiv=>editMessageCaption(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+editMessageCaption(Pool, Req, Async) -> editMessageCaption(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>editMessageCaption(Pool, Req, false),since=><<"2.0">>}).
+-spec editMessageCaption(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), caption => binary(), parse_mode => binary(), caption_entities => nonempty_list('MessageEntity'()), show_caption_above_media => boolean(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result(true | 'Message'()).
 editMessageCaption(Pool, Req) -> editMessageCaption(Pool, Req, false).
 
 
 -doc """
-Use this method to edit animation, audio, document, photo, or video messages, or to add media to text messages.  
+Use this method to edit animation, audio, document, photo, or [video message](https://telegram.org/blog/video-messages-and-telescope)s, or to add media to text messages.  
 If a message is part of a message album, then it can be edited only to an audio for audio albums, only to a document for document albums and to a photo or a video otherwise.  
 When an inline message is edited, a new file can't be uploaded; use a previously uploaded file via its file_id or specify a URL.  
 On success, if the edited message is not an inline message, the edited Message is returned, otherwise True is returned.  
-Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48 hours from the time they were sent.
+Note that business messages that were not sent by the bot and do not contain an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) can only be edited within 48 hours from the time they were sent.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message to be edited was sent
   * `chat_id` - Required if inline_message_id is not specified. Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_id` - Required if inline_message_id is not specified. Identifier of the message to edit
   * `inline_message_id` - Required if chat_id and message_id are not specified. Identifier of the inline message
   * `media` - A JSON-serialized object for a new media content of the message
-  * `reply_markup` - A JSON-serialized object for a new inline keyboard.
+  * `reply_markup` - A JSON-serialized object for a new [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).
 """.
 -doc (#{group=><<"Message">>,since=><<"4.0">>}).
--spec editMessageMedia(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), media := 'InputMedia'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
-editMessageMedia(Pool, #{media:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editMessageMedia">>, Req, Async}).
--doc (#{equiv=>editMessageMedia(Pool, Req, false),since=><<"4.0">>,group=><<"Sync Request">>}).
+-spec editMessageMedia(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), media := 'InputMedia'(), reply_markup => 'InlineKeyboardMarkup'(), file_attach_name() => multipart_file()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true | 'Message'()).
+editMessageMedia(Pool, #{media:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"editMessageMedia">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>editMessageMedia(Pool, Req, Async, 5000),since=><<"4.0">>}).
+-spec editMessageMedia(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), media := 'InputMedia'(), reply_markup => 'InlineKeyboardMarkup'(), file_attach_name() => multipart_file()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
+editMessageMedia(Pool, Req, Async) -> editMessageMedia(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>editMessageMedia(Pool, Req, false),since=><<"4.0">>}).
+-spec editMessageMedia(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), media := 'InputMedia'(), reply_markup => 'InlineKeyboardMarkup'(), file_attach_name() => multipart_file()}) -> Result :: result(true | 'Message'()).
 editMessageMedia(Pool, Req) -> editMessageMedia(Pool, Req, false).
 
 
@@ -7240,12 +7855,16 @@ On success, if the edited message is not an inline message, the edited Message i
   * `horizontal_accuracy` - The radius of uncertainty for the location, measured in meters; 0-1500
   * `heading` - Direction in which the user is moving, in degrees. Must be between 1 and 360 if specified.
   * `proximity_alert_radius` - The maximum distance for proximity alerts about approaching another chat member, in meters. Must be between 1 and 100000 if specified.
-  * `reply_markup` - A JSON-serialized object for a new inline keyboard.
+  * `reply_markup` - A JSON-serialized object for a new [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).
 """.
 -doc (#{group=><<"Message">>,since=><<"3.4">>}).
+-spec editMessageLiveLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), latitude := float(), longitude := float(), live_period => integer(), horizontal_accuracy => float(), heading => integer(), proximity_alert_radius => integer(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true | 'Message'()).
+editMessageLiveLocation(Pool, #{latitude:=_,longitude:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editMessageLiveLocation">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>editMessageLiveLocation(Pool, Req, Async, 5000),since=><<"3.4">>}).
 -spec editMessageLiveLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), latitude := float(), longitude := float(), live_period => integer(), horizontal_accuracy => float(), heading => integer(), proximity_alert_radius => integer(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
-editMessageLiveLocation(Pool, #{latitude:=_,longitude:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editMessageLiveLocation">>, Req, Async}).
--doc (#{equiv=>editMessageLiveLocation(Pool, Req, false),since=><<"3.4">>,group=><<"Sync Request">>}).
+editMessageLiveLocation(Pool, Req, Async) -> editMessageLiveLocation(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>editMessageLiveLocation(Pool, Req, false),since=><<"3.4">>}).
+-spec editMessageLiveLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), latitude := float(), longitude := float(), live_period => integer(), horizontal_accuracy => float(), heading => integer(), proximity_alert_radius => integer(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result(true | 'Message'()).
 editMessageLiveLocation(Pool, Req) -> editMessageLiveLocation(Pool, Req, false).
 
 
@@ -7257,12 +7876,16 @@ On success, if the message is not an inline message, the edited Message is retur
   * `chat_id` - Required if inline_message_id is not specified. Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_id` - Required if inline_message_id is not specified. Identifier of the message with live location to stop
   * `inline_message_id` - Required if chat_id and message_id are not specified. Identifier of the inline message
-  * `reply_markup` - A JSON-serialized object for a new inline keyboard.
+  * `reply_markup` - A JSON-serialized object for a new [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).
 """.
 -doc (#{group=><<"Message">>,since=><<"3.4">>}).
+-spec stopMessageLiveLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true | 'Message'()).
+stopMessageLiveLocation(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"stopMessageLiveLocation">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>stopMessageLiveLocation(Pool, Req, Async, 5000),since=><<"3.4">>}).
 -spec stopMessageLiveLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
-stopMessageLiveLocation(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"stopMessageLiveLocation">>, Req, Async}).
--doc (#{equiv=>stopMessageLiveLocation(Pool, Req, false),since=><<"3.4">>,group=><<"Sync Request">>}).
+stopMessageLiveLocation(Pool, Req, Async) -> stopMessageLiveLocation(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>stopMessageLiveLocation(Pool, Req, false),since=><<"3.4">>}).
+-spec stopMessageLiveLocation(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result(true | 'Message'()).
 stopMessageLiveLocation(Pool, Req) -> stopMessageLiveLocation(Pool, Req, false).
 
 
@@ -7274,30 +7897,38 @@ On success, the edited Message is returned.
   * `chat_id` - Unique identifier for the target chat
   * `message_id` - Unique identifier for the target message
   * `checklist` - A JSON-serialized object for the new checklist
-  * `reply_markup` - A JSON-serialized object for the new inline keyboard for the message
+  * `reply_markup` - A JSON-serialized object for the new [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) for the message
 """.
 -doc (#{group=><<"Message">>,since=><<"9.1">>}).
+-spec editMessageChecklist(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), message_id := integer(), checklist := 'InputChecklist'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+editMessageChecklist(Pool, #{business_connection_id:=_,chat_id:=_,message_id:=_,checklist:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editMessageChecklist">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>editMessageChecklist(Pool, Req, Async, 5000),since=><<"9.1">>}).
 -spec editMessageChecklist(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), message_id := integer(), checklist := 'InputChecklist'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result('Message'()).
-editMessageChecklist(Pool, #{business_connection_id:=_,chat_id:=_,message_id:=_,checklist:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editMessageChecklist">>, Req, Async}).
--doc (#{equiv=>editMessageChecklist(Pool, Req, false),since=><<"9.1">>,group=><<"Sync Request">>}).
+editMessageChecklist(Pool, Req, Async) -> editMessageChecklist(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>editMessageChecklist(Pool, Req, false),since=><<"9.1">>}).
+-spec editMessageChecklist(Pool :: pool_name(), Req :: #{business_connection_id := binary(), chat_id := integer(), message_id := integer(), checklist := 'InputChecklist'(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result('Message'()).
 editMessageChecklist(Pool, Req) -> editMessageChecklist(Pool, Req, false).
 
 
 -doc """
 Use this method to edit only the reply markup of messages.  
 On success, if the edited message is not an inline message, the edited Message is returned, otherwise True is returned.  
-Note that business messages that were not sent by the bot and do not contain an inline keyboard can only be edited within 48 hours from the time they were sent.
+Note that business messages that were not sent by the bot and do not contain an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) can only be edited within 48 hours from the time they were sent.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message to be edited was sent
   * `chat_id` - Required if inline_message_id is not specified. Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_id` - Required if inline_message_id is not specified. Identifier of the message to edit
   * `inline_message_id` - Required if chat_id and message_id are not specified. Identifier of the inline message
-  * `reply_markup` - A JSON-serialized object for an inline keyboard.
+  * `reply_markup` - A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).
 """.
 -doc (#{group=><<"Message">>,since=><<"2.0">>}).
+-spec editMessageReplyMarkup(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true | 'Message'()).
+editMessageReplyMarkup(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editMessageReplyMarkup">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>editMessageReplyMarkup(Pool, Req, Async, 5000),since=><<"2.0">>}).
 -spec editMessageReplyMarkup(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
-editMessageReplyMarkup(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"editMessageReplyMarkup">>, Req, Async}).
--doc (#{equiv=>editMessageReplyMarkup(Pool, Req, false),since=><<"2.0">>,group=><<"Sync Request">>}).
+editMessageReplyMarkup(Pool, Req, Async) -> editMessageReplyMarkup(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>editMessageReplyMarkup(Pool, Req, false),since=><<"2.0">>}).
+-spec editMessageReplyMarkup(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id => integer() | binary(), message_id => integer(), inline_message_id => binary(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result(true | 'Message'()).
 editMessageReplyMarkup(Pool, Req) -> editMessageReplyMarkup(Pool, Req, false).
 
 
@@ -7308,12 +7939,16 @@ On success, the stopped Poll is returned.
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message to be edited was sent
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_id` - Identifier of the original message with the poll
-  * `reply_markup` - A JSON-serialized object for a new message inline keyboard.
+  * `reply_markup` - A JSON-serialized object for a new message [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards).
 """.
 -doc (#{group=><<"Message">>,since=><<"4.2">>}).
+-spec stopPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id := integer(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Poll'()).
+stopPoll(Pool, #{chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"stopPoll">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>stopPoll(Pool, Req, Async, 5000),since=><<"4.2">>}).
 -spec stopPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id := integer(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result('Poll'()).
-stopPoll(Pool, #{chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"stopPoll">>, Req, Async}).
--doc (#{equiv=>stopPoll(Pool, Req, false),since=><<"4.2">>,group=><<"Sync Request">>}).
+stopPoll(Pool, Req, Async) -> stopPoll(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>stopPoll(Pool, Req, false),since=><<"4.2">>}).
+-spec stopPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_id := integer(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result('Poll'()).
 stopPoll(Pool, Req) -> stopPoll(Pool, Req, false).
 
 
@@ -7327,9 +7962,13 @@ Returns True on success.
   * `send_date` - Point in time (Unix timestamp) when the post is expected to be published; omit if the date has already been specified when the suggested post was created. If specified, then the date must be not more than 2678400 seconds (30 days) in the future
 """.
 -doc (#{group=><<"Message">>,since=><<"9.2">>}).
+-spec approveSuggestedPost(Pool :: pool_name(), Req :: #{chat_id := integer(), message_id := integer(), send_date => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+approveSuggestedPost(Pool, #{chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"approveSuggestedPost">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>approveSuggestedPost(Pool, Req, Async, 5000),since=><<"9.2">>}).
 -spec approveSuggestedPost(Pool :: pool_name(), Req :: #{chat_id := integer(), message_id := integer(), send_date => integer()}, Async :: boolean()) -> Result :: result(true).
-approveSuggestedPost(Pool, #{chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"approveSuggestedPost">>, Req, Async}).
--doc (#{equiv=>approveSuggestedPost(Pool, Req, false),since=><<"9.2">>,group=><<"Sync Request">>}).
+approveSuggestedPost(Pool, Req, Async) -> approveSuggestedPost(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>approveSuggestedPost(Pool, Req, false),since=><<"9.2">>}).
+-spec approveSuggestedPost(Pool :: pool_name(), Req :: #{chat_id := integer(), message_id := integer(), send_date => integer()}) -> Result :: result(true).
 approveSuggestedPost(Pool, Req) -> approveSuggestedPost(Pool, Req, false).
 
 
@@ -7343,9 +7982,13 @@ Returns True on success.
   * `comment` - Comment for the creator of the suggested post; 0-128 characters
 """.
 -doc (#{group=><<"Message">>,since=><<"9.2">>}).
+-spec declineSuggestedPost(Pool :: pool_name(), Req :: #{chat_id := integer(), message_id := integer(), comment => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+declineSuggestedPost(Pool, #{chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"declineSuggestedPost">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>declineSuggestedPost(Pool, Req, Async, 5000),since=><<"9.2">>}).
 -spec declineSuggestedPost(Pool :: pool_name(), Req :: #{chat_id := integer(), message_id := integer(), comment => binary()}, Async :: boolean()) -> Result :: result(true).
-declineSuggestedPost(Pool, #{chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"declineSuggestedPost">>, Req, Async}).
--doc (#{equiv=>declineSuggestedPost(Pool, Req, false),since=><<"9.2">>,group=><<"Sync Request">>}).
+declineSuggestedPost(Pool, Req, Async) -> declineSuggestedPost(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>declineSuggestedPost(Pool, Req, false),since=><<"9.2">>}).
+-spec declineSuggestedPost(Pool :: pool_name(), Req :: #{chat_id := integer(), message_id := integer(), comment => binary()}) -> Result :: result(true).
 declineSuggestedPost(Pool, Req) -> declineSuggestedPost(Pool, Req, false).
 
 
@@ -7366,9 +8009,13 @@ Returns True on success.
   * `message_id` - Identifier of the message to delete
 """.
 -doc (#{group=><<"Message">>,since=><<"3.0">>}).
+-spec deleteMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteMessage(Pool, #{chat_id:=_,message_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>deleteMessage(Pool, Req, Async, 5000),since=><<"3.0">>}).
 -spec deleteMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_id := integer()}, Async :: boolean()) -> Result :: result(true).
-deleteMessage(Pool, #{chat_id:=_,message_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteMessage">>, Req, Async}).
--doc (#{equiv=>deleteMessage(Pool, Req, false),since=><<"3.0">>,group=><<"Sync Request">>}).
+deleteMessage(Pool, Req, Async) -> deleteMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>deleteMessage(Pool, Req, false),since=><<"3.0">>}).
+-spec deleteMessage(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_id := integer()}) -> Result :: result(true).
 deleteMessage(Pool, Req) -> deleteMessage(Pool, Req, false).
 
 
@@ -7381,34 +8028,42 @@ Returns True on success.
   * `message_ids` - A JSON-serialized list of 1-100 identifiers of messages to delete. See deleteMessage for limitations on which messages can be deleted
 """.
 -doc (#{group=><<"Message">>,since=><<"7.0">>}).
+-spec deleteMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_ids := nonempty_list(integer())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteMessages(Pool, #{chat_id:=_,message_ids:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteMessages">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>deleteMessages(Pool, Req, Async, 5000),since=><<"7.0">>}).
 -spec deleteMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_ids := nonempty_list(integer())}, Async :: boolean()) -> Result :: result(true).
-deleteMessages(Pool, #{chat_id:=_,message_ids:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteMessages">>, Req, Async}).
--doc (#{equiv=>deleteMessages(Pool, Req, false),since=><<"7.0">>,group=><<"Sync Request">>}).
+deleteMessages(Pool, Req, Async) -> deleteMessages(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>deleteMessages(Pool, Req, false),since=><<"7.0">>}).
+-spec deleteMessages(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_ids := nonempty_list(integer())}) -> Result :: result(true).
 deleteMessages(Pool, Req) -> deleteMessages(Pool, Req, false).
 
 
 -doc """
-Use this method to send static .WEBP, animated .TGS, or video .WEBM stickers.  
+Use this method to send static .WEBP, [animated](https://telegram.org/blog/animated-stickers) .TGS, or video .WEBM stickers.  
 On success, the sent Message is returned.
 ## Parameters
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message will be sent
   * `chat_id` - Unique identifier for the target chat or username of the target channel (in the format @channelusername)
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
   * `direct_messages_topic_id` - Identifier of the direct messages topic to which the message will be sent; required if the message is sent to a direct messages chat
-  * `sticker` - Sticker to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a .WEBP sticker from the Internet, or upload a new .WEBP, .TGS, or .WEBM sticker using multipart/form-data. More information on Sending Files ». Video and animated stickers can't be sent via an HTTP URL.
+  * `sticker` - Sticker to send. Pass a file_id as String to send a file that exists on the Telegram servers (recommended), pass an HTTP URL as a String for Telegram to get a .WEBP sticker from the Internet, or upload a new .WEBP, .TGS, or .WEBM sticker using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files). Video and [animated](https://telegram.org/blog/animated-stickers) stickers can't be sent via an HTTP URL.
   * `emoji` - Emoji associated with the sticker; only for just uploaded stickers
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - Additional interface options. A JSON-serialized object for an inline keyboard, custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
+  * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Sticker">>,since=><<"4.4">>}).
+-spec sendSticker(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), sticker := 'InputFile'() | binary(), emoji => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendSticker(Pool, #{chat_id:=_,sticker:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"sendSticker">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>sendSticker(Pool, Req, Async, 5000),since=><<"4.4">>}).
 -spec sendSticker(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), sticker := 'InputFile'() | binary(), emoji => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendSticker(Pool, #{chat_id:=_,sticker:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"sendSticker">>, Req, Async}).
--doc (#{equiv=>sendSticker(Pool, Req, false),since=><<"4.4">>,group=><<"Sync Request">>}).
+sendSticker(Pool, Req, Async) -> sendSticker(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>sendSticker(Pool, Req, false),since=><<"4.4">>}).
+-spec sendSticker(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), sticker := 'InputFile'() | binary(), emoji => binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendSticker(Pool, Req) -> sendSticker(Pool, Req, false).
 
 
@@ -7419,9 +8074,13 @@ On success, a StickerSet object is returned.
   * `name` - Name of the sticker set
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.2">>}).
+-spec getStickerSet(Pool :: pool_name(), Req :: #{name := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('StickerSet'()).
+getStickerSet(Pool, #{name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getStickerSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>getStickerSet(Pool, Req, Async, 5000),since=><<"3.2">>}).
 -spec getStickerSet(Pool :: pool_name(), Req :: #{name := binary()}, Async :: boolean()) -> Result :: result('StickerSet'()).
-getStickerSet(Pool, #{name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getStickerSet">>, Req, Async}).
--doc (#{equiv=>getStickerSet(Pool, Req, false),since=><<"3.2">>,group=><<"Sync Request">>}).
+getStickerSet(Pool, Req, Async) -> getStickerSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>getStickerSet(Pool, Req, false),since=><<"3.2">>}).
+-spec getStickerSet(Pool :: pool_name(), Req :: #{name := binary()}) -> Result :: result('StickerSet'()).
 getStickerSet(Pool, Req) -> getStickerSet(Pool, Req, false).
 
 
@@ -7432,9 +8091,13 @@ Returns an Array of Sticker objects.
   * `custom_emoji_ids` - A JSON-serialized list of custom emoji identifiers. At most 200 custom emoji identifiers can be specified.
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.2">>}).
+-spec getCustomEmojiStickers(Pool :: pool_name(), Req :: #{custom_emoji_ids := nonempty_list(binary())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('Sticker'())).
+getCustomEmojiStickers(Pool, #{custom_emoji_ids:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getCustomEmojiStickers">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>getCustomEmojiStickers(Pool, Req, Async, 5000),since=><<"6.2">>}).
 -spec getCustomEmojiStickers(Pool :: pool_name(), Req :: #{custom_emoji_ids := nonempty_list(binary())}, Async :: boolean()) -> Result :: result(nonempty_list('Sticker'())).
-getCustomEmojiStickers(Pool, #{custom_emoji_ids:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getCustomEmojiStickers">>, Req, Async}).
--doc (#{equiv=>getCustomEmojiStickers(Pool, Req, false),since=><<"6.2">>,group=><<"Sync Request">>}).
+getCustomEmojiStickers(Pool, Req, Async) -> getCustomEmojiStickers(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>getCustomEmojiStickers(Pool, Req, false),since=><<"6.2">>}).
+-spec getCustomEmojiStickers(Pool :: pool_name(), Req :: #{custom_emoji_ids := nonempty_list(binary())}) -> Result :: result(nonempty_list('Sticker'())).
 getCustomEmojiStickers(Pool, Req) -> getCustomEmojiStickers(Pool, Req, false).
 
 
@@ -7443,13 +8106,17 @@ Use this method to upload a file with a sticker for later use in the createNewSt
 Returns the uploaded File on success.
 ## Parameters
   * `user_id` - User identifier of sticker file owner
-  * `sticker` - A file with the sticker in .WEBP, .PNG, .TGS, or .WEBM format. See https://core.telegram.org/stickers for technical requirements. More information on Sending Files »
-  * `sticker_format` - Format of the sticker, must be one of “static”, “animated”, “video”
+  * `sticker` - A file with the sticker in .WEBP, .PNG, .TGS, or .WEBM format. See [https://core.telegram.org/stickers](https://core.telegram.org/stickers) for technical requirements. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files)
+  * `sticker_format` - Format of the sticker, must be one of `static`, `[animated](https://telegram.org/blog/animated-stickers)`, `video`
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.2">>}).
+-spec uploadStickerFile(Pool :: pool_name(), Req :: #{user_id := integer(), sticker := 'InputFile'(), sticker_format := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('File'()).
+uploadStickerFile(Pool, #{user_id:=_,sticker:=_,sticker_format:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"uploadStickerFile">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>uploadStickerFile(Pool, Req, Async, 5000),since=><<"3.2">>}).
 -spec uploadStickerFile(Pool :: pool_name(), Req :: #{user_id := integer(), sticker := 'InputFile'(), sticker_format := binary()}, Async :: boolean()) -> Result :: result('File'()).
-uploadStickerFile(Pool, #{user_id:=_,sticker:=_,sticker_format:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"uploadStickerFile">>, Req, Async}).
--doc (#{equiv=>uploadStickerFile(Pool, Req, false),since=><<"3.2">>,group=><<"Sync Request">>}).
+uploadStickerFile(Pool, Req, Async) -> uploadStickerFile(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>uploadStickerFile(Pool, Req, false),since=><<"3.2">>}).
+-spec uploadStickerFile(Pool :: pool_name(), Req :: #{user_id := integer(), sticker := 'InputFile'(), sticker_format := binary()}) -> Result :: result('File'()).
 uploadStickerFile(Pool, Req) -> uploadStickerFile(Pool, Req, false).
 
 
@@ -7462,13 +8129,17 @@ Returns True on success.
   * `name` - Short name of sticker set, to be used in t.me/addstickers/ URLs (e.g., animals). Can contain only English letters, digits and underscores. Must begin with a letter, can't contain consecutive underscores and must end in _by_<bot_username>. <bot_username> is case insensitive. 1-64 characters.
   * `title` - Sticker set title, 1-64 characters
   * `stickers` - A JSON-serialized list of 1-50 initial stickers to be added to the sticker set
-  * `sticker_type` - Type of stickers in the set, pass “regular”, “mask”, or “custom_emoji”. By default, a regular sticker set is created.
+  * `sticker_type` - Type of stickers in the set, pass `regular`, `mask`, or `custom_emoji`. By default, a regular sticker set is created.
   * `needs_repainting` - Pass True if stickers in the sticker set must be repainted to the color of text when used in messages, the accent color if used as emoji status, white on chat photos, or another appropriate color based on context; for custom emoji sticker sets only
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.2">>}).
+-spec createNewStickerSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), title := binary(), stickers := nonempty_list('InputSticker'()), sticker_type => binary(), needs_repainting => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+createNewStickerSet(Pool, #{user_id:=_,name:=_,title:=_,stickers:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"createNewStickerSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>createNewStickerSet(Pool, Req, Async, 5000),since=><<"3.2">>}).
 -spec createNewStickerSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), title := binary(), stickers := nonempty_list('InputSticker'()), sticker_type => binary(), needs_repainting => boolean()}, Async :: boolean()) -> Result :: result(true).
-createNewStickerSet(Pool, #{user_id:=_,name:=_,title:=_,stickers:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"createNewStickerSet">>, Req, Async}).
--doc (#{equiv=>createNewStickerSet(Pool, Req, false),since=><<"3.2">>,group=><<"Sync Request">>}).
+createNewStickerSet(Pool, Req, Async) -> createNewStickerSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>createNewStickerSet(Pool, Req, false),since=><<"3.2">>}).
+-spec createNewStickerSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), title := binary(), stickers := nonempty_list('InputSticker'()), sticker_type => binary(), needs_repainting => boolean()}) -> Result :: result(true).
 createNewStickerSet(Pool, Req) -> createNewStickerSet(Pool, Req, false).
 
 
@@ -7483,9 +8154,13 @@ Returns True on success.
   * `sticker` - A JSON-serialized object with information about the added sticker. If exactly the same sticker had already been added to the set, then the set isn't changed.
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.2">>}).
--spec addStickerToSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), sticker := 'InputSticker'()}, Async :: boolean()) -> Result :: result(true).
-addStickerToSet(Pool, #{user_id:=_,name:=_,sticker:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"addStickerToSet">>, Req, Async}).
--doc (#{equiv=>addStickerToSet(Pool, Req, false),since=><<"3.2">>,group=><<"Sync Request">>}).
+-spec addStickerToSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), sticker := 'InputSticker'(), file_attach_name() => multipart_file()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+addStickerToSet(Pool, #{user_id:=_,name:=_,sticker:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"addStickerToSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>addStickerToSet(Pool, Req, Async, 5000),since=><<"3.2">>}).
+-spec addStickerToSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), sticker := 'InputSticker'(), file_attach_name() => multipart_file()}, Async :: boolean()) -> Result :: result(true).
+addStickerToSet(Pool, Req, Async) -> addStickerToSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>addStickerToSet(Pool, Req, false),since=><<"3.2">>}).
+-spec addStickerToSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), sticker := 'InputSticker'(), file_attach_name() => multipart_file()}) -> Result :: result(true).
 addStickerToSet(Pool, Req) -> addStickerToSet(Pool, Req, false).
 
 
@@ -7497,9 +8172,13 @@ Returns True on success.
   * `position` - New sticker position in the set, zero-based
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.2">>}).
+-spec setStickerPositionInSet(Pool :: pool_name(), Req :: #{sticker := binary(), position := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setStickerPositionInSet(Pool, #{sticker:=_,position:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setStickerPositionInSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerPositionInSet(Pool, Req, Async, 5000),since=><<"3.2">>}).
 -spec setStickerPositionInSet(Pool :: pool_name(), Req :: #{sticker := binary(), position := integer()}, Async :: boolean()) -> Result :: result(true).
-setStickerPositionInSet(Pool, #{sticker:=_,position:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setStickerPositionInSet">>, Req, Async}).
--doc (#{equiv=>setStickerPositionInSet(Pool, Req, false),since=><<"3.2">>,group=><<"Sync Request">>}).
+setStickerPositionInSet(Pool, Req, Async) -> setStickerPositionInSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerPositionInSet(Pool, Req, false),since=><<"3.2">>}).
+-spec setStickerPositionInSet(Pool :: pool_name(), Req :: #{sticker := binary(), position := integer()}) -> Result :: result(true).
 setStickerPositionInSet(Pool, Req) -> setStickerPositionInSet(Pool, Req, false).
 
 
@@ -7510,9 +8189,13 @@ Returns True on success.
   * `sticker` - File identifier of the sticker
 """.
 -doc (#{group=><<"Sticker">>,since=><<"3.2">>}).
+-spec deleteStickerFromSet(Pool :: pool_name(), Req :: #{sticker := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteStickerFromSet(Pool, #{sticker:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteStickerFromSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>deleteStickerFromSet(Pool, Req, Async, 5000),since=><<"3.2">>}).
 -spec deleteStickerFromSet(Pool :: pool_name(), Req :: #{sticker := binary()}, Async :: boolean()) -> Result :: result(true).
-deleteStickerFromSet(Pool, #{sticker:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteStickerFromSet">>, Req, Async}).
--doc (#{equiv=>deleteStickerFromSet(Pool, Req, false),since=><<"3.2">>,group=><<"Sync Request">>}).
+deleteStickerFromSet(Pool, Req, Async) -> deleteStickerFromSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>deleteStickerFromSet(Pool, Req, false),since=><<"3.2">>}).
+-spec deleteStickerFromSet(Pool :: pool_name(), Req :: #{sticker := binary()}) -> Result :: result(true).
 deleteStickerFromSet(Pool, Req) -> deleteStickerFromSet(Pool, Req, false).
 
 
@@ -7527,9 +8210,13 @@ Returns True on success.
   * `sticker` - A JSON-serialized object with information about the added sticker. If exactly the same sticker had already been added to the set, then the set remains unchanged.
 """.
 -doc (#{group=><<"Sticker">>,since=><<"7.2">>}).
--spec replaceStickerInSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), old_sticker := binary(), sticker := 'InputSticker'()}, Async :: boolean()) -> Result :: result(true).
-replaceStickerInSet(Pool, #{user_id:=_,name:=_,old_sticker:=_,sticker:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"replaceStickerInSet">>, Req, Async}).
--doc (#{equiv=>replaceStickerInSet(Pool, Req, false),since=><<"7.2">>,group=><<"Sync Request">>}).
+-spec replaceStickerInSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), old_sticker := binary(), sticker := 'InputSticker'(), file_attach_name() => multipart_file()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+replaceStickerInSet(Pool, #{user_id:=_,name:=_,old_sticker:=_,sticker:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"replaceStickerInSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>replaceStickerInSet(Pool, Req, Async, 5000),since=><<"7.2">>}).
+-spec replaceStickerInSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), old_sticker := binary(), sticker := 'InputSticker'(), file_attach_name() => multipart_file()}, Async :: boolean()) -> Result :: result(true).
+replaceStickerInSet(Pool, Req, Async) -> replaceStickerInSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>replaceStickerInSet(Pool, Req, false),since=><<"7.2">>}).
+-spec replaceStickerInSet(Pool :: pool_name(), Req :: #{user_id := integer(), name := binary(), old_sticker := binary(), sticker := 'InputSticker'(), file_attach_name() => multipart_file()}) -> Result :: result(true).
 replaceStickerInSet(Pool, Req) -> replaceStickerInSet(Pool, Req, false).
 
 
@@ -7542,9 +8229,13 @@ Returns True on success.
   * `emoji_list` - A JSON-serialized list of 1-20 emoji associated with the sticker
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.6">>}).
+-spec setStickerEmojiList(Pool :: pool_name(), Req :: #{sticker := binary(), emoji_list := nonempty_list(binary())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setStickerEmojiList(Pool, #{sticker:=_,emoji_list:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setStickerEmojiList">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerEmojiList(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setStickerEmojiList(Pool :: pool_name(), Req :: #{sticker := binary(), emoji_list := nonempty_list(binary())}, Async :: boolean()) -> Result :: result(true).
-setStickerEmojiList(Pool, #{sticker:=_,emoji_list:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setStickerEmojiList">>, Req, Async}).
--doc (#{equiv=>setStickerEmojiList(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setStickerEmojiList(Pool, Req, Async) -> setStickerEmojiList(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerEmojiList(Pool, Req, false),since=><<"6.6">>}).
+-spec setStickerEmojiList(Pool :: pool_name(), Req :: #{sticker := binary(), emoji_list := nonempty_list(binary())}) -> Result :: result(true).
 setStickerEmojiList(Pool, Req) -> setStickerEmojiList(Pool, Req, false).
 
 
@@ -7557,24 +8248,32 @@ Returns True on success.
   * `keywords` - A JSON-serialized list of 0-20 search keywords for the sticker with total length of up to 64 characters
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.6">>}).
+-spec setStickerKeywords(Pool :: pool_name(), Req :: #{sticker := binary(), keywords => nonempty_list(binary())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setStickerKeywords(Pool, #{sticker:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setStickerKeywords">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerKeywords(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setStickerKeywords(Pool :: pool_name(), Req :: #{sticker := binary(), keywords => nonempty_list(binary())}, Async :: boolean()) -> Result :: result(true).
-setStickerKeywords(Pool, #{sticker:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setStickerKeywords">>, Req, Async}).
--doc (#{equiv=>setStickerKeywords(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setStickerKeywords(Pool, Req, Async) -> setStickerKeywords(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerKeywords(Pool, Req, false),since=><<"6.6">>}).
+-spec setStickerKeywords(Pool :: pool_name(), Req :: #{sticker := binary(), keywords => nonempty_list(binary())}) -> Result :: result(true).
 setStickerKeywords(Pool, Req) -> setStickerKeywords(Pool, Req, false).
 
 
 -doc """
-Use this method to change the mask position of a mask sticker.  
+Use this method to change the [mask position](https://core.telegram.org/bots/api#maskposition) of a mask sticker.  
 The sticker must belong to a sticker set that was created by the bot.  
 Returns True on success.
 ## Parameters
   * `sticker` - File identifier of the sticker
-  * `mask_position` - A JSON-serialized object with the position where the mask should be placed on faces. Omit the parameter to remove the mask position.
+  * `mask_position` - A JSON-serialized object with the position where the mask should be placed on faces. Omit the parameter to remove the [mask position](https://core.telegram.org/bots/api#maskposition).
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.6">>}).
+-spec setStickerMaskPosition(Pool :: pool_name(), Req :: #{sticker := binary(), mask_position => 'MaskPosition'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setStickerMaskPosition(Pool, #{sticker:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setStickerMaskPosition">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerMaskPosition(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setStickerMaskPosition(Pool :: pool_name(), Req :: #{sticker := binary(), mask_position => 'MaskPosition'()}, Async :: boolean()) -> Result :: result(true).
-setStickerMaskPosition(Pool, #{sticker:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setStickerMaskPosition">>, Req, Async}).
--doc (#{equiv=>setStickerMaskPosition(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setStickerMaskPosition(Pool, Req, Async) -> setStickerMaskPosition(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerMaskPosition(Pool, Req, false),since=><<"6.6">>}).
+-spec setStickerMaskPosition(Pool :: pool_name(), Req :: #{sticker := binary(), mask_position => 'MaskPosition'()}) -> Result :: result(true).
 setStickerMaskPosition(Pool, Req) -> setStickerMaskPosition(Pool, Req, false).
 
 
@@ -7586,9 +8285,13 @@ Returns True on success.
   * `title` - Sticker set title, 1-64 characters
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.6">>}).
+-spec setStickerSetTitle(Pool :: pool_name(), Req :: #{name := binary(), title := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setStickerSetTitle(Pool, #{name:=_,title:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setStickerSetTitle">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerSetTitle(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setStickerSetTitle(Pool :: pool_name(), Req :: #{name := binary(), title := binary()}, Async :: boolean()) -> Result :: result(true).
-setStickerSetTitle(Pool, #{name:=_,title:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setStickerSetTitle">>, Req, Async}).
--doc (#{equiv=>setStickerSetTitle(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setStickerSetTitle(Pool, Req, Async) -> setStickerSetTitle(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerSetTitle(Pool, Req, false),since=><<"6.6">>}).
+-spec setStickerSetTitle(Pool :: pool_name(), Req :: #{name := binary(), title := binary()}) -> Result :: result(true).
 setStickerSetTitle(Pool, Req) -> setStickerSetTitle(Pool, Req, false).
 
 
@@ -7599,13 +8302,17 @@ Returns True on success.
 ## Parameters
   * `name` - Sticker set name
   * `user_id` - User identifier of the sticker set owner
-  * `thumbnail` - A .WEBP or .PNG image with the thumbnail, must be up to 128 kilobytes in size and have a width and height of exactly 100px, or a .TGS animation with a thumbnail up to 32 kilobytes in size (see https://core.telegram.org/stickers#animation-requirements for animated sticker technical requirements), or a .WEBM video with the thumbnail up to 32 kilobytes in size; see https://core.telegram.org/stickers#video-requirements for video sticker technical requirements. Pass a file_id as a String to send a file that already exists on the Telegram servers, pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. More information on Sending Files ». Animated and video sticker set thumbnails can't be uploaded via HTTP URL. If omitted, then the thumbnail is dropped and the first sticker is used as the thumbnail.
-  * `format` - Format of the thumbnail, must be one of “static” for a .WEBP or .PNG image, “animated” for a .TGS animation, or “video” for a .WEBM video
+  * `thumbnail` - A .WEBP or .PNG image with the thumbnail, must be up to 128 kilobytes in size and have a width and height of exactly 100px, or a .TGS animation with a thumbnail up to 32 kilobytes in size (see [https://core.telegram.org/stickers#animation-requirements](https://core.telegram.org/stickers#animation-requirements) for [animated](https://telegram.org/blog/animated-stickers) sticker technical requirements), or a .WEBM video with the thumbnail up to 32 kilobytes in size; see [https://core.telegram.org/stickers](https://core.telegram.org/stickers)#video-requirements for [video sticker](https://telegram.org/blog/video-stickers-better-reactions) technical requirements. Pass a file_id as a String to send a file that already exists on the Telegram servers, pass an HTTP URL as a String for Telegram to get a file from the Internet, or upload a new one using multipart/form-data. [More information on Sending Files »](https://core.telegram.org/bots/api#sending-files). Animated and [video sticker](https://telegram.org/blog/video-stickers-better-reactions) set thumbnails can't be uploaded via HTTP URL. If omitted, then the thumbnail is dropped and the first sticker is used as the thumbnail.
+  * `format` - Format of the thumbnail, must be one of `static` for a .WEBP or .PNG image, `[animated](https://telegram.org/blog/animated-stickers)` for a .TGS animation, or `video` for a .WEBM video
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.6">>}).
+-spec setStickerSetThumbnail(Pool :: pool_name(), Req :: #{name := binary(), user_id := integer(), thumbnail => 'InputFile'() | binary(), format := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setStickerSetThumbnail(Pool, #{name:=_,user_id:=_,format:=_} = Req, Async, Timeout) ->wpool:call(Pool, {multipart, <<"setStickerSetThumbnail">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerSetThumbnail(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setStickerSetThumbnail(Pool :: pool_name(), Req :: #{name := binary(), user_id := integer(), thumbnail => 'InputFile'() | binary(), format := binary()}, Async :: boolean()) -> Result :: result(true).
-setStickerSetThumbnail(Pool, #{name:=_,user_id:=_,format:=_} = Req, Async) ->wpool:call(Pool, {multipart, <<"setStickerSetThumbnail">>, Req, Async}).
--doc (#{equiv=>setStickerSetThumbnail(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setStickerSetThumbnail(Pool, Req, Async) -> setStickerSetThumbnail(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setStickerSetThumbnail(Pool, Req, false),since=><<"6.6">>}).
+-spec setStickerSetThumbnail(Pool :: pool_name(), Req :: #{name := binary(), user_id := integer(), thumbnail => 'InputFile'() | binary(), format := binary()}) -> Result :: result(true).
 setStickerSetThumbnail(Pool, Req) -> setStickerSetThumbnail(Pool, Req, false).
 
 
@@ -7617,9 +8324,13 @@ Returns True on success.
   * `custom_emoji_id` - Custom emoji identifier of a sticker from the sticker set; pass an empty string to drop the thumbnail and use the first sticker as the thumbnail.
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.6">>}).
+-spec setCustomEmojiStickerSetThumbnail(Pool :: pool_name(), Req :: #{name := binary(), custom_emoji_id => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setCustomEmojiStickerSetThumbnail(Pool, #{name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setCustomEmojiStickerSetThumbnail">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>setCustomEmojiStickerSetThumbnail(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec setCustomEmojiStickerSetThumbnail(Pool :: pool_name(), Req :: #{name := binary(), custom_emoji_id => binary()}, Async :: boolean()) -> Result :: result(true).
-setCustomEmojiStickerSetThumbnail(Pool, #{name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setCustomEmojiStickerSetThumbnail">>, Req, Async}).
--doc (#{equiv=>setCustomEmojiStickerSetThumbnail(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+setCustomEmojiStickerSetThumbnail(Pool, Req, Async) -> setCustomEmojiStickerSetThumbnail(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>setCustomEmojiStickerSetThumbnail(Pool, Req, false),since=><<"6.6">>}).
+-spec setCustomEmojiStickerSetThumbnail(Pool :: pool_name(), Req :: #{name := binary(), custom_emoji_id => binary()}) -> Result :: result(true).
 setCustomEmojiStickerSetThumbnail(Pool, Req) -> setCustomEmojiStickerSetThumbnail(Pool, Req, false).
 
 
@@ -7630,9 +8341,13 @@ Returns True on success.
   * `name` - Sticker set name
 """.
 -doc (#{group=><<"Sticker">>,since=><<"6.6">>}).
+-spec deleteStickerSet(Pool :: pool_name(), Req :: #{name := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+deleteStickerSet(Pool, #{name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"deleteStickerSet">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Sticker">>,equiv=>deleteStickerSet(Pool, Req, Async, 5000),since=><<"6.6">>}).
 -spec deleteStickerSet(Pool :: pool_name(), Req :: #{name := binary()}, Async :: boolean()) -> Result :: result(true).
-deleteStickerSet(Pool, #{name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"deleteStickerSet">>, Req, Async}).
--doc (#{equiv=>deleteStickerSet(Pool, Req, false),since=><<"6.6">>,group=><<"Sync Request">>}).
+deleteStickerSet(Pool, Req, Async) -> deleteStickerSet(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Sticker">>,equiv=>deleteStickerSet(Pool, Req, false),since=><<"6.6">>}).
+-spec deleteStickerSet(Pool :: pool_name(), Req :: #{name := binary()}) -> Result :: result(true).
 deleteStickerSet(Pool, Req) -> deleteStickerSet(Pool, Req, false).
 
 
@@ -7649,23 +8364,31 @@ No more than 50 results per query are allowed.
   * `button` - A JSON-serialized object describing a button to be shown above inline query results
 """.
 -doc (#{group=><<"Inline Mode">>,since=><<"1.16">>}).
+-spec answerInlineQuery(Pool :: pool_name(), Req :: #{inline_query_id := binary(), results := nonempty_list('InlineQueryResult'()), cache_time => integer(), is_personal => boolean(), next_offset => binary(), button => 'InlineQueryResultsButton'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+answerInlineQuery(Pool, #{inline_query_id:=_,results:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"answerInlineQuery">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerInlineQuery(Pool, Req, Async, 5000),since=><<"1.16">>}).
 -spec answerInlineQuery(Pool :: pool_name(), Req :: #{inline_query_id := binary(), results := nonempty_list('InlineQueryResult'()), cache_time => integer(), is_personal => boolean(), next_offset => binary(), button => 'InlineQueryResultsButton'()}, Async :: boolean()) -> Result :: result(true).
-answerInlineQuery(Pool, #{inline_query_id:=_,results:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"answerInlineQuery">>, Req, Async}).
--doc (#{equiv=>answerInlineQuery(Pool, Req, false),since=><<"1.16">>,group=><<"Sync Request">>}).
+answerInlineQuery(Pool, Req, Async) -> answerInlineQuery(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerInlineQuery(Pool, Req, false),since=><<"1.16">>}).
+-spec answerInlineQuery(Pool :: pool_name(), Req :: #{inline_query_id := binary(), results := nonempty_list('InlineQueryResult'()), cache_time => integer(), is_personal => boolean(), next_offset => binary(), button => 'InlineQueryResultsButton'()}) -> Result :: result(true).
 answerInlineQuery(Pool, Req) -> answerInlineQuery(Pool, Req, false).
 
 
 -doc """
-Use this method to set the result of an interaction with a Web App and send a corresponding message on behalf of the user to the chat from which the query originated.  
+Use this method to set the result of an interaction with a [Web App](https://core.telegram.org/bots/webapps) and send a corresponding message on behalf of the user to the chat from which the query originated.  
 On success, a SentWebAppMessage object is returned.
 ## Parameters
   * `web_app_query_id` - Unique identifier for the query to be answered
   * `result` - A JSON-serialized object describing the message to be sent
 """.
 -doc (#{group=><<"Inline Mode">>,since=><<"6.0">>}).
+-spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('SentWebAppMessage'()).
+answerWebAppQuery(Pool, #{web_app_query_id:=_,result:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"answerWebAppQuery">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerWebAppQuery(Pool, Req, Async, 5000),since=><<"6.0">>}).
 -spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}, Async :: boolean()) -> Result :: result('SentWebAppMessage'()).
-answerWebAppQuery(Pool, #{web_app_query_id:=_,result:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"answerWebAppQuery">>, Req, Async}).
--doc (#{equiv=>answerWebAppQuery(Pool, Req, false),since=><<"6.0">>,group=><<"Sync Request">>}).
+answerWebAppQuery(Pool, Req, Async) -> answerWebAppQuery(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerWebAppQuery(Pool, Req, false),since=><<"6.0">>}).
+-spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}) -> Result :: result('SentWebAppMessage'()).
 answerWebAppQuery(Pool, Req) -> answerWebAppQuery(Pool, Req, false).
 
 
@@ -7681,9 +8404,13 @@ Returns a PreparedInlineMessage object.
   * `allow_channel_chats` - Pass True if the message can be sent to channel chats
 """.
 -doc (#{group=><<"Message">>,since=><<"8.0">>}).
+-spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('PreparedInlineMessage'()).
+savePreparedInlineMessage(Pool, #{user_id:=_,result:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"savePreparedInlineMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Message">>,equiv=>savePreparedInlineMessage(Pool, Req, Async, 5000),since=><<"8.0">>}).
 -spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}, Async :: boolean()) -> Result :: result('PreparedInlineMessage'()).
-savePreparedInlineMessage(Pool, #{user_id:=_,result:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"savePreparedInlineMessage">>, Req, Async}).
--doc (#{equiv=>savePreparedInlineMessage(Pool, Req, false),since=><<"8.0">>,group=><<"Sync Request">>}).
+savePreparedInlineMessage(Pool, Req, Async) -> savePreparedInlineMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Message">>,equiv=>savePreparedInlineMessage(Pool, Req, false),since=><<"8.0">>}).
+-spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}) -> Result :: result('PreparedInlineMessage'()).
 savePreparedInlineMessage(Pool, Req) -> savePreparedInlineMessage(Pool, Req, false).
 
 
@@ -7697,36 +8424,40 @@ On success, the sent Message is returned.
   * `title` - Product name, 1-32 characters
   * `description` - Product description, 1-255 characters
   * `payload` - Bot-defined invoice payload, 1-128 bytes. This will not be displayed to the user, use it for your internal processes.
-  * `provider_token` - Payment provider token, obtained via @BotFather. Pass an empty string for payments in Telegram Stars.
-  * `currency` - Three-letter ISO 4217 currency code, see more on currencies. Pass “XTR” for payments in Telegram Stars.
-  * `prices` - Price breakdown, a JSON-serialized list of components (e.g. product price, tax, discount, delivery cost, delivery tax, bonus, etc.). Must contain exactly one item for payments in Telegram Stars.
-  * `max_tip_amount` - The maximum accepted amount for tips in the smallest units of the currency (integer, not float/double). For example, for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies). Defaults to 0. Not supported for payments in Telegram Stars.
-  * `suggested_tip_amounts` - A JSON-serialized array of suggested amounts of tips in the smallest units of the currency (integer, not float/double). At most 4 suggested tip amounts can be specified. The suggested tip amounts must be positive, passed in a strictly increased order and must not exceed max_tip_amount.
-  * `start_parameter` - Unique deep-linking parameter. If left empty, forwarded copies of the sent message will have a Pay button, allowing multiple users to pay directly from the forwarded message, using the same invoice. If non-empty, forwarded copies of the sent message will have a URL button with a deep link to the bot (instead of a Pay button), with the value used as the start parameter
+  * `provider_token` - Payment provider token, obtained via [@BotFather](https://t.me/botfather). Pass an empty string for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `currency` - Three-letter ISO 4217 [currency](https://core.telegram.org/bots/payments#supported-currencies) code, see [more on currencies](https://core.telegram.org/bots/payments#supported-currencies). Pass `XTR` for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `prices` - Price breakdown, a JSON-serialized list of components (e.g. product price, tax, discount, delivery cost, delivery tax, bonus, etc.). Must contain exactly one item for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `max_tip_amount` - The maximum accepted amount for tips in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies). Defaults to 0. Not supported for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `suggested_tip_amounts` - A JSON-serialized array of suggested amounts of tips in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). At most 4 suggested tip amounts can be specified. The suggested tip amounts must be positive, passed in a strictly increased order and must not exceed max_tip_amount.
+  * `start_parameter` - Unique deep-linking parameter. If left empty, forwarded copies of the sent message will have a [Pay button](https://core.telegram.org/bots/api#payments), allowing multiple users to pay directly from the forwarded message, using the same invoice. If non-empty, forwarded copies of the sent message will have a URL button with a deep link to the bot (instead of a [Pay button](https://core.telegram.org/bots/api#payments)), with the value used as the start parameter
   * `provider_data` - JSON-serialized data about the invoice, which will be shared with the payment provider. A detailed description of required fields should be provided by the payment provider.
   * `photo_url` - URL of the product photo for the invoice. Can be a photo of the goods or a marketing image for a service. People like it better when they see what they are paying for.
   * `photo_size` - Photo size in bytes
   * `photo_width` - Photo width
   * `photo_height` - Photo height
-  * `need_name` - Pass True if you require the user's full name to complete the order. Ignored for payments in Telegram Stars.
-  * `need_phone_number` - Pass True if you require the user's phone number to complete the order. Ignored for payments in Telegram Stars.
-  * `need_email` - Pass True if you require the user's email address to complete the order. Ignored for payments in Telegram Stars.
-  * `need_shipping_address` - Pass True if you require the user's shipping address to complete the order. Ignored for payments in Telegram Stars.
-  * `send_phone_number_to_provider` - Pass True if the user's phone number should be sent to the provider. Ignored for payments in Telegram Stars.
-  * `send_email_to_provider` - Pass True if the user's email address should be sent to the provider. Ignored for payments in Telegram Stars.
-  * `is_flexible` - Pass True if the final price depends on the shipping method. Ignored for payments in Telegram Stars.
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `need_name` - Pass True if you require the user's full name to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_phone_number` - Pass True if you require the user's phone number to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_email` - Pass True if you require the user's email address to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_shipping_address` - Pass True if you require the user's shipping address to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `send_phone_number_to_provider` - Pass True if the user's phone number should be sent to the provider. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `send_email_to_provider` - Pass True if the user's email address should be sent to the provider. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `is_flexible` - Pass True if the final price depends on the shipping method. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `suggested_post_parameters` - A JSON-serialized object containing the parameters of the suggested post to send; for direct messages chats only. If the message is sent as a reply to another suggested post, then that suggested post is automatically declined.
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - A JSON-serialized object for an inline keyboard. If empty, one 'Pay total price' button will be shown. If not empty, the first button must be a Pay button.
+  * `reply_markup` - A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards). If empty, one 'Pay total price' button will be shown. If not empty, the first button must be a [Pay button](https://core.telegram.org/bots/api#payments).
 """.
 -doc (#{group=><<"Payments">>,since=><<"3.0">>}).
+-spec sendInvoice(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), title := binary(), description := binary(), payload := binary(), provider_token => binary(), currency := binary(), prices := nonempty_list('LabeledPrice'()), max_tip_amount => integer(), suggested_tip_amounts => nonempty_list(integer()), start_parameter => binary(), provider_data => binary(), photo_url => binary(), photo_size => integer(), photo_width => integer(), photo_height => integer(), need_name => boolean(), need_phone_number => boolean(), need_email => boolean(), need_shipping_address => boolean(), send_phone_number_to_provider => boolean(), send_email_to_provider => boolean(), is_flexible => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendInvoice(Pool, #{chat_id:=_,title:=_,description:=_,payload:=_,currency:=_,prices:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendInvoice">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>sendInvoice(Pool, Req, Async, 5000),since=><<"3.0">>}).
 -spec sendInvoice(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), title := binary(), description := binary(), payload := binary(), provider_token => binary(), currency := binary(), prices := nonempty_list('LabeledPrice'()), max_tip_amount => integer(), suggested_tip_amounts => nonempty_list(integer()), start_parameter => binary(), provider_data => binary(), photo_url => binary(), photo_size => integer(), photo_width => integer(), photo_height => integer(), need_name => boolean(), need_phone_number => boolean(), need_email => boolean(), need_shipping_address => boolean(), send_phone_number_to_provider => boolean(), send_email_to_provider => boolean(), is_flexible => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendInvoice(Pool, #{chat_id:=_,title:=_,description:=_,payload:=_,currency:=_,prices:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendInvoice">>, Req, Async}).
--doc (#{equiv=>sendInvoice(Pool, Req, false),since=><<"3.0">>,group=><<"Sync Request">>}).
+sendInvoice(Pool, Req, Async) -> sendInvoice(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>sendInvoice(Pool, Req, false),since=><<"3.0">>}).
+-spec sendInvoice(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), message_thread_id => integer(), direct_messages_topic_id => integer(), title := binary(), description := binary(), payload := binary(), provider_token => binary(), currency := binary(), prices := nonempty_list('LabeledPrice'()), max_tip_amount => integer(), suggested_tip_amounts => nonempty_list(integer()), start_parameter => binary(), provider_data => binary(), photo_url => binary(), photo_size => integer(), photo_width => integer(), photo_height => integer(), need_name => boolean(), need_phone_number => boolean(), need_email => boolean(), need_shipping_address => boolean(), send_phone_number_to_provider => boolean(), send_email_to_provider => boolean(), is_flexible => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), suggested_post_parameters => 'SuggestedPostParameters'(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result('Message'()).
 sendInvoice(Pool, Req) -> sendInvoice(Pool, Req, false).
 
 
@@ -7734,79 +8465,95 @@ sendInvoice(Pool, Req) -> sendInvoice(Pool, Req, false).
 Use this method to create a link for an invoice.  
 Returns the created invoice link as String on success.
 ## Parameters
-  * `business_connection_id` - Unique identifier of the business connection on behalf of which the link will be created. For payments in Telegram Stars only.
+  * `business_connection_id` - Unique identifier of the business connection on behalf of which the link will be created. For payments in [Telegram Stars](https://t.me/BotNews/90) only.
   * `title` - Product name, 1-32 characters
   * `description` - Product description, 1-255 characters
   * `payload` - Bot-defined invoice payload, 1-128 bytes. This will not be displayed to the user, use it for your internal processes.
-  * `provider_token` - Payment provider token, obtained via @BotFather. Pass an empty string for payments in Telegram Stars.
-  * `currency` - Three-letter ISO 4217 currency code, see more on currencies. Pass “XTR” for payments in Telegram Stars.
-  * `prices` - Price breakdown, a JSON-serialized list of components (e.g. product price, tax, discount, delivery cost, delivery tax, bonus, etc.). Must contain exactly one item for payments in Telegram Stars.
-  * `subscription_period` - The number of seconds the subscription will be active for before the next payment. The currency must be set to “XTR” (Telegram Stars) if the parameter is used. Currently, it must always be 2592000 (30 days) if specified. Any number of subscriptions can be active for a given bot at the same time, including multiple concurrent subscriptions from the same user. Subscription price must no exceed 10000 Telegram Stars.
-  * `max_tip_amount` - The maximum accepted amount for tips in the smallest units of the currency (integer, not float/double). For example, for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See the exp parameter in currencies.json, it shows the number of digits past the decimal point for each currency (2 for the majority of currencies). Defaults to 0. Not supported for payments in Telegram Stars.
-  * `suggested_tip_amounts` - A JSON-serialized array of suggested amounts of tips in the smallest units of the currency (integer, not float/double). At most 4 suggested tip amounts can be specified. The suggested tip amounts must be positive, passed in a strictly increased order and must not exceed max_tip_amount.
+  * `provider_token` - Payment provider token, obtained via [@BotFather](https://t.me/botfather). Pass an empty string for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `currency` - Three-letter ISO 4217 [currency](https://core.telegram.org/bots/payments#supported-currencies) code, see [more on currencies](https://core.telegram.org/bots/payments#supported-currencies). Pass `XTR` for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `prices` - Price breakdown, a JSON-serialized list of components (e.g. product price, tax, discount, delivery cost, delivery tax, bonus, etc.). Must contain exactly one item for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `subscription_period` - The number of seconds the subscription will be active for before the next payment. The [currency](https://core.telegram.org/bots/payments#supported-currencies) must be set to `XTR` ([Telegram Stars](https://t.me/BotNews/90)) if the parameter is used. Currently, it must always be 2592000 (30 days) if specified. Any number of subscriptions can be active for a given bot at the same time, including multiple concurrent subscriptions from the same user. Subscription price must no exceed 10000 [Telegram Stars](https://t.me/BotNews/90).
+  * `max_tip_amount` - The maximum accepted amount for tips in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). For example, for a maximum tip of US$ 1.45 pass max_tip_amount = 145. See the exp parameter in [currencies.json](https://core.telegram.org/bots/payments/currencies.json), it shows the number of digits past the decimal point for each [currency](https://core.telegram.org/bots/payments#supported-currencies) (2 for the majority of currencies). Defaults to 0. Not supported for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `suggested_tip_amounts` - A JSON-serialized array of suggested amounts of tips in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies) (integer, not float/double). At most 4 suggested tip amounts can be specified. The suggested tip amounts must be positive, passed in a strictly increased order and must not exceed max_tip_amount.
   * `provider_data` - JSON-serialized data about the invoice, which will be shared with the payment provider. A detailed description of required fields should be provided by the payment provider.
   * `photo_url` - URL of the product photo for the invoice. Can be a photo of the goods or a marketing image for a service.
   * `photo_size` - Photo size in bytes
   * `photo_width` - Photo width
   * `photo_height` - Photo height
-  * `need_name` - Pass True if you require the user's full name to complete the order. Ignored for payments in Telegram Stars.
-  * `need_phone_number` - Pass True if you require the user's phone number to complete the order. Ignored for payments in Telegram Stars.
-  * `need_email` - Pass True if you require the user's email address to complete the order. Ignored for payments in Telegram Stars.
-  * `need_shipping_address` - Pass True if you require the user's shipping address to complete the order. Ignored for payments in Telegram Stars.
-  * `send_phone_number_to_provider` - Pass True if the user's phone number should be sent to the provider. Ignored for payments in Telegram Stars.
-  * `send_email_to_provider` - Pass True if the user's email address should be sent to the provider. Ignored for payments in Telegram Stars.
-  * `is_flexible` - Pass True if the final price depends on the shipping method. Ignored for payments in Telegram Stars.
+  * `need_name` - Pass True if you require the user's full name to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_phone_number` - Pass True if you require the user's phone number to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_email` - Pass True if you require the user's email address to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `need_shipping_address` - Pass True if you require the user's shipping address to complete the order. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `send_phone_number_to_provider` - Pass True if the user's phone number should be sent to the provider. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `send_email_to_provider` - Pass True if the user's email address should be sent to the provider. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
+  * `is_flexible` - Pass True if the final price depends on the shipping method. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
 """.
 -doc (#{group=><<"Payments">>,since=><<"6.1">>}).
+-spec createInvoiceLink(Pool :: pool_name(), Req :: #{business_connection_id => binary(), title := binary(), description := binary(), payload := binary(), provider_token => binary(), currency := binary(), prices := nonempty_list('LabeledPrice'()), subscription_period => integer(), max_tip_amount => integer(), suggested_tip_amounts => nonempty_list(integer()), provider_data => binary(), photo_url => binary(), photo_size => integer(), photo_width => integer(), photo_height => integer(), need_name => boolean(), need_phone_number => boolean(), need_email => boolean(), need_shipping_address => boolean(), send_phone_number_to_provider => boolean(), send_email_to_provider => boolean(), is_flexible => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(binary()).
+createInvoiceLink(Pool, #{title:=_,description:=_,payload:=_,currency:=_,prices:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"createInvoiceLink">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>createInvoiceLink(Pool, Req, Async, 5000),since=><<"6.1">>}).
 -spec createInvoiceLink(Pool :: pool_name(), Req :: #{business_connection_id => binary(), title := binary(), description := binary(), payload := binary(), provider_token => binary(), currency := binary(), prices := nonempty_list('LabeledPrice'()), subscription_period => integer(), max_tip_amount => integer(), suggested_tip_amounts => nonempty_list(integer()), provider_data => binary(), photo_url => binary(), photo_size => integer(), photo_width => integer(), photo_height => integer(), need_name => boolean(), need_phone_number => boolean(), need_email => boolean(), need_shipping_address => boolean(), send_phone_number_to_provider => boolean(), send_email_to_provider => boolean(), is_flexible => boolean()}, Async :: boolean()) -> Result :: result(binary()).
-createInvoiceLink(Pool, #{title:=_,description:=_,payload:=_,currency:=_,prices:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"createInvoiceLink">>, Req, Async}).
--doc (#{equiv=>createInvoiceLink(Pool, Req, false),since=><<"6.1">>,group=><<"Sync Request">>}).
+createInvoiceLink(Pool, Req, Async) -> createInvoiceLink(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>createInvoiceLink(Pool, Req, false),since=><<"6.1">>}).
+-spec createInvoiceLink(Pool :: pool_name(), Req :: #{business_connection_id => binary(), title := binary(), description := binary(), payload := binary(), provider_token => binary(), currency := binary(), prices := nonempty_list('LabeledPrice'()), subscription_period => integer(), max_tip_amount => integer(), suggested_tip_amounts => nonempty_list(integer()), provider_data => binary(), photo_url => binary(), photo_size => integer(), photo_width => integer(), photo_height => integer(), need_name => boolean(), need_phone_number => boolean(), need_email => boolean(), need_shipping_address => boolean(), send_phone_number_to_provider => boolean(), send_email_to_provider => boolean(), is_flexible => boolean()}) -> Result :: result(binary()).
 createInvoiceLink(Pool, Req) -> createInvoiceLink(Pool, Req, false).
 
 
 -doc """
-If you sent an invoice requesting a shipping address and the parameter is_flexible was specified, the Bot API will send an Update with a shipping_query field to the bot.  
+If you sent an invoice requesting a shipping address and the parameter is_flexible was specified, the Bot [API](https://core.telegram.org/api) will send an Update with a shipping_query field to the bot.  
 Use this method to reply to shipping queries.  
 On success, True is returned.
 ## Parameters
   * `shipping_query_id` - Unique identifier for the query to be answered
   * `ok` - Pass True if delivery to the specified address is possible and False if there are any problems (for example, if delivery to the specified address is not possible)
   * `shipping_options` - Required if ok is True. A JSON-serialized array of available shipping options.
-  * `error_message` - Required if ok is False. Error message in human readable form that explains why it is impossible to complete the order (e.g. “Sorry, delivery to your desired address is unavailable”). Telegram will display this message to the user.
+  * `error_message` - Required if ok is False. Error message in human readable form that explains why it is impossible to complete the order (e.g. `Sorry, delivery to your desired address is unavailable`). Telegram will display this message to the user.
 """.
 -doc (#{group=><<"Payments">>,since=><<"3.0">>}).
+-spec answerShippingQuery(Pool :: pool_name(), Req :: #{shipping_query_id := binary(), ok := boolean(), shipping_options => nonempty_list('ShippingOption'()), error_message => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+answerShippingQuery(Pool, #{shipping_query_id:=_,ok:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"answerShippingQuery">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>answerShippingQuery(Pool, Req, Async, 5000),since=><<"3.0">>}).
 -spec answerShippingQuery(Pool :: pool_name(), Req :: #{shipping_query_id := binary(), ok := boolean(), shipping_options => nonempty_list('ShippingOption'()), error_message => binary()}, Async :: boolean()) -> Result :: result(true).
-answerShippingQuery(Pool, #{shipping_query_id:=_,ok:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"answerShippingQuery">>, Req, Async}).
--doc (#{equiv=>answerShippingQuery(Pool, Req, false),since=><<"3.0">>,group=><<"Sync Request">>}).
+answerShippingQuery(Pool, Req, Async) -> answerShippingQuery(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>answerShippingQuery(Pool, Req, false),since=><<"3.0">>}).
+-spec answerShippingQuery(Pool :: pool_name(), Req :: #{shipping_query_id := binary(), ok := boolean(), shipping_options => nonempty_list('ShippingOption'()), error_message => binary()}) -> Result :: result(true).
 answerShippingQuery(Pool, Req) -> answerShippingQuery(Pool, Req, false).
 
 
 -doc """
-Once the user has confirmed their payment and shipping details, the Bot API sends the final confirmation in the form of an Update with the field pre_checkout_query.  
+Once the user has confirmed their payment and shipping details, the Bot [API](https://core.telegram.org/api) sends the final confirmation in the form of an Update with the field pre_checkout_query.  
 Use this method to respond to such pre-checkout queries.  
 On success, True is returned.  
-Note: The Bot API must receive an answer within 10 seconds after the pre-checkout query was sent.
+Note: The Bot [API](https://core.telegram.org/api) must receive an answer within 10 seconds after the pre-checkout query was sent.
 ## Parameters
   * `pre_checkout_query_id` - Unique identifier for the query to be answered
   * `ok` - Specify True if everything is alright (goods are available, etc.) and the bot is ready to proceed with the order. Use False if there are any problems.
   * `error_message` - Required if ok is False. Error message in human readable form that explains the reason for failure to proceed with the checkout (e.g. Sorry, somebody just bought the last of our amazing black T-shirts while you were busy filling out your payment details. Please choose a different color or garment!). Telegram will display this message to the user.
 """.
 -doc (#{group=><<"Payments">>,since=><<"3.0">>}).
+-spec answerPreCheckoutQuery(Pool :: pool_name(), Req :: #{pre_checkout_query_id := binary(), ok := boolean(), error_message => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+answerPreCheckoutQuery(Pool, #{pre_checkout_query_id:=_,ok:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"answerPreCheckoutQuery">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>answerPreCheckoutQuery(Pool, Req, Async, 5000),since=><<"3.0">>}).
 -spec answerPreCheckoutQuery(Pool :: pool_name(), Req :: #{pre_checkout_query_id := binary(), ok := boolean(), error_message => binary()}, Async :: boolean()) -> Result :: result(true).
-answerPreCheckoutQuery(Pool, #{pre_checkout_query_id:=_,ok:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"answerPreCheckoutQuery">>, Req, Async}).
--doc (#{equiv=>answerPreCheckoutQuery(Pool, Req, false),since=><<"3.0">>,group=><<"Sync Request">>}).
+answerPreCheckoutQuery(Pool, Req, Async) -> answerPreCheckoutQuery(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>answerPreCheckoutQuery(Pool, Req, false),since=><<"3.0">>}).
+-spec answerPreCheckoutQuery(Pool :: pool_name(), Req :: #{pre_checkout_query_id := binary(), ok := boolean(), error_message => binary()}) -> Result :: result(true).
 answerPreCheckoutQuery(Pool, Req) -> answerPreCheckoutQuery(Pool, Req, false).
 
 
 -doc """
-A method to get the current Telegram Stars balance of the bot.  
+A method to get the current [Telegram Stars](https://t.me/BotNews/90) balance of the bot.  
 Requires no parameters.  
 On success, returns a StarAmount object.
 """.
 -doc (#{group=><<"Payments">>,since=><<"9.1">>}).
+-spec getMyStarBalance(Pool :: pool_name(), Req :: empty_map(), Async :: boolean(), Timeout :: timeout()) -> Result :: result('StarAmount'()).
+getMyStarBalance(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getMyStarBalance">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>getMyStarBalance(Pool, Req, Async, 5000),since=><<"9.1">>}).
 -spec getMyStarBalance(Pool :: pool_name(), Req :: empty_map(), Async :: boolean()) -> Result :: result('StarAmount'()).
-getMyStarBalance(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getMyStarBalance">>, Req, Async}).
--doc (#{equiv=>getMyStarBalance(Pool, Req, false),since=><<"9.1">>,group=><<"Sync Request">>}).
+getMyStarBalance(Pool, Req, Async) -> getMyStarBalance(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>getMyStarBalance(Pool, Req, false),since=><<"9.1">>}).
+-spec getMyStarBalance(Pool :: pool_name(), Req :: empty_map()) -> Result :: result('StarAmount'()).
 getMyStarBalance(Pool, Req) -> getMyStarBalance(Pool, Req, false).
 
 
@@ -7818,28 +8565,36 @@ On success, returns a StarTransactions object.
   * `limit` - The maximum number of transactions to be retrieved. Values between 1-100 are accepted. Defaults to 100.
 """.
 -doc (#{group=><<"Payments">>,since=><<"7.5">>}).
+-spec getStarTransactions(Pool :: pool_name(), Req :: #{offset => integer(), limit => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('StarTransactions'()).
+getStarTransactions(Pool, #{} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getStarTransactions">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>getStarTransactions(Pool, Req, Async, 5000),since=><<"7.5">>}).
 -spec getStarTransactions(Pool :: pool_name(), Req :: #{offset => integer(), limit => integer()}, Async :: boolean()) -> Result :: result('StarTransactions'()).
-getStarTransactions(Pool, #{} = Req, Async) ->wpool:call(Pool, {raw, <<"getStarTransactions">>, Req, Async}).
--doc (#{equiv=>getStarTransactions(Pool, Req, false),since=><<"7.5">>,group=><<"Sync Request">>}).
+getStarTransactions(Pool, Req, Async) -> getStarTransactions(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>getStarTransactions(Pool, Req, false),since=><<"7.5">>}).
+-spec getStarTransactions(Pool :: pool_name(), Req :: #{offset => integer(), limit => integer()}) -> Result :: result('StarTransactions'()).
 getStarTransactions(Pool, Req) -> getStarTransactions(Pool, Req, false).
 
 
 -doc """
-Refunds a successful payment in Telegram Stars.  
+Refunds a successful payment in [Telegram Stars](https://t.me/BotNews/90).  
 Returns True on success.
 ## Parameters
   * `user_id` - Identifier of the user whose payment will be refunded
   * `telegram_payment_charge_id` - Telegram payment identifier
 """.
 -doc (#{group=><<"Payments">>,since=><<"7.4">>}).
+-spec refundStarPayment(Pool :: pool_name(), Req :: #{user_id := integer(), telegram_payment_charge_id := binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+refundStarPayment(Pool, #{user_id:=_,telegram_payment_charge_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"refundStarPayment">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>refundStarPayment(Pool, Req, Async, 5000),since=><<"7.4">>}).
 -spec refundStarPayment(Pool :: pool_name(), Req :: #{user_id := integer(), telegram_payment_charge_id := binary()}, Async :: boolean()) -> Result :: result(true).
-refundStarPayment(Pool, #{user_id:=_,telegram_payment_charge_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"refundStarPayment">>, Req, Async}).
--doc (#{equiv=>refundStarPayment(Pool, Req, false),since=><<"7.4">>,group=><<"Sync Request">>}).
+refundStarPayment(Pool, Req, Async) -> refundStarPayment(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>refundStarPayment(Pool, Req, false),since=><<"7.4">>}).
+-spec refundStarPayment(Pool :: pool_name(), Req :: #{user_id := integer(), telegram_payment_charge_id := binary()}) -> Result :: result(true).
 refundStarPayment(Pool, Req) -> refundStarPayment(Pool, Req, false).
 
 
 -doc """
-Allows the bot to cancel or re-enable extension of a subscription paid in Telegram Stars.  
+Allows the bot to cancel or re-enable extension of a subscription paid in [Telegram Stars](https://t.me/BotNews/90).  
 Returns True on success.
 ## Parameters
   * `user_id` - Identifier of the user whose subscription will be edited
@@ -7847,9 +8602,13 @@ Returns True on success.
   * `is_canceled` - Pass True to cancel extension of the user subscription; the subscription must be active up to the end of the current subscription period. Pass False to allow the user to re-enable a subscription that was previously canceled by the bot.
 """.
 -doc (#{group=><<"Payments">>,since=><<"8.0">>}).
+-spec editUserStarSubscription(Pool :: pool_name(), Req :: #{user_id := integer(), telegram_payment_charge_id := binary(), is_canceled := boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+editUserStarSubscription(Pool, #{user_id:=_,telegram_payment_charge_id:=_,is_canceled:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"editUserStarSubscription">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Payments">>,equiv=>editUserStarSubscription(Pool, Req, Async, 5000),since=><<"8.0">>}).
 -spec editUserStarSubscription(Pool :: pool_name(), Req :: #{user_id := integer(), telegram_payment_charge_id := binary(), is_canceled := boolean()}, Async :: boolean()) -> Result :: result(true).
-editUserStarSubscription(Pool, #{user_id:=_,telegram_payment_charge_id:=_,is_canceled:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"editUserStarSubscription">>, Req, Async}).
--doc (#{equiv=>editUserStarSubscription(Pool, Req, false),since=><<"8.0">>,group=><<"Sync Request">>}).
+editUserStarSubscription(Pool, Req, Async) -> editUserStarSubscription(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Payments">>,equiv=>editUserStarSubscription(Pool, Req, false),since=><<"8.0">>}).
+-spec editUserStarSubscription(Pool :: pool_name(), Req :: #{user_id := integer(), telegram_payment_charge_id := binary(), is_canceled := boolean()}) -> Result :: result(true).
 editUserStarSubscription(Pool, Req) -> editUserStarSubscription(Pool, Req, false).
 
 
@@ -7865,9 +8624,13 @@ Supply some details in the error message to make sure the user knows how to corr
   * `errors` - A JSON-serialized array describing the errors
 """.
 -doc (#{group=><<"Passport">>,since=><<"">>}).
+-spec setPassportDataErrors(Pool :: pool_name(), Req :: #{user_id := integer(), errors := nonempty_list('PassportElementError'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setPassportDataErrors(Pool, #{user_id:=_,errors:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setPassportDataErrors">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Passport">>,equiv=>setPassportDataErrors(Pool, Req, Async, 5000),since=><<"">>}).
 -spec setPassportDataErrors(Pool :: pool_name(), Req :: #{user_id := integer(), errors := nonempty_list('PassportElementError'())}, Async :: boolean()) -> Result :: result(true).
-setPassportDataErrors(Pool, #{user_id:=_,errors:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setPassportDataErrors">>, Req, Async}).
--doc (#{equiv=>setPassportDataErrors(Pool, Req, false),since=><<"">>,group=><<"Sync Request">>}).
+setPassportDataErrors(Pool, Req, Async) -> setPassportDataErrors(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Passport">>,equiv=>setPassportDataErrors(Pool, Req, false),since=><<"">>}).
+-spec setPassportDataErrors(Pool :: pool_name(), Req :: #{user_id := integer(), errors := nonempty_list('PassportElementError'())}) -> Result :: result(true).
 setPassportDataErrors(Pool, Req) -> setPassportDataErrors(Pool, Req, false).
 
 
@@ -7878,18 +8641,22 @@ On success, the sent Message is returned.
   * `business_connection_id` - Unique identifier of the business connection on behalf of which the message will be sent
   * `chat_id` - Unique identifier for the target chat. Games can't be sent to channel direct messages chats and channel chats.
   * `message_thread_id` - Unique identifier for the target message thread (topic) of a forum; for forum supergroups and private chats of bots with forum topic mode enabled only
-  * `game_short_name` - Short name of the game, serves as the unique identifier for the game. Set up your games via @BotFather.
-  * `disable_notification` - Sends the message silently. Users will receive a notification with no sound.
+  * `game_short_name` - Short name of the game, serves as the unique identifier for the game. Set up your games via [@BotFather](https://t.me/botfather).
+  * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
-  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring broadcasting limits for a fee of 0.1 Telegram Stars per message. The relevant Stars will be withdrawn from the bot's balance
+  * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
   * `message_effect_id` - Unique identifier of the message effect to be added to the message; for private chats only
   * `reply_parameters` - Description of the message to reply to
-  * `reply_markup` - A JSON-serialized object for an inline keyboard. If empty, one 'Play game_title' button will be shown. If not empty, the first button must launch the game.
+  * `reply_markup` - A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards). If empty, one 'Play game_title' button will be shown. If not empty, the first button must launch the game.
 """.
 -doc (#{group=><<"Games">>,since=><<"2.2">>}).
+-spec sendGame(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer(), message_thread_id => integer(), game_short_name := binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+sendGame(Pool, #{chat_id:=_,game_short_name:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendGame">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Games">>,equiv=>sendGame(Pool, Req, Async, 5000),since=><<"2.2">>}).
 -spec sendGame(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer(), message_thread_id => integer(), game_short_name := binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}, Async :: boolean()) -> Result :: result('Message'()).
-sendGame(Pool, #{chat_id:=_,game_short_name:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"sendGame">>, Req, Async}).
--doc (#{equiv=>sendGame(Pool, Req, false),since=><<"2.2">>,group=><<"Sync Request">>}).
+sendGame(Pool, Req, Async) -> sendGame(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Games">>,equiv=>sendGame(Pool, Req, false),since=><<"2.2">>}).
+-spec sendGame(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer(), message_thread_id => integer(), game_short_name := binary(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'()}) -> Result :: result('Message'()).
 sendGame(Pool, Req) -> sendGame(Pool, Req, false).
 
 
@@ -7907,9 +8674,13 @@ Returns an error, if the new score is not greater than the user's current score 
   * `inline_message_id` - Required if chat_id and message_id are not specified. Identifier of the inline message
 """.
 -doc (#{group=><<"Games">>,since=><<"2.2">>}).
+-spec setGameScore(Pool :: pool_name(), Req :: #{user_id := integer(), score := integer(), force => boolean(), disable_edit_message => boolean(), chat_id => integer(), message_id => integer(), inline_message_id => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true | 'Message'()).
+setGameScore(Pool, #{user_id:=_,score:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setGameScore">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Games">>,equiv=>setGameScore(Pool, Req, Async, 5000),since=><<"2.2">>}).
 -spec setGameScore(Pool :: pool_name(), Req :: #{user_id := integer(), score := integer(), force => boolean(), disable_edit_message => boolean(), chat_id => integer(), message_id => integer(), inline_message_id => binary()}, Async :: boolean()) -> Result :: result(true | 'Message'()).
-setGameScore(Pool, #{user_id:=_,score:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"setGameScore">>, Req, Async}).
--doc (#{equiv=>setGameScore(Pool, Req, false),since=><<"2.2">>,group=><<"Sync Request">>}).
+setGameScore(Pool, Req, Async) -> setGameScore(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Games">>,equiv=>setGameScore(Pool, Req, false),since=><<"2.2">>}).
+-spec setGameScore(Pool :: pool_name(), Req :: #{user_id := integer(), score := integer(), force => boolean(), disable_edit_message => boolean(), chat_id => integer(), message_id => integer(), inline_message_id => binary()}) -> Result :: result(true | 'Message'()).
 setGameScore(Pool, Req) -> setGameScore(Pool, Req, false).
 
 
@@ -7927,8 +8698,12 @@ Please note that this behavior is subject to change.
   * `inline_message_id` - Required if chat_id and message_id are not specified. Identifier of the inline message
 """.
 -doc (#{group=><<"Games">>,since=><<"2.2">>}).
+-spec getGameHighScores(Pool :: pool_name(), Req :: #{user_id := integer(), chat_id => integer(), message_id => integer(), inline_message_id => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(nonempty_list('GameHighScore'())).
+getGameHighScores(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getGameHighScores">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Games">>,equiv=>getGameHighScores(Pool, Req, Async, 5000),since=><<"2.2">>}).
 -spec getGameHighScores(Pool :: pool_name(), Req :: #{user_id := integer(), chat_id => integer(), message_id => integer(), inline_message_id => binary()}, Async :: boolean()) -> Result :: result(nonempty_list('GameHighScore'())).
-getGameHighScores(Pool, #{user_id:=_} = Req, Async) ->wpool:call(Pool, {raw, <<"getGameHighScores">>, Req, Async}).
--doc (#{equiv=>getGameHighScores(Pool, Req, false),since=><<"2.2">>,group=><<"Sync Request">>}).
+getGameHighScores(Pool, Req, Async) -> getGameHighScores(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Games">>,equiv=>getGameHighScores(Pool, Req, false),since=><<"2.2">>}).
+-spec getGameHighScores(Pool :: pool_name(), Req :: #{user_id := integer(), chat_id => integer(), message_id => integer(), inline_message_id => binary()}) -> Result :: result(nonempty_list('GameHighScore'())).
 getGameHighScores(Pool, Req) -> getGameHighScores(Pool, Req, false).
 
