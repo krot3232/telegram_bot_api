@@ -17,14 +17,14 @@ init([Args]) ->
 handle_event({update,BotName,#{
                             message:= Msg=#{
                             chat:=#{id:=ChatId},
-                            %                                 %from:=From,
-                            %                                 text:=Text,
+                            from:=#{id:=UserId},
+                            text:=Text,
                             message_id:=MessageId
                             } 
                             }=_Result
 }, State) ->
-    io:format("\e[0;41mhandle_event update [BOT1] ~p <~p>:~p |~p|\e[0m~n",[BotName,ChatId,MessageId,Msg]),
-  
+    io:format("\e[0;41mhandle_event update [BOT1] ~p <~p>:~p |~p| ~ts\e[0m~n",[BotName,ChatId,MessageId,UserId,Text]),
+
     {ok, State};
   
 handle_event({error,BotName,Err,Msg}, State) ->

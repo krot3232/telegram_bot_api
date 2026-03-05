@@ -74,7 +74,7 @@ See `t:'Update'/0`
     | purchased_paid_media.
 
 -doc """
-A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token” in every webhook request, 1-256 characters. Only characters A-Z, a-z, 0-9, _ and - are allowed. The header is useful to ensure that the request comes from a webhook set by you.
+A secret token to be sent in a header `X-Telegram-Bot-Api-Secret-Token` in every webhook request, 1-256 characters. Only characters A-Z, a-z, 0-9, _ and - are allowed. The header is useful to ensure that the request comes from a webhook set by you.
 """.
 -type secret_token() :: nonempty_binary().
 
@@ -96,6 +96,7 @@ A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token” in e
 	restrictChatMember/2, restrictChatMember/3, restrictChatMember/4,
 	promoteChatMember/2, promoteChatMember/3, promoteChatMember/4,
 	setChatAdministratorCustomTitle/2, setChatAdministratorCustomTitle/3, setChatAdministratorCustomTitle/4,
+	setChatMemberTag/2, setChatMemberTag/3, setChatMemberTag/4,
 	banChatSenderChat/2, banChatSenderChat/3, banChatSenderChat/4,
 	unbanChatSenderChat/2, unbanChatSenderChat/3, unbanChatSenderChat/4,
 	setChatPermissions/2, setChatPermissions/3, setChatPermissions/4,
@@ -505,6 +506,7 @@ This object represents a message.
   * `sender_chat` - Optional. Sender of the message when sent on behalf of a chat. For example, the supergroup itself for messages sent by its anonymous administrators or a linked channel for messages automatically forwarded to the channel's discussion group. For backward compatibility, if the message was sent on behalf of a chat, the field from contains a fake sender user in non-channel chats.
   * `sender_boost_count` - Optional. If the sender of the message boosted the chat, the number of boosts added by the user
   * `sender_business_bot` - Optional. The bot that actually sent the message on behalf of the business account. Available only for outgoing messages sent on behalf of the connected business account.
+  * `sender_tag` - Optional. Tag or custom title of the sender of the message; for supergroups only
   * `date` - Date the message was sent in Unix time. It is always a positive number, representing a valid date.
   * `business_connection_id` - Optional. Unique identifier of the business connection from which the message was received. If non-empty, the message belongs to a chat of the corresponding business account that is independent from any potential bot chat which might share the same identifier.
   * `chat` - Chat the message belongs to
@@ -521,7 +523,7 @@ This object represents a message.
   * `has_protected_content` - Optional. True, if the message can't be forwarded
   * `is_from_offline` - Optional. True, if the message was sent by an implicit action, for example, as an away or a greeting business message, or as a scheduled message
   * `is_paid_post` - Optional. True, if the message is a paid post. Note that such posts must not be deleted for 24 hours to receive the payment and can't be edited.
-  * `media_group_id` - Optional. The unique identifier of a media message group this message belongs to
+  * `media_group_id` - Optional. The unique identifier inside this chat of a media message group this message belongs to
   * `author_signature` - Optional. Signature of the post author for messages in channels, or the custom title of an anonymous group administrator
   * `paid_star_count` - Optional. The number of [Telegram Stars](https://t.me/BotNews/90) that were paid by the sender of the message to send it
   * `text` - Optional. For text messages, the actual UTF-8 text of the message
@@ -612,6 +614,7 @@ This object represents a message.
 	sender_chat => 'Chat'(),
 	sender_boost_count => integer(),
 	sender_business_bot => 'User'(),
+	sender_tag => binary(),
 	date := integer(),
 	business_connection_id => binary(),
 	chat := 'Chat'(),
@@ -741,13 +744,15 @@ This object describes a message that can be inaccessible to the bot.
 -doc """
 This object represents one special entity in a text message.  
 For example, hashtags, usernames, URLs, etc.
-  * `type` - Type of the entity. Currently, can be `mention` (@username), `hashtag` (#hashtag or #hashtag@chatusername), `cashtag` ($USD or $USD@chatusername), `bot_command` (/start@jobs_bot), `url` (https://telegram.org), `email` (do-not-reply@telegram.org), `phone_number` (+1-212-555-0123), `bold` (bold text), `italic` (italic text), `underline` (underlined text), `strikethrough` (strikethrough text), `spoiler` (spoiler message), `blockquote` (block quotation), `expandable_blockquote` (collapsed-by-default block quotation), `code` (monowidth string), `pre` (monowidth block), `text_link` (for clickable text URLs), `text_mention` (for users [without usernames](https://telegram.org/blog/edit#new-mentions)), `custom_emoji` (for inline custom emoji stickers)
+  * `type` - Type of the entity. Currently, can be `mention` (@username), `hashtag` (#hashtag or #hashtag@chatusername), `cashtag` ($USD or $USD@chatusername), `bot_command` (/start@jobs_bot), `url` (https://telegram.org), `email` (do-not-reply@telegram.org), `phone_number` (+1-212-555-0123), `bold` (bold text), `italic` (italic text), `underline` (underlined text), `strikethrough` (strikethrough text), `spoiler` (spoiler message), `blockquote` (block quotation), `expandable_blockquote` (collapsed-by-default block quotation), `code` (monowidth string), `pre` (monowidth block), `text_link` (for clickable text URLs), `text_mention` (for users [without usernames](https://telegram.org/blog/edit#new-mentions)), `custom_emoji` (for inline custom emoji stickers), or `date_time` (for formatted date and time)
   * `offset` - Offset in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length) to the start of the entity
   * `length` - Length of the entity in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length)
   * `url` - Optional. For `text_link` only, URL that will be opened after user taps on the text
   * `user` - Optional. For `text_mention` only, the mentioned user
   * `language` - Optional. For `pre` only, the programming language of the entity text
   * `custom_emoji_id` - Optional. For `custom_emoji` only, unique identifier of the custom emoji. Use getCustomEmojiStickers to get full information about the sticker
+  * `unix_time` - Optional. For `date_time` only, the Unix time associated with the entity
+  * `date_time_format` - Optional. For `date_time` only, the string that defines the formatting of the date and time. See [date-time entity formatting](https://core.telegram.org/bots/api#date-time-entity-formatting) for more details.
 """.
 -type 'MessageEntity'() :: #{
 	type := binary(),
@@ -756,7 +761,9 @@ For example, hashtags, usernames, URLs, etc.
 	url => binary(),
 	user => 'User'(),
 	language => binary(),
-	custom_emoji_id => binary()
+	custom_emoji_id => binary(),
+	unix_time => integer(),
+	date_time_format => binary()
 }.
 
 -doc """
@@ -2216,6 +2223,7 @@ Represents the rights of an administrator in a chat.
   * `can_pin_messages` - Optional. True, if the user is allowed to pin messages; for groups and supergroups only
   * `can_manage_topics` - Optional. True, if the user is allowed to create, rename, close, and reopen forum topics; for supergroups only
   * `can_manage_direct_messages` - Optional. True, if the administrator can manage direct messages of the channel and decline suggested posts; for channels only
+  * `can_manage_tags` - Optional. True, if the administrator can edit the tags of regular members; for groups and supergroups only. If omitted defaults to the value of can_pin_messages.
 """.
 -type 'ChatAdministratorRights'() :: #{
 	is_anonymous := boolean(),
@@ -2233,7 +2241,8 @@ Represents the rights of an administrator in a chat.
 	can_edit_messages => boolean(),
 	can_pin_messages => boolean(),
 	can_manage_topics => boolean(),
-	can_manage_direct_messages => boolean()
+	can_manage_direct_messages => boolean(),
+	can_manage_tags => boolean()
 }.
 
 -doc """
@@ -2299,6 +2308,7 @@ Represents a chat member that has some additional privileges.
   * `can_pin_messages` - Optional. True, if the user is allowed to pin messages; for groups and supergroups only
   * `can_manage_topics` - Optional. True, if the user is allowed to create, rename, close, and reopen forum topics; for supergroups only
   * `can_manage_direct_messages` - Optional. True, if the administrator can manage direct messages of the channel and decline suggested posts; for channels only
+  * `can_manage_tags` - Optional. True, if the administrator can edit the tags of regular members; for groups and supergroups only. If omitted defaults to the value of can_pin_messages.
   * `custom_title` - Optional. Custom title for this user
 """.
 -type 'ChatMemberAdministrator'() :: #{
@@ -2321,17 +2331,20 @@ Represents a chat member that has some additional privileges.
 	can_pin_messages => boolean(),
 	can_manage_topics => boolean(),
 	can_manage_direct_messages => boolean(),
+	can_manage_tags => boolean(),
 	custom_title => binary()
 }.
 
 -doc """
 Represents a chat member that has no additional privileges or restrictions.
   * `status` - The member's status in the chat, always `member`
+  * `tag` - Optional. Tag of the member
   * `user` - Information about the user
   * `until_date` - Optional. Date when the user's subscription will expire; Unix time
 """.
 -type 'ChatMemberMember'() :: #{
 	status := binary(),
+	tag => binary(),
 	user := 'User'(),
 	until_date => integer()
 }.
@@ -2340,6 +2353,7 @@ Represents a chat member that has no additional privileges or restrictions.
 Represents a chat member that is under certain restrictions in the chat.  
 Supergroups only.
   * `status` - The member's status in the chat, always `restricted`
+  * `tag` - Optional. Tag of the member
   * `user` - Information about the user
   * `is_member` - True, if the user is a member of the chat at the moment of the request
   * `can_send_messages` - True, if the user is allowed to send text messages, contacts, giveaways, giveaway winners, invoices, locations and venues
@@ -2352,6 +2366,7 @@ Supergroups only.
   * `can_send_polls` - True, if the user is allowed to send polls and checklists
   * `can_send_other_messages` - True, if the user is allowed to send animations, games, stickers and use inline bots
   * `can_add_web_page_previews` - True, if the user is allowed to add web page previews to their messages
+  * `can_edit_tag` - True, if the user is allowed to edit their own tag
   * `can_change_info` - True, if the user is allowed to change the chat title, photo and other settings
   * `can_invite_users` - True, if the user is allowed to invite new users to the chat
   * `can_pin_messages` - True, if the user is allowed to pin messages
@@ -2360,6 +2375,7 @@ Supergroups only.
 """.
 -type 'ChatMemberRestricted'() :: #{
 	status := binary(),
+	tag => binary(),
 	user := 'User'(),
 	is_member := boolean(),
 	can_send_messages := boolean(),
@@ -2372,6 +2388,7 @@ Supergroups only.
 	can_send_polls := boolean(),
 	can_send_other_messages := boolean(),
 	can_add_web_page_previews := boolean(),
+	can_edit_tag := boolean(),
 	can_change_info := boolean(),
 	can_invite_users := boolean(),
 	can_pin_messages := boolean(),
@@ -2431,6 +2448,7 @@ Describes actions that a non-administrator user is allowed to take in a chat.
   * `can_send_polls` - Optional. True, if the user is allowed to send polls and checklists
   * `can_send_other_messages` - Optional. True, if the user is allowed to send animations, games, stickers and use inline bots
   * `can_add_web_page_previews` - Optional. True, if the user is allowed to add web page previews to their messages
+  * `can_edit_tag` - Optional. True, if the user is allowed to edit their own tag
   * `can_change_info` - Optional. True, if the user is allowed to change the chat title, photo and other settings. Ignored in public supergroups
   * `can_invite_users` - Optional. True, if the user is allowed to invite new users to the chat
   * `can_pin_messages` - Optional. True, if the user is allowed to pin messages. Ignored in public supergroups
@@ -2447,6 +2465,7 @@ Describes actions that a non-administrator user is allowed to take in a chat.
 	can_send_polls => boolean(),
 	can_send_other_messages => boolean(),
 	can_add_web_page_previews => boolean(),
+	can_edit_tag => boolean(),
 	can_change_info => boolean(),
 	can_invite_users => boolean(),
 	can_pin_messages => boolean(),
@@ -5861,7 +5880,7 @@ sendDice(Pool, Req) -> sendDice(Pool, Req, false).
 
 
 -doc """
-Use this method to stream a partial message to a user while the message is being generated; supported only for bots with forum topic mode enabled.  
+Use this method to stream a partial message to a user while the message is being generated.  
 Returns True on success.
 ## Parameters
   * `chat_id` - Unique identifier for the target private chat
@@ -5938,13 +5957,13 @@ Returns a UserProfilePhotos object.
   * `offset` - Sequential number of the first photo to be returned. By default, all photos are returned.
   * `limit` - Limits the number of photos to be retrieved. Values between 1-100 are accepted. Defaults to 100.
 """.
--doc (#{group=><<"User">>,since=><<"">>}).
+-doc (#{group=><<"User">>,since=><<"1.0">>}).
 -spec getUserProfilePhotos(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('UserProfilePhotos'()).
 getUserProfilePhotos(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getUserProfilePhotos">>, Req, Async}, wpool:default_strategy(), Timeout).
--doc (#{group=><<"User">>,equiv=>getUserProfilePhotos(Pool, Req, Async, 5000),since=><<"">>}).
+-doc (#{group=><<"User">>,equiv=>getUserProfilePhotos(Pool, Req, Async, 5000),since=><<"1.0">>}).
 -spec getUserProfilePhotos(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}, Async :: boolean()) -> Result :: result('UserProfilePhotos'()).
 getUserProfilePhotos(Pool, Req, Async) -> getUserProfilePhotos(Pool, Req, Async, ?TIMEOUT_DEFAULT).
--doc (#{group=><<"User">>,equiv=>getUserProfilePhotos(Pool, Req, false),since=><<"">>}).
+-doc (#{group=><<"User">>,equiv=>getUserProfilePhotos(Pool, Req, false),since=><<"1.0">>}).
 -spec getUserProfilePhotos(Pool :: pool_name(), Req :: #{user_id := integer(), offset => integer(), limit => integer()}) -> Result :: result('UserProfilePhotos'()).
 getUserProfilePhotos(Pool, Req) -> getUserProfilePhotos(Pool, Req, false).
 
@@ -6103,15 +6122,16 @@ Returns True on success.
   * `can_pin_messages` - Pass True if the administrator can pin messages; for supergroups only
   * `can_manage_topics` - Pass True if the user is allowed to create, rename, close, and reopen forum topics; for supergroups only
   * `can_manage_direct_messages` - Pass True if the administrator can manage direct messages within the channel and decline suggested posts; for channels only
+  * `can_manage_tags` - Pass True if the administrator can edit the tags of regular members; for groups and supergroups only
 """.
 -doc (#{group=><<"Chat">>,since=><<"3.1">>}).
--spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+-spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean(), can_manage_tags => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
 promoteChatMember(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"promoteChatMember">>, Req, Async}, wpool:default_strategy(), Timeout).
 -doc (#{group=><<"Chat">>,equiv=>promoteChatMember(Pool, Req, Async, 5000),since=><<"3.1">>}).
--spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean()}, Async :: boolean()) -> Result :: result(true).
+-spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean(), can_manage_tags => boolean()}, Async :: boolean()) -> Result :: result(true).
 promoteChatMember(Pool, Req, Async) -> promoteChatMember(Pool, Req, Async, ?TIMEOUT_DEFAULT).
 -doc (#{group=><<"Chat">>,equiv=>promoteChatMember(Pool, Req, false),since=><<"3.1">>}).
--spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean()}) -> Result :: result(true).
+-spec promoteChatMember(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), is_anonymous => boolean(), can_manage_chat => boolean(), can_delete_messages => boolean(), can_manage_video_chats => boolean(), can_restrict_members => boolean(), can_promote_members => boolean(), can_change_info => boolean(), can_invite_users => boolean(), can_post_stories => boolean(), can_edit_stories => boolean(), can_delete_stories => boolean(), can_post_messages => boolean(), can_edit_messages => boolean(), can_pin_messages => boolean(), can_manage_topics => boolean(), can_manage_direct_messages => boolean(), can_manage_tags => boolean()}) -> Result :: result(true).
 promoteChatMember(Pool, Req) -> promoteChatMember(Pool, Req, false).
 
 
@@ -6132,6 +6152,26 @@ setChatAdministratorCustomTitle(Pool, Req, Async) -> setChatAdministratorCustomT
 -doc (#{group=><<"Chat">>,equiv=>setChatAdministratorCustomTitle(Pool, Req, false),since=><<"4.5">>}).
 -spec setChatAdministratorCustomTitle(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), custom_title := binary()}) -> Result :: result(true).
 setChatAdministratorCustomTitle(Pool, Req) -> setChatAdministratorCustomTitle(Pool, Req, false).
+
+
+-doc """
+Use this method to set a tag for a regular member in a group or a supergroup.  
+The bot must be an administrator in the chat for this to work and must have the can_manage_tags administrator right.  
+Returns True on success.
+## Parameters
+  * `chat_id` - Unique identifier for the target chat or username of the target supergroup (in the format @supergroupusername)
+  * `user_id` - Unique identifier of the target user
+  * `tag` - New tag for the member; 0-16 characters, emoji are not allowed
+""".
+-doc (#{group=><<"Chat">>,since=><<"9.5">>}).
+-spec setChatMemberTag(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), tag => binary()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
+setChatMemberTag(Pool, #{chat_id:=_,user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setChatMemberTag">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Chat">>,equiv=>setChatMemberTag(Pool, Req, Async, 5000),since=><<"9.5">>}).
+-spec setChatMemberTag(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), tag => binary()}, Async :: boolean()) -> Result :: result(true).
+setChatMemberTag(Pool, Req, Async) -> setChatMemberTag(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Chat">>,equiv=>setChatMemberTag(Pool, Req, false),since=><<"9.5">>}).
+-spec setChatMemberTag(Pool :: pool_name(), Req :: #{chat_id := integer() | binary(), user_id := integer(), tag => binary()}) -> Result :: result(true).
+setChatMemberTag(Pool, Req) -> setChatMemberTag(Pool, Req, false).
 
 
 -doc """
@@ -8623,13 +8663,13 @@ Supply some details in the error message to make sure the user knows how to corr
   * `user_id` - User identifier
   * `errors` - A JSON-serialized array describing the errors
 """.
--doc (#{group=><<"Passport">>,since=><<"">>}).
+-doc (#{group=><<"Passport">>,since=><<"3.7">>}).
 -spec setPassportDataErrors(Pool :: pool_name(), Req :: #{user_id := integer(), errors := nonempty_list('PassportElementError'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
 setPassportDataErrors(Pool, #{user_id:=_,errors:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"setPassportDataErrors">>, Req, Async}, wpool:default_strategy(), Timeout).
--doc (#{group=><<"Passport">>,equiv=>setPassportDataErrors(Pool, Req, Async, 5000),since=><<"">>}).
+-doc (#{group=><<"Passport">>,equiv=>setPassportDataErrors(Pool, Req, Async, 5000),since=><<"3.7">>}).
 -spec setPassportDataErrors(Pool :: pool_name(), Req :: #{user_id := integer(), errors := nonempty_list('PassportElementError'())}, Async :: boolean()) -> Result :: result(true).
 setPassportDataErrors(Pool, Req, Async) -> setPassportDataErrors(Pool, Req, Async, ?TIMEOUT_DEFAULT).
--doc (#{group=><<"Passport">>,equiv=>setPassportDataErrors(Pool, Req, false),since=><<"">>}).
+-doc (#{group=><<"Passport">>,equiv=>setPassportDataErrors(Pool, Req, false),since=><<"3.7">>}).
 -spec setPassportDataErrors(Pool :: pool_name(), Req :: #{user_id := integer(), errors := nonempty_list('PassportElementError'())}) -> Result :: result(true).
 setPassportDataErrors(Pool, Req) -> setPassportDataErrors(Pool, Req, false).
 
