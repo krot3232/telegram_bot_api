@@ -1,0 +1,18 @@
+[submodule "example/async"]
+	path = example/async
+	url = git@github.com:krot3232/telegram_bot_async_example.git
+[submodule "example/echo"]
+	path = example/echo
+	url = git@github.com:krot3232/telegram_bot_echo_example.git
+[submodule "example/hello"]
+	path = example/hello
+	url = git@github.com:krot3232/telegram_bot_hello_example.git
+[submodule "example/http_proxy"]
+	path = example/http_proxy
+	url = git@github.com:krot3232/telegram_bot_http_proxy_example.git
+[submodule "example/inline_keyboard"]
+	path = example/inline_keyboard
+	url = git@github.com:krot3232/telegram_bot_inline_keyboard_example.git
+[submodule "example/webhook"]
+	path = example/webhook
+	url = git@github.com:krot3232/telegram_bot_webhook_example.git
