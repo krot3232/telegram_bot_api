@@ -3,7 +3,7 @@
 -module(telegram_bot_api_util).
 -export([json_encode/1, json_decode/1]).
 -export([to_binary/1]).
--export([get_ip/0]).
+-export([get_ip/0, get_ip/1]).
 
 -spec json_encode(Map :: dynamic()) -> binary().
 json_encode(Map) ->
@@ -35,5 +35,24 @@ get_ip() ->
         {ok, {{_, 200, _}, _Headers, Body}} ->
             {ok, Body};
         {error, Reason} ->
+            {error, Reason}
+    end.
+
+-doc """
+Get ip address
+## Examples:
+```erlang
+    {ok,<<"1.1.1.1">>}=telegram_bot_api_util:get_ip("ens3").
+```
+""".
+-spec get_ip(InterfaceName :: string()) -> {ok, binary()} | {error, term()}.
+get_ip(InterfaceName) ->
+    case inet:getifaddrs() of
+        {ok, L} ->
+            case proplists:get_value(addr, proplists:get_value(InterfaceName, L, []), []) of
+                {_, _, _, _} = Ip -> {ok, list_to_binary(inet:ntoa(Ip))};
+                Reason -> {error, Reason}
+            end;
+        Reason ->
             {error, Reason}
     end.

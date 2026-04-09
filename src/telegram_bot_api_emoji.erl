@@ -6,20 +6,17 @@
 -include("message_topic.hrl").
 -include("message_dice.hrl").
 
-%%-include("message_effect.hrl").
-%-include("chat_action.hrl").
-
 -doc """
 The Emoji whether the player has won by number.
 """.
--spec is_win_dice(DiceEmoji :: binary(),Value :: 6|5|64|integer()) -> IsWin :: boolean().
-is_win_dice(?DICE_BOWLING,6)->true;
-is_win_dice(?DICE_GAME_DIE,6)->true;
-is_win_dice(?DICE_DART,6)->true;
-is_win_dice(?DICE_BASKETBALL,5)->true;
-is_win_dice(?DICE_SOCCER,5)->true;
-is_win_dice(?DICE_SLOT_MACHINE,64)->true;
-is_win_dice(_DiceEmoji,_Value)->false.
+-spec is_win_dice(DiceEmoji :: binary(), Value :: 6 | 5 | 64 | integer()) -> IsWin :: boolean().
+is_win_dice(?DICE_BOWLING, 6) -> true;
+is_win_dice(?DICE_GAME_DIE, 6) -> true;
+is_win_dice(?DICE_DART, 6) -> true;
+is_win_dice(?DICE_BASKETBALL, 5) -> true;
+is_win_dice(?DICE_SOCCER, 5) -> true;
+is_win_dice(?DICE_SLOT_MACHINE, 64) -> true;
+is_win_dice(_DiceEmoji, _Value) -> false.
 
 -doc """
 Generates a random dice from those available in Telegram.

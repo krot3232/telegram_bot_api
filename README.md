@@ -4,7 +4,7 @@
 Erlang library for Telegram Bot API.  
 It contains all methods and types available in Telegram Bot API 9.5, released March 1, 2026.
 
-[![Erlang](https://img.shields.io/badge/Erlang%2FOTP-27+-deeppink?style=flat-square&logo=erlang&logoColor=ffffff)](https://hex.pm/packages/telegram_bot_api)
+[![Erlang](https://img.shields.io/badge/Erlang%2FOTP-27+-deeppink?style=flat-square&logo=erlang&logoColor=ffffff)](https://www.erlang.org)
 [![Hex Version](https://img.shields.io/hexpm/v/telegram_bot_api.svg?style=flat-square)](https://hex.pm/packages/telegram_bot_api)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-orange?style=flat-square)](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html)
 [![Compatible with Bot API v9.5](https://img.shields.io/badge/Bot%20API%20version-v9.5-success?style=flat-square)](https://core.telegram.org/bots/api#march-1-2026)
@@ -25,6 +25,7 @@ Token = <<"1111111111:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">>,
 %%After creating an HTTP pool, you can use any methods available in the Telegram API. 
 Pool=mybot_pool,  
 {ok, Pid} = telegram_bot_api_sup:start_pool(#{name=>Pool,token=>Token,workers=>1}),
+%%ok=telegram_bot_api_sup:stop_pool(Pool).
 
 %%Once the pool is created, you can call any methods as they are named in the Telegram documentation: telegram_bot_api:'Method'
 %%The names of the methods from the Telegram documentation and the telegram_bot_api module are the same.
@@ -37,7 +38,7 @@ Params=#{chat_id=>ChatId,...},
 Async=false,%*if you install Async=true, the query result will be sent to the process mailbox message: {async,Ref,{ok,HttpCode,MapJson}} or {async, Ref, saved_to_file}(use in telegram_bot_api_file:download) or {error, Reason}
 Timeout=5000,%*default timeout for gen_server:call
 
-Result=telegram_bot_api:[Method](Pool,Params,Async,Timeout),
+Result=telegram_bot_api:Method(Pool,Params,Async,Timeout),
 case Result of
     {ok, Ref}->ok;%is Async=true
     {ok, HttpCode, MapJson}->ok; %is Async=false
@@ -58,7 +59,9 @@ end.
 ```
 ## Webhook
 ``` erlang  
+WebhookId=telegram_bot_api_webhook_server:name_server({0,0,0,0},8443),
 {ok,WebhookPid}=telegram_bot_api_sup:start_webhook(#{
+    id=>WebhookId,%% name process
     secret_token=><<"my_secret">>,%this is the secret_token that is set in the Parameter method setWebhook https://core.telegram.org/bots/api#setwebhook
     bots=>#{
     %% add 1 bot
@@ -87,12 +90,13 @@ end.
 	%}
     %% see parameter https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_webhook/1
 }).
+{ok,WebhookPid}=global:whereis_name(WebhookId).
 ```
 ## Webhook dynamic add bot
 ``` erlang  
 %%add
 ok= telegram_bot_api_webhook_server:add_bot(
-    {global,WebhookServer},%|| WebhookPid
+    {global,WebhookId},%or WebhookPid
     <<"mybot_pool">>,
     #{
         event=>{global,BotEvent1},
@@ -100,7 +104,7 @@ ok= telegram_bot_api_webhook_server:add_bot(
     }
 ),
 %%delete
-    telegram_bot_api_webhook_server:delete_bot({global,WebhookServer},mybot_pool).
+    telegram_bot_api_webhook_server:delete_bot({global,WebhookId},mybot_pool).
 ```
 ## Set webhook
 ``` erlang  
@@ -415,7 +419,7 @@ case telegram_bot_api:setChatMemberTag(BotName, #{
 ## Other
 * [all methods](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#bot-settings)
 * [emoji](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_emoji.html)
-* [example](https://github.com/krot3232/telegram_bot_api/tree/main/example)   
+* [examples](https://github.com/krot3232/telegram_bot_api/tree/main/example)   
 
 
 

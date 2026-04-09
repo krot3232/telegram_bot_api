@@ -11,7 +11,9 @@ telegram_bot_api top level supervisor.
 
 -define(SERVER, ?MODULE).
 
--export([start_pool/1, start_update/1, start_webhook/1]).
+-export([start_pool/1, stop_pool/1]).
+-export([start_webhook/1, stop_webhook/1]).
+-export([start_update/1]).
 
 -type child_id() :: term().
 
@@ -59,7 +61,6 @@ Start Http pool telegram bot
     http_proxy => telegram_bot_api_http:http_proxy(),
     http_profile => atom()
 }) -> supervisor:startchild_ret() | supervisor:startchild_err() | {error, term()}.
-
 start_pool(#{name := Pool, token := _, workers := Workers} = Op) ->
     try
         ChildSpec = wpool:child_spec(Pool, [
@@ -68,6 +69,16 @@ start_pool(#{name := Pool, token := _, workers := Workers} = Op) ->
             {work_type, gen_server}
         ]),
         supervisor:start_child(?SERVER, ChildSpec)
+    catch
+        E:M -> {error, {E, M}}
+    end.
+
+-spec stop_pool(Pool :: telegram_bot_api:pool_name()) -> ok | {error, term()}.
+stop_pool(Pool) ->
+    try
+        ok = supervisor:terminate_child(?SERVER, Pool),
+        ok = supervisor:delete_child(?SERVER, Pool),
+        ok
     catch
         E:M -> {error, {E, M}}
     end.
@@ -110,6 +121,16 @@ start_update(
     try
         ChildSpec = telegram_bot_api_updater_server:child_spec(Op),
         supervisor:start_child(?SERVER, ChildSpec)
+    catch
+        E:M -> {error, {E, M}}
+    end.
+
+-spec stop_update(Id :: child_id()) -> ok | {error, term()}.
+stop_update(Id) ->
+    try
+        {ok, {_, Pid, _, _}} = supervisor:which_child(?SERVER, Id),
+        stopped = telegram_bot_api_update_server:stop(Pid),
+        ok = supervisor:delete_child(?SERVER, Id)
     catch
         E:M -> {error, {E, M}}
     end.
@@ -159,3 +180,12 @@ start_webhook(#{secret_token := _, transport_opts := #{ip := _Ip, port := _Port}
         E:M -> {error, {E, M}}
     end.
 
+-spec stop_webhook(Id :: child_id()) -> ok | {error, term()}.
+stop_webhook(Id) ->
+    try
+        {ok, {_, Pid, _, _}} = supervisor:which_child(?SERVER, Id),
+        stopped = telegram_bot_api_webhook_server:stop(Pid),
+        ok = supervisor:delete_child(?SERVER, Id)
+    catch
+        E:M -> {error, {E, M}}
+    end.
