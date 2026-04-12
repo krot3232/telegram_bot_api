@@ -78,8 +78,88 @@ A secret token to be sent in a header `X-Telegram-Bot-Api-Secret-Token` in every
 """.
 -type secret_token() :: nonempty_binary().
 
+-type binary3() :: <<_:24>>.
+
+-doc """
+Telegram payments currently support the currencies listed below. [supported currencies](https://core.telegram.org/bots/payments#supported-currencies)
+""".
+-type currency_iso_4217() :: binary3().
+-doc """
+`XTR`
+""".
+-type currency_xtr() :: binary3().
+-doc """
+`TON`
+""".
+-type currency_ton() :: binary3().
+
+
 %Default timeout for wpool:call(Pool, Req, Strategy, Timeout).
 -define(TIMEOUT_DEFAULT, 5000).
+
+-type binary_4() :: <<_:32>>.
+-type binary_5() :: <<_:40>>.
+-type binary_6() :: <<_:48>>.
+-type binary_7() :: <<_:56>>.
+-type binary_8() :: <<_:64>>.
+-type binary_9() :: <<_:72>>.
+-type binary_10() :: <<_:80>>.
+-type binary_11() :: <<_:88>>.
+-type binary_12() :: <<_:96>>.
+-type binary_13() :: <<_:104>>.
+-type binary_17() :: <<_:136>>.
+-type binary_18() :: <<_:144>>.
+-type binary_0_1024() :: binary().
+-type binary_0_200() :: binary().
+-type binary_0_4096() :: binary().
+-type binary_1_100() :: nonempty_binary().
+-type binary_1_255() :: nonempty_binary().
+-type binary_1_256() :: nonempty_binary().
+-type binary_1_300() :: nonempty_binary().
+-type binary_1_32() :: nonempty_binary().
+-type binary_1_4096() :: nonempty_binary().
+-type binary_1_64() :: nonempty_binary().
+-type alway_administrator() :: binary_13().
+-type alway_affiliate_program() :: binary_17().
+-type alway_channel() :: binary_7().
+-type alway_chat() :: binary_4().
+-type alway_chat_theme() :: binary_10().
+-type alway_creator() :: binary_7().
+-type alway_custom_emoji() :: binary_12().
+-type alway_emoji() :: binary_5().
+-type alway_failed() :: binary_6().
+-type alway_fill() :: binary_4().
+-type alway_fragment() :: binary_8().
+-type alway_freeform_gradient() :: binary_17().
+-type alway_gift_code() :: binary_9().
+-type alway_giveaway() :: binary_8().
+-type alway_gradient() :: binary_8().
+-type alway_hidden_user() :: binary_11().
+-type alway_kicked() :: binary_6().
+-type alway_left() :: binary_4().
+-type alway_link() :: binary_4().
+-type alway_location() :: binary_8().
+-type alway_member() :: binary_6().
+-type alway_other() :: binary_5().
+-type alway_paid() :: binary_4().
+-type alway_pattern() :: binary_7().
+-type alway_pending() :: binary_7().
+-type alway_photo() :: binary_5().
+-type alway_premium() :: binary_7().
+-type alway_preview() :: binary_7().
+-type alway_regular() :: binary_7().
+-type alway_restricted() :: binary_10().
+-type alway_solid() :: binary_5().
+-type alway_succeeded() :: binary_9().
+-type alway_suggested_reaction() :: binary_18().
+-type alway_telegram_ads() :: binary_12().
+-type alway_telegram_api() :: binary_12().
+-type alway_unique() :: binary_6().
+-type alway_unique_gift() :: binary_11().
+-type alway_user() :: binary_4().
+-type alway_video() :: binary_5().
+-type alway_wallpaper() :: binary_9().
+-type alway_weather() :: binary_7().
 
 -export([
 	getUpdates/2, getUpdates/3, getUpdates/4,
@@ -851,7 +931,7 @@ Describes reply parameters for the message that is being sent.
 	message_id := integer(),
 	chat_id => integer() | binary(),
 	allow_sending_without_reply => boolean(),
-	quote => binary(),
+	quote => binary_0_1024(),
 	quote_parse_mode => binary(),
 	quote_entities => nonempty_list('MessageEntity'()),
 	quote_position => integer(),
@@ -871,7 +951,7 @@ The message was originally sent by a known user.
   * `sender_user` - User that sent the message originally
 """.
 -type 'MessageOriginUser'() :: #{
-	type := binary(),
+	type := alway_user(),
 	date := integer(),
 	sender_user := 'User'()
 }.
@@ -883,7 +963,7 @@ The message was originally sent by an unknown user.
   * `sender_user_name` - Name of the user that sent the message originally
 """.
 -type 'MessageOriginHiddenUser'() :: #{
-	type := binary(),
+	type := alway_hidden_user(),
 	date := integer(),
 	sender_user_name := binary()
 }.
@@ -896,7 +976,7 @@ The message was originally sent on behalf of a chat to a group chat.
   * `author_signature` - Optional. For messages originally sent by an anonymous chat administrator, original message author signature
 """.
 -type 'MessageOriginChat'() :: #{
-	type := binary(),
+	type := alway_chat(),
 	date := integer(),
 	sender_chat := 'Chat'(),
 	author_signature => binary()
@@ -911,7 +991,7 @@ The message was originally sent to a channel chat.
   * `author_signature` - Optional. Signature of the original post author
 """.
 -type 'MessageOriginChannel'() :: #{
-	type := binary(),
+	type := alway_channel(),
 	date := integer(),
 	chat := 'Chat'(),
 	message_id := integer(),
@@ -1116,7 +1196,7 @@ The paid media isn't available before the payment.
   * `duration` - Optional. Duration of the media in seconds as defined by the sender
 """.
 -type 'PaidMediaPreview'() :: #{
-	type := binary(),
+	type := alway_preview(),
 	width => integer(),
 	height => integer(),
 	duration => integer()
@@ -1128,7 +1208,7 @@ The paid media is a photo.
   * `photo` - The photo
 """.
 -type 'PaidMediaPhoto'() :: #{
-	type := binary(),
+	type := alway_photo(),
 	photo := nonempty_list('PhotoSize'())
 }.
 
@@ -1138,7 +1218,7 @@ The paid media is a video.
   * `video` - The video
 """.
 -type 'PaidMediaVideo'() :: #{
-	type := binary(),
+	type := alway_video(),
 	video := 'Video'()
 }.
 
@@ -1175,7 +1255,7 @@ This object contains information about one answer option in a poll.
   * `voter_count` - Number of users that voted for this option
 """.
 -type 'PollOption'() :: #{
-	text := binary(),
+	text := binary_1_100(),
 	text_entities => nonempty_list('MessageEntity'()),
 	voter_count := integer()
 }.
@@ -1187,7 +1267,7 @@ This object contains information about one answer option in a poll to be sent.
   * `text_entities` - Optional. A JSON-serialized list of special entities that appear in the poll option text. It can be specified instead of text_parse_mode
 """.
 -type 'InputPollOption'() :: #{
-	text := binary(),
+	text := binary_1_100(),
 	text_parse_mode => binary(),
 	text_entities => nonempty_list('MessageEntity'())
 }.
@@ -1225,7 +1305,7 @@ This object contains information about a poll.
 """.
 -type 'Poll'() :: #{
 	id := binary(),
-	question := binary(),
+	question := binary_1_300(),
 	question_entities => nonempty_list('MessageEntity'()),
 	options := nonempty_list('PollOption'()),
 	total_voter_count := integer(),
@@ -1234,7 +1314,7 @@ This object contains information about a poll.
 	type := binary(),
 	allows_multiple_answers := boolean(),
 	correct_option_id => integer(),
-	explanation => binary(),
+	explanation => binary_0_200(),
 	explanation_entities => nonempty_list('MessageEntity'()),
 	open_period => integer(),
 	close_date => integer()
@@ -1283,7 +1363,7 @@ Describes a task to add to a checklist.
 """.
 -type 'InputChecklistTask'() :: #{
 	id := integer(),
-	text := binary(),
+	text := binary_1_100(),
 	parse_mode => binary(),
 	text_entities => nonempty_list('MessageEntity'())
 }.
@@ -1298,7 +1378,7 @@ Describes a checklist to create.
   * `others_can_mark_tasks_as_done` - Optional. Pass True if other users can mark tasks as done or not done in the checklist
 """.
 -type 'InputChecklist'() :: #{
-	title := binary(),
+	title := binary_1_255(),
 	parse_mode => binary(),
 	title_entities => nonempty_list('MessageEntity'()),
 	tasks := nonempty_list('InputChecklistTask'()),
@@ -1342,7 +1422,7 @@ This object represents a point on the map.
 	longitude := float(),
 	horizontal_accuracy => float(),
 	live_period => integer(),
-	heading => integer(),
+	heading => 1..360,
 	proximity_alert_radius => integer()
 }.
 
@@ -1416,7 +1496,7 @@ The background is filled using the selected color.
   * `color` - The color of the background fill in the RGB24 format
 """.
 -type 'BackgroundFillSolid'() :: #{
-	type := binary(),
+	type := alway_solid(),
 	color := integer()
 }.
 
@@ -1428,10 +1508,10 @@ The background is a gradient fill.
   * `rotation_angle` - Clockwise rotation angle of the background fill in degrees; 0-359
 """.
 -type 'BackgroundFillGradient'() :: #{
-	type := binary(),
+	type := alway_gradient(),
 	top_color := integer(),
 	bottom_color := integer(),
-	rotation_angle := integer()
+	rotation_angle := 0..359
 }.
 
 -doc """
@@ -1440,7 +1520,7 @@ The background is a freeform gradient that rotates after every message in the ch
   * `colors` - A list of the 3 or 4 base colors that are used to generate the freeform gradient in the RGB24 format
 """.
 -type 'BackgroundFillFreeformGradient'() :: #{
-	type := binary(),
+	type := alway_freeform_gradient(),
 	colors := nonempty_list(integer())
 }.
 
@@ -1457,9 +1537,9 @@ The background is automatically filled based on the selected colors.
   * `dark_theme_dimming` - Dimming of the background in dark themes, as a percentage; 0-100
 """.
 -type 'BackgroundTypeFill'() :: #{
-	type := binary(),
+	type := alway_fill(),
 	fill := 'BackgroundFill'(),
-	dark_theme_dimming := integer()
+	dark_theme_dimming := 0..100
 }.
 
 -doc """
@@ -1471,9 +1551,9 @@ The background is a wallpaper in the JPEG format.
   * `is_moving` - Optional. True, if the background moves slightly when the device is tilted
 """.
 -type 'BackgroundTypeWallpaper'() :: #{
-	type := binary(),
+	type := alway_wallpaper(),
 	document := 'Document'(),
-	dark_theme_dimming := integer(),
+	dark_theme_dimming := 0..100,
 	is_blurred => true,
 	is_moving => true
 }.
@@ -1488,10 +1568,10 @@ The background is a .PNG or .TGV (gzipped subset of SVG with MIME type “applic
   * `is_moving` - Optional. True, if the background moves slightly when the device is tilted
 """.
 -type 'BackgroundTypePattern'() :: #{
-	type := binary(),
+	type := alway_pattern(),
 	document := 'Document'(),
 	fill := 'BackgroundFill'(),
-	intensity := integer(),
+	intensity := 0..100,
 	is_inverted => true,
 	is_moving => true
 }.
@@ -1502,7 +1582,7 @@ The background is taken directly from a built-in chat theme.
   * `theme_name` - Name of the chat theme, which is usually an emoji
 """.
 -type 'BackgroundTypeChatTheme'() :: #{
-	type := binary(),
+	type := alway_chat_theme(),
 	theme_name := binary()
 }.
 
@@ -1706,7 +1786,7 @@ Describes a service message about a successful payment for a suggested post.
 """.
 -type 'SuggestedPostPaid'() :: #{
 	suggested_post_message => 'Message'(),
-	currency := binary(),
+	currency := currency_xtr() | currency_ton(),
 	amount => integer(),
 	star_amount => 'StarAmount'()
 }.
@@ -1819,7 +1899,7 @@ Describes the price of a suggested post.
   * `amount` - The amount of the [currency](https://core.telegram.org/bots/payments#supported-currencies) that will be paid for the post in the smallest units of the [currency](https://core.telegram.org/bots/payments#supported-currencies), i.e. [Telegram Stars](https://t.me/BotNews/90) or nanotoncoins. Currently, price in [Telegram Stars](https://t.me/BotNews/90) must be between 5 and 100000, and price in nanotoncoins must be between 10000000 and 10000000000000.
 """.
 -type 'SuggestedPostPrice'() :: #{
-	currency := binary(),
+	currency := currency_xtr() | currency_ton(),
 	amount := integer()
 }.
 
@@ -1918,7 +1998,7 @@ Example: A user requests to change the bot's language, bot replies to the reques
 	is_persistent => boolean(),
 	resize_keyboard => boolean(),
 	one_time_keyboard => boolean(),
-	input_field_placeholder => binary(),
+	input_field_placeholder => binary_1_64(),
 	selective => boolean()
 }.
 
@@ -1964,7 +2044,7 @@ Information about the selected users will be shared with the bot when the corres
 	request_id := integer(),
 	user_is_bot => boolean(),
 	user_is_premium => boolean(),
-	max_quantity => integer(),
+	max_quantity => 1..10,
 	request_name => boolean(),
 	request_username => boolean(),
 	request_photo => boolean()
@@ -2112,7 +2192,7 @@ This object represents an [inline keyboard](https://core.telegram.org/bots/featu
   * `text` - The text to be copied to the clipboard; 1-256 characters
 """.
 -type 'CopyTextButton'() :: #{
-	text := binary()
+	text := binary_1_256()
 }.
 
 -doc """
@@ -2159,7 +2239,7 @@ And if you use ForceReply in your bot's questions, it will receive the user's an
 """.
 -type 'ForceReply'() :: #{
 	force_reply := true,
-	input_field_placeholder => binary(),
+	input_field_placeholder => binary_1_64(),
 	selective => boolean()
 }.
 
@@ -2199,7 +2279,7 @@ Represents an invite link for a chat.
 	is_revoked := boolean(),
 	name => binary(),
 	expire_date => integer(),
-	member_limit => integer(),
+	member_limit => 1..99999,
 	pending_join_request_count => integer(),
 	subscription_period => integer(),
 	subscription_price => integer()
@@ -2281,7 +2361,7 @@ Represents a chat member that owns the chat and has all administrator privileges
   * `custom_title` - Optional. Custom title for this user
 """.
 -type 'ChatMemberOwner'() :: #{
-	status := binary(),
+	status := alway_creator(),
 	user := 'User'(),
 	is_anonymous := boolean(),
 	custom_title => binary()
@@ -2312,7 +2392,7 @@ Represents a chat member that has some additional privileges.
   * `custom_title` - Optional. Custom title for this user
 """.
 -type 'ChatMemberAdministrator'() :: #{
-	status := binary(),
+	status := alway_administrator(),
 	user := 'User'(),
 	can_be_edited := boolean(),
 	is_anonymous := boolean(),
@@ -2343,7 +2423,7 @@ Represents a chat member that has no additional privileges or restrictions.
   * `until_date` - Optional. Date when the user's subscription will expire; Unix time
 """.
 -type 'ChatMemberMember'() :: #{
-	status := binary(),
+	status := alway_member(),
 	tag => binary(),
 	user := 'User'(),
 	until_date => integer()
@@ -2374,7 +2454,7 @@ Supergroups only.
   * `until_date` - Date when restrictions will be lifted for this user; Unix time. If 0, then the user is restricted forever
 """.
 -type 'ChatMemberRestricted'() :: #{
-	status := binary(),
+	status := alway_restricted(),
 	tag => binary(),
 	user := 'User'(),
 	is_member := boolean(),
@@ -2402,7 +2482,7 @@ Represents a chat member that isn't currently a member of the chat, but may join
   * `user` - Information about the user
 """.
 -type 'ChatMemberLeft'() :: #{
-	status := binary(),
+	status := alway_left(),
 	user := 'User'()
 }.
 
@@ -2413,7 +2493,7 @@ Represents a chat member that was banned in the chat and can't return to the cha
   * `until_date` - Date when restrictions will be lifted for this user; Unix time. If 0, then the user is banned forever
 """.
 -type 'ChatMemberBanned'() :: #{
-	status := binary(),
+	status := alway_kicked(),
 	user := 'User'(),
 	until_date := integer()
 }.
@@ -2479,8 +2559,8 @@ Describes the birthdate of a user.
   * `year` - Optional. Year of the user's birth
 """.
 -type 'Birthdate'() :: #{
-	day := integer(),
-	month := integer(),
+	day := 1..31,
+	month := 1..12,
 	year => integer()
 }.
 
@@ -2587,7 +2667,7 @@ Currently, a story can have up to 10 location areas.
   * `address` - Optional. Address of the location
 """.
 -type 'StoryAreaTypeLocation'() :: #{
-	type := binary(),
+	type := alway_location(),
 	latitude := float(),
 	longitude := float(),
 	address => 'LocationAddress'()
@@ -2602,7 +2682,7 @@ Currently, a story can have up to 5 suggested reaction areas.
   * `is_flipped` - Optional. Pass True if reaction area corner is flipped
 """.
 -type 'StoryAreaTypeSuggestedReaction'() :: #{
-	type := binary(),
+	type := alway_suggested_reaction(),
 	reaction_type := 'ReactionType'(),
 	is_dark => boolean(),
 	is_flipped => boolean()
@@ -2615,7 +2695,7 @@ Currently, a story can have up to 3 link areas.
   * `url` - HTTP or tg:// URL to be opened when the area is clicked
 """.
 -type 'StoryAreaTypeLink'() :: #{
-	type := binary(),
+	type := alway_link(),
 	url := binary()
 }.
 
@@ -2628,7 +2708,7 @@ Currently, a story can have up to 3 weather areas.
   * `background_color` - A color of the area background in the ARGB format
 """.
 -type 'StoryAreaTypeWeather'() :: #{
-	type := binary(),
+	type := alway_weather(),
 	temperature := float(),
 	emoji := binary(),
 	background_color := integer()
@@ -2641,7 +2721,7 @@ Currently, a story can have at most 1 unique gift area.
   * `name` - Unique name of the gift
 """.
 -type 'StoryAreaTypeUniqueGift'() :: #{
-	type := binary(),
+	type := alway_unique_gift(),
 	name := binary()
 }.
 
@@ -2662,7 +2742,7 @@ Represents a location to which a chat is connected.
 """.
 -type 'ChatLocation'() :: #{
 	location := 'Location'(),
-	address := binary()
+	address := binary_1_64()
 }.
 
 -doc """
@@ -2677,7 +2757,7 @@ The reaction is based on an emoji.
   * `emoji` - Reaction emoji. Currently, it can be one of ❤, 👍, 👎, 🔥, 🥰, 👏, 😁, 🤔, 🤯, 😱, 🤬, 😢, 🎉, 🤩, 🤮, 💩, 🙏, 👌, 🕊, 🤡, 🥱, 🥴, 😍, 🐳, ❤‍🔥, 🌚, 🌭, 💯, 🤣, ⚡, 🍌, 🏆, 💔, 🤨, 😐, 🍓, 🍾, 💋, 🖕, 😈, 😴, 😭, 🤓, 👻, 👨‍💻, 👀, 🎃, 🙈, 😇, 😨, 🤝, ✍, 🤗, 🫡, 🎅, 🎄, ☃, 💅, 🤪, 🗿, 🆒, 💘, 🙉, 🦄, 😘, 💊, 🙊, 😎, 👾, 🤷‍♂, 🤷, 🤷‍♀, 😡
 """.
 -type 'ReactionTypeEmoji'() :: #{
-	type := binary(),
+	type := alway_emoji(),
 	emoji := binary()
 }.
 
@@ -2687,7 +2767,7 @@ The reaction is based on a custom emoji.
   * `custom_emoji_id` - Custom emoji identifier
 """.
 -type 'ReactionTypeCustomEmoji'() :: #{
-	type := binary(),
+	type := alway_custom_emoji(),
 	custom_emoji_id := binary()
 }.
 
@@ -2696,7 +2776,7 @@ The reaction is paid.
   * `type` - Type of the reaction, always `paid`
 """.
 -type 'ReactionTypePaid'() :: #{
-	type := binary()
+	type := alway_paid()
 }.
 
 -doc """
@@ -2982,7 +3062,7 @@ Describes a regular gift owned by a user or a chat.
   * `unique_gift_number` - Optional. Unique number reserved for this gift when upgraded. See the number field in UniqueGift
 """.
 -type 'OwnedGiftRegular'() :: #{
-	type := binary(),
+	type := alway_regular(),
 	gift := 'Gift'(),
 	owned_gift_id => binary(),
 	sender_user => 'User'(),
@@ -3012,7 +3092,7 @@ Describes a unique gift received and owned by a user or a chat.
   * `next_transfer_date` - Optional. Point in time (Unix timestamp) when the gift can be transferred. If it is in the past, then the gift can be transferred now
 """.
 -type 'OwnedGiftUnique'() :: #{
-	type := binary(),
+	type := alway_unique(),
 	gift := 'UniqueGift'(),
 	owned_gift_id => binary(),
 	sender_user => 'User'(),
@@ -3067,8 +3147,8 @@ This object represents a bot command.
   * `description` - Description of the command; 1-256 characters.
 """.
 -type 'BotCommand'() :: #{
-	command := binary(),
-	description := binary()
+	command := binary_1_32(),
+	description := binary_1_256()
 }.
 
 -doc """
@@ -3215,7 +3295,7 @@ The boost was obtained by subscribing to Telegram Premium or by gifting a Telegr
   * `user` - User that boosted the chat
 """.
 -type 'ChatBoostSourcePremium'() :: #{
-	source := binary(),
+	source := alway_premium(),
 	user := 'User'()
 }.
 
@@ -3226,7 +3306,7 @@ Each such code boosts the chat 4 times for the duration of the corresponding Tel
   * `user` - User for which the gift code was created
 """.
 -type 'ChatBoostSourceGiftCode'() :: #{
-	source := binary(),
+	source := alway_gift_code(),
 	user := 'User'()
 }.
 
@@ -3240,7 +3320,7 @@ This boosts the chat 4 times for the duration of the corresponding Telegram Prem
   * `is_unclaimed` - Optional. True, if the giveaway was completed, but there was no user to win the prize
 """.
 -type 'ChatBoostSourceGiveaway'() :: #{
-	source := binary(),
+	source := alway_giveaway(),
 	giveaway_message_id := integer(),
 	user => 'User'(),
 	prize_star_count => integer(),
@@ -3402,7 +3482,7 @@ Represents a photo to be sent.
 -type 'InputMediaPhoto'() :: #{
 	type := binary(),
 	media := binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -3432,7 +3512,7 @@ Represents a video to be sent.
 	thumbnail => binary(),
 	cover => binary(),
 	start_timestamp => integer(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -3461,7 +3541,7 @@ Represents an animation file (GIF or H.264/MPEG-4 AVC video without sound) to be
 	type := binary(),
 	media := binary(),
 	thumbnail => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -3487,7 +3567,7 @@ Represents an audio file to be treated as music to be sent.
 	type := binary(),
 	media := binary(),
 	thumbnail => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	duration => integer(),
@@ -3509,7 +3589,7 @@ Represents a general file to be sent.
 	type := binary(),
 	media := binary(),
 	thumbnail => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	disable_content_type_detection => boolean()
@@ -3734,7 +3814,7 @@ Example: An inline bot that sends YouTube videos can ask the user to connect the
 -type 'InlineQueryResultsButton'() :: #{
 	text := binary(),
 	web_app => 'WebAppInfo'(),
-	start_parameter => binary()
+	start_parameter => binary_1_64()
 }.
 
 -doc """
@@ -3798,7 +3878,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	photo_height => integer(),
 	title => binary(),
 	description => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -3836,7 +3916,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	thumbnail_url := binary(),
 	thumbnail_mime_type => binary(),
 	title => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -3874,7 +3954,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	thumbnail_url := binary(),
 	thumbnail_mime_type => binary(),
 	title => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -3911,7 +3991,7 @@ If an InlineQueryResultVideo message contains an embedded video (e.g., YouTube),
 	mime_type := binary(),
 	thumbnail_url := binary(),
 	title := binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -3944,7 +4024,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	id := binary(),
 	audio_url := binary(),
 	title := binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	performer => binary(),
@@ -3973,7 +4053,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	id := binary(),
 	voice_url := binary(),
 	title := binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	voice_duration => integer(),
@@ -4005,7 +4085,7 @@ Currently, only .PDF and .ZIP files can be sent using this method.
 	type := binary(),
 	id := binary(),
 	title := binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	document_url := binary(),
@@ -4158,7 +4238,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	photo_file_id := binary(),
 	title => binary(),
 	description => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -4186,7 +4266,7 @@ Alternatively, you can use input_message_content to send a message with specifie
 	id := binary(),
 	gif_file_id := binary(),
 	title => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -4214,7 +4294,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	id := binary(),
 	mpeg4_file_id := binary(),
 	title => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -4261,7 +4341,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	title := binary(),
 	document_file_id := binary(),
 	description => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	reply_markup => 'InlineKeyboardMarkup'(),
@@ -4290,7 +4370,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	video_file_id := binary(),
 	title := binary(),
 	description => binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	show_caption_above_media => boolean(),
@@ -4317,7 +4397,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	id := binary(),
 	voice_file_id := binary(),
 	title := binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	reply_markup => 'InlineKeyboardMarkup'(),
@@ -4341,7 +4421,7 @@ Alternatively, you can use input_message_content to send a message with the spec
 	type := binary(),
 	id := binary(),
 	audio_file_id := binary(),
-	caption => binary(),
+	caption => binary_0_1024(),
 	parse_mode => binary(),
 	caption_entities => nonempty_list('MessageEntity'()),
 	reply_markup => 'InlineKeyboardMarkup'(),
@@ -4362,7 +4442,7 @@ Represents the content of a text message to be sent as the result of an inline q
   * `link_preview_options` - Optional. Link preview generation options for the message
 """.
 -type 'InputTextMessageContent'() :: #{
-	message_text := binary(),
+	message_text := binary_1_4096(),
 	parse_mode => binary(),
 	entities => nonempty_list('MessageEntity'()),
 	link_preview_options => 'LinkPreviewOptions'()
@@ -4446,11 +4526,11 @@ Represents the content of an invoice message to be sent as the result of an inli
   * `is_flexible` - Optional. Pass True if the final price depends on the shipping method. Ignored for payments in [Telegram Stars](https://t.me/BotNews/90).
 """.
 -type 'InputInvoiceMessageContent'() :: #{
-	title := binary(),
-	description := binary(),
+	title := binary_1_32(),
+	description := binary_1_255(),
 	payload := binary(),
 	provider_token => binary(),
-	currency := binary(),
+	currency := currency_iso_4217() | currency_xtr(),
 	prices := nonempty_list('LabeledPrice'()),
 	max_tip_amount => integer(),
 	suggested_tip_amounts => nonempty_list(integer()),
@@ -4525,7 +4605,7 @@ This object contains basic information about an invoice.
 	title := binary(),
 	description := binary(),
 	start_parameter := binary(),
-	currency := binary(),
+	currency := currency_iso_4217() | currency_xtr(),
 	total_amount := integer()
 }.
 
@@ -4589,7 +4669,7 @@ This is outside of Telegram's control.
   * `provider_payment_charge_id` - Provider payment identifier
 """.
 -type 'SuccessfulPayment'() :: #{
-	currency := binary(),
+	currency := currency_iso_4217() | currency_xtr(),
 	total_amount := integer(),
 	invoice_payload := binary(),
 	subscription_expiration_date => integer(),
@@ -4610,7 +4690,7 @@ This object contains basic information about a refunded payment.
   * `provider_payment_charge_id` - Optional. Provider payment identifier
 """.
 -type 'RefundedPayment'() :: #{
-	currency := binary(),
+	currency := currency_iso_4217() | currency_xtr(),
 	total_amount := integer(),
 	invoice_payload := binary(),
 	telegram_payment_charge_id := binary(),
@@ -4644,7 +4724,7 @@ This object contains information about an incoming pre-checkout query.
 -type 'PreCheckoutQuery'() :: #{
 	id := binary(),
 	from := 'User'(),
-	currency := binary(),
+	currency := currency_iso_4217() | currency_xtr(),
 	total_amount := integer(),
 	invoice_payload := binary(),
 	shipping_option_id => binary(),
@@ -4672,7 +4752,7 @@ The withdrawal is in progress.
   * `type` - Type of the state, always `pending`
 """.
 -type 'RevenueWithdrawalStatePending'() :: #{
-	type := binary()
+	type := alway_pending()
 }.
 
 -doc """
@@ -4682,7 +4762,7 @@ The withdrawal succeeded.
   * `url` - An HTTPS URL that can be used to see transaction details
 """.
 -type 'RevenueWithdrawalStateSucceeded'() :: #{
-	type := binary(),
+	type := alway_succeeded(),
 	date := integer(),
 	url := binary()
 }.
@@ -4692,7 +4772,7 @@ The withdrawal failed and the transaction was refunded.
   * `type` - Type of the state, always `failed`
 """.
 -type 'RevenueWithdrawalStateFailed'() :: #{
-	type := binary()
+	type := alway_failed()
 }.
 
 -doc """
@@ -4731,7 +4811,7 @@ Describes a transaction with a user.
   * `premium_subscription_duration` - Optional. Number of months the gifted Telegram Premium subscription will be active for; for `premium_purchase` transactions only
 """.
 -type 'TransactionPartnerUser'() :: #{
-	type := binary(),
+	type := alway_user(),
 	transaction_type := binary(),
 	user := 'User'(),
 	affiliate => 'AffiliateInfo'(),
@@ -4750,7 +4830,7 @@ Describes a transaction with a chat.
   * `gift` - Optional. The gift sent to the chat by the bot
 """.
 -type 'TransactionPartnerChat'() :: #{
-	type := binary(),
+	type := alway_chat(),
 	chat := 'Chat'(),
 	gift => 'Gift'()
 }.
@@ -4762,7 +4842,7 @@ Describes the affiliate program that issued the affiliate commission received vi
   * `commission_per_mille` - The number of [Telegram Stars](https://t.me/BotNews/90) received by the bot for each 1000 [Telegram Stars](https://t.me/BotNews/90) received by the affiliate program sponsor from referred users
 """.
 -type 'TransactionPartnerAffiliateProgram'() :: #{
-	type := binary(),
+	type := alway_affiliate_program(),
 	sponsor_user => 'User'(),
 	commission_per_mille := integer()
 }.
@@ -4773,7 +4853,7 @@ Describes a withdrawal transaction with [Fragment](https://fragment.com).
   * `withdrawal_state` - Optional. State of the transaction if the transaction is outgoing
 """.
 -type 'TransactionPartnerFragment'() :: #{
-	type := binary(),
+	type := alway_fragment(),
 	withdrawal_state => 'RevenueWithdrawalState'()
 }.
 
@@ -4782,7 +4862,7 @@ Describes a withdrawal transaction to the Telegram Ads platform.
   * `type` - Type of the transaction partner, always `telegram_ads`
 """.
 -type 'TransactionPartnerTelegramAds'() :: #{
-	type := binary()
+	type := alway_telegram_ads()
 }.
 
 -doc """
@@ -4791,7 +4871,7 @@ Describes a transaction with payment for [paid broadcasting](https://core.telegr
   * `request_count` - The number of successful requests that exceeded regular limits and were therefore billed
 """.
 -type 'TransactionPartnerTelegramApi'() :: #{
-	type := binary(),
+	type := alway_telegram_api(),
 	request_count := integer()
 }.
 
@@ -4800,7 +4880,7 @@ Describes a transaction with an unknown source or recipient.
   * `type` - Type of the transaction partner, always `other`
 """.
 -type 'TransactionPartnerOther'() :: #{
-	type := binary()
+	type := alway_other()
 }.
 
 -doc """
@@ -5052,7 +5132,7 @@ Use [BotFather](https://t.me/botfather) to create and edit games, their short na
 	title := binary(),
 	description := binary(),
 	photo := nonempty_list('PhotoSize'()),
-	text => binary(),
+	text => binary_0_4096(),
 	text_entities => nonempty_list('MessageEntity'()),
 	animation => 'Animation'()
 }.

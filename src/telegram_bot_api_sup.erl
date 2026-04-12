@@ -13,7 +13,7 @@ telegram_bot_api top level supervisor.
 
 -export([start_pool/1, stop_pool/1]).
 -export([start_webhook/1, stop_webhook/1]).
--export([start_update/1]).
+-export([start_update/1, stop_update/1]).
 
 -type child_id() :: term().
 
@@ -129,7 +129,7 @@ start_update(
 stop_update(Id) ->
     try
         {ok, {_, Pid, _, _}} = supervisor:which_child(?SERVER, Id),
-        stopped = telegram_bot_api_update_server:stop(Pid),
+        ok = telegram_bot_api_updater_server:stop(Pid),
         ok = supervisor:delete_child(?SERVER, Id)
     catch
         E:M -> {error, {E, M}}

@@ -53,7 +53,7 @@ Roll a dice, `telegram_bot_api:sendDice/3` function is used for sending.
 
 Using the dice emoji:
 
-    -include_lib("telegram_bot_api/include/message_dice.hrl").`
+    -include_lib("telegram_bot_api/include/message_dice.hrl").
     %%use emoji
     ?DICE_GAME_DIE.
 
@@ -72,7 +72,7 @@ In a supergroup you can use topics, to create topics you can use the `telegram_b
 
 Using the forum topic emoji:
 
-    -include_lib("telegram_bot_api/include/message_topic.hrl").`
+    -include_lib("telegram_bot_api/include/message_topic.hrl").
     %%use emoji
     ?TOPIC_EMOJI_NEWSPAPER_ID.
 
@@ -198,7 +198,7 @@ You can send reaction emojis in response to chat messages using the `telegram_bo
 
 Emoji reaction use:
 
-    -include_lib("telegram_bot_api/include/message_reaction.hrl").`
+    -include_lib("telegram_bot_api/include/message_reaction.hrl").
     %%use emoji
     ?REACTION_HEART.
 
@@ -285,7 +285,7 @@ You can send emoji in a message using the `telegram_bot_api:sendMessage/3` funct
 
 Emoji use:
 
-    -include_lib("telegram_bot_api/include/emoji.hrl").`
+    -include_lib("telegram_bot_api/include/emoji.hrl").
     %%use emoji
     ?EMOJI_LION_FACE.
 
@@ -2183,7 +2183,7 @@ When sending messages, you can use message `effects message_effect_id`.
 
 Using the effect emoji:
 
-    -include_lib("telegram_bot_api/include/message_effect.hrl").`
+    -include_lib("telegram_bot_api/include/message_effect.hrl").
     %%use emoji
     ?MESSAGE_EFFECT_FIRE.
 

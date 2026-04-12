@@ -1,5 +1,7 @@
-%%https://core.telegram.org/bots/api#reactiontype
+%% https://core.telegram.org/bots/api#reactiontype
 -define(REACTION_TYPE_EMOJI, <<"emoji">>).
+-define(REACTION_TYPE_CUSTOM_EMOJI, <<"custom_emoji">>).
+-define(REACTION_TYPE_PAID, <<"paid">>).
 
 %% ❤	0xE29DA4 :heart:
 -define(REACTION_HEART, <<16#E2,16#9D,16#A4>>).

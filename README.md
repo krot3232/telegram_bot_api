@@ -99,7 +99,7 @@ ok= telegram_bot_api_webhook_server:add_bot(
     {global,WebhookId},%or WebhookPid
     <<"mybot_pool">>,
     #{
-        event=>{global,BotEvent1},
+        event=>{global,my_event},
         name=>mybot_pool
     }
 ),
@@ -201,8 +201,8 @@ telegram_bot_api:setMessageReaction(BotName,#{
         message_id=>MessageId,
         reaction=>[
         #{
-            type=>?REACTION_TYPE_EMOJI,% or telegram_bot_api_emoji:random_reaction()
-            emoji=>Reaction1
+            type=>?REACTION_TYPE_EMOJI, % REACTION_TYPE_EMOJI | REACTION_TYPE_CUSTOM_EMOJI | REACTION_TYPE_PAID see https://core.telegram.org/bots/api#reactiontype
+            emoji=>?REACTION_OK_HAND % or telegram_bot_api_emoji:random_reaction()
         }
     ]},Async),
 ```
