@@ -2,12 +2,12 @@
 <img src="https://raw.githubusercontent.com/krot3232/logos/main/telegram_bot_api.png" width="200">
 
 Erlang library for Telegram Bot API.  
-It contains all methods and types available in Telegram Bot API 9.5, released March 1, 2026.
+It contains all methods and types available in Telegram Bot API 9.6, released April 3, 2026.
 
 [![Erlang](https://img.shields.io/badge/Erlang%2FOTP-27+-deeppink?style=flat-square&logo=erlang&logoColor=ffffff)](https://www.erlang.org)
 [![Hex Version](https://img.shields.io/hexpm/v/telegram_bot_api.svg?style=flat-square)](https://hex.pm/packages/telegram_bot_api)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-orange?style=flat-square)](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html)
-[![Compatible with Bot API v9.5](https://img.shields.io/badge/Bot%20API%20version-v9.5-success?style=flat-square)](https://core.telegram.org/bots/api#march-1-2026)
+[![Compatible with Bot API v9.6](https://img.shields.io/badge/Bot%20API%20version-v9.6-success?style=flat-square)](https://core.telegram.org/bots/api#april-3-2026)
 
 ## Installation
 

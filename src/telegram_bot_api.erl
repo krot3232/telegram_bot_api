@@ -97,6 +97,7 @@ Telegram payments currently support the currencies listed below. [supported curr
 %Default timeout for wpool:call(Pool, Req, Strategy, Timeout).
 -define(TIMEOUT_DEFAULT, 5000).
 
+
 -type binary_4() :: <<_:32>>.
 -type binary_5() :: <<_:40>>.
 -type binary_6() :: <<_:48>>.
@@ -285,6 +286,8 @@ Telegram payments currently support the currencies listed below. [supported curr
 	getFile/2, getFile/3, getFile/4,
 	uploadStickerFile/2, uploadStickerFile/3, uploadStickerFile/4,
 	exportChatInviteLink/2, exportChatInviteLink/3, exportChatInviteLink/4,
+	getManagedBotToken/2, getManagedBotToken/3, getManagedBotToken/4,
+	replaceManagedBotToken/2, replaceManagedBotToken/3, replaceManagedBotToken/4,
 	createInvoiceLink/2, createInvoiceLink/3, createInvoiceLink/4,
 	createChatInviteLink/2, createChatInviteLink/3, createChatInviteLink/4,
 	editChatInviteLink/2, editChatInviteLink/3, editChatInviteLink/4,
@@ -315,6 +318,9 @@ Telegram payments currently support the currencies listed below. [supported curr
 	postStory/2, postStory/3, postStory/4,
 	repostStory/2, repostStory/3, repostStory/4,
 	editStory/2, editStory/3, editStory/4,
+	answerWebAppQuery/2, answerWebAppQuery/3, answerWebAppQuery/4,
+	savePreparedInlineMessage/2, savePreparedInlineMessage/3, savePreparedInlineMessage/4,
+	savePreparedKeyboardButton/2, savePreparedKeyboardButton/3, savePreparedKeyboardButton/4,
 	editMessageText/2, editMessageText/3, editMessageText/4,
 	editMessageCaption/2, editMessageCaption/3, editMessageCaption/4,
 	editMessageMedia/2, editMessageMedia/3, editMessageMedia/4,
@@ -324,8 +330,6 @@ Telegram payments currently support the currencies listed below. [supported curr
 	setGameScore/2, setGameScore/3, setGameScore/4,
 	stopPoll/2, stopPoll/3, stopPoll/4,
 	getStickerSet/2, getStickerSet/3, getStickerSet/4,
-	answerWebAppQuery/2, answerWebAppQuery/3, answerWebAppQuery/4,
-	savePreparedInlineMessage/2, savePreparedInlineMessage/3, savePreparedInlineMessage/4,
 	getStarTransactions/2, getStarTransactions/3, getStarTransactions/4,
 	getGameHighScores/2, getGameHighScores/3, getGameHighScores/4
 ]).
@@ -359,6 +363,7 @@ At most one of the optional parameters can be present in any given update.
   * `chat_join_request` - Optional. A request to join the chat has been sent. The bot must have the can_invite_users administrator right in the chat to receive these updates.
   * `chat_boost` - Optional. A chat boost was added or changed. The bot must be an administrator in the chat to receive these updates.
   * `removed_chat_boost` - Optional. A boost was removed from a chat. The bot must be an administrator in the chat to receive these updates.
+  * `managed_bot` - Optional. A new bot was created to be managed by the bot, or token or owner of a managed bot was changed
 """.
 -type 'Update'() :: #{
 	update_id := integer(),
@@ -384,7 +389,8 @@ At most one of the optional parameters can be present in any given update.
 	chat_member => 'ChatMemberUpdated'(),
 	chat_join_request => 'ChatJoinRequest'(),
 	chat_boost => 'ChatBoostUpdated'(),
-	removed_chat_boost => 'ChatBoostRemoved'()
+	removed_chat_boost => 'ChatBoostRemoved'(),
+	managed_bot => 'ManagedBotUpdated'()
 }.
 
 -doc """
@@ -428,6 +434,7 @@ This object represents a Telegram user or bot.
   * `has_main_web_app` - Optional. True, if the bot has a main [Web App](https://core.telegram.org/bots/webapps). Returned only in getMe.
   * `has_topics_enabled` - Optional. True, if the bot has forum topic mode enabled in private chats. Returned only in getMe.
   * `allows_users_to_create_topics` - Optional. True, if the bot allows users to create and delete topics in private chats. Returned only in getMe.
+  * `can_manage_bots` - Optional. True, if other bots can be created to be controlled by the bot. Returned only in getMe.
 """.
 -type 'User'() :: #{
 	id := integer(),
@@ -444,7 +451,8 @@ This object represents a Telegram user or bot.
 	can_connect_to_business => boolean(),
 	has_main_web_app => boolean(),
 	has_topics_enabled => boolean(),
-	allows_users_to_create_topics => boolean()
+	allows_users_to_create_topics => boolean(),
+	can_manage_bots => boolean()
 }.
 
 -doc """
@@ -598,6 +606,7 @@ This object represents a message.
   * `quote` - Optional. For replies that quote part of the original message, the quoted part of the message
   * `reply_to_story` - Optional. For replies to a story, the original story
   * `reply_to_checklist_task_id` - Optional. Identifier of the specific checklist task that is being replied to
+  * `reply_to_poll_option_id` - Optional. Persistent identifier of the specific poll option that is being replied to
   * `via_bot` - Optional. Bot through which the message was sent
   * `edit_date` - Optional. Date the message was last edited in Unix time
   * `has_protected_content` - Optional. True, if the message can't be forwarded
@@ -673,7 +682,10 @@ This object represents a message.
   * `giveaway` - Optional. The message is a scheduled giveaway message
   * `giveaway_winners` - Optional. A giveaway with public winners was completed
   * `giveaway_completed` - Optional. Service message: a giveaway without public winners was completed
+  * `managed_bot_created` - Optional. Service message: user created a bot that will be managed by the current bot
   * `paid_message_price_changed` - Optional. Service message: the price for paid messages has changed in the chat
+  * `poll_option_added` - Optional. Service message: answer option was added to a poll
+  * `poll_option_deleted` - Optional. Service message: answer option was deleted from a poll
   * `suggested_post_approved` - Optional. Service message: a suggested post was approved
   * `suggested_post_approval_failed` - Optional. Service message: approval of a suggested post has failed
   * `suggested_post_declined` - Optional. Service message: a suggested post was declined
@@ -706,6 +718,7 @@ This object represents a message.
 	quote => 'TextQuote'(),
 	reply_to_story => 'Story'(),
 	reply_to_checklist_task_id => integer(),
+	reply_to_poll_option_id => binary(),
 	via_bot => 'User'(),
 	edit_date => integer(),
 	has_protected_content => true,
@@ -781,7 +794,10 @@ This object represents a message.
 	giveaway => 'Giveaway'(),
 	giveaway_winners => 'GiveawayWinners'(),
 	giveaway_completed => 'GiveawayCompleted'(),
+	managed_bot_created => 'ManagedBotCreated'(),
 	paid_message_price_changed => 'PaidMessagePriceChanged'(),
+	poll_option_added => 'PollOptionAdded'(),
+	poll_option_deleted => 'PollOptionDeleted'(),
 	suggested_post_approved => 'SuggestedPostApproved'(),
 	suggested_post_approval_failed => 'SuggestedPostApprovalFailed'(),
 	suggested_post_declined => 'SuggestedPostDeclined'(),
@@ -849,7 +865,7 @@ For example, hashtags, usernames, URLs, etc.
 -doc """
 This object contains information about the quoted part of a message that is replied to by the given message.
   * `text` - Text of the quoted part of a message that is replied to by the given message
-  * `entities` - Optional. Special entities that appear in the quote. Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are kept in quotes.
+  * `entities` - Optional. Special entities that appear in the quote. Currently, only bold, italic, underline, strikethrough, spoiler, custom_emoji, and date_time entities are kept in quotes.
   * `position` - Approximate quote position in the original message in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length) as specified by the sender
   * `is_manual` - Optional. True, if the quote was chosen manually by the message sender. Otherwise, the quote was added automatically by the server.
 """.
@@ -921,11 +937,12 @@ Describes reply parameters for the message that is being sent.
   * `message_id` - Identifier of the message that will be replied to in the current chat, or in the chat chat_id if it is specified
   * `chat_id` - Optional. If the message to be replied to is from a different chat, unique identifier for the chat or username of the channel (in the format @channelusername). Not supported for messages sent on behalf of a business account and messages from channel direct messages chats.
   * `allow_sending_without_reply` - Optional. Pass True if the message should be sent even if the specified message to be replied to is not found. Always False for replies in another chat or forum topic. Always True for messages sent on behalf of a business account.
-  * `quote` - Optional. Quoted part of the message to be replied to; 0-1024 characters after entities parsing. The quote must be an exact substring of the message to be replied to, including bold, italic, underline, strikethrough, spoiler, and custom_emoji entities. The message will fail to send if the quote isn't found in the original message.
+  * `quote` - Optional. Quoted part of the message to be replied to; 0-1024 characters after entities parsing. The quote must be an exact substring of the message to be replied to, including bold, italic, underline, strikethrough, spoiler, custom_emoji, and date_time entities. The message will fail to send if the quote isn't found in the original message.
   * `quote_parse_mode` - Optional. Mode for parsing entities in the quote. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `quote_entities` - Optional. A JSON-serialized list of special entities that appear in the quote. It can be specified instead of quote_parse_mode.
   * `quote_position` - Optional. Position of the quote in the original message in [UTF-16 code units](https://core.telegram.org/api/entities#entity-length)
   * `checklist_task_id` - Optional. Identifier of the specific checklist task to be replied to
+  * `poll_option_id` - Optional. Persistent identifier of the specific poll option to be replied to
 """.
 -type 'ReplyParameters'() :: #{
 	message_id := integer(),
@@ -935,7 +952,8 @@ Describes reply parameters for the message that is being sent.
 	quote_parse_mode => binary(),
 	quote_entities => nonempty_list('MessageEntity'()),
 	quote_position => integer(),
-	checklist_task_id => integer()
+	checklist_task_id => integer(),
+	poll_option_id => binary()
 }.
 
 -doc """
@@ -1250,14 +1268,22 @@ This object represents an [animated](https://telegram.org/blog/animated-stickers
 
 -doc """
 This object contains information about one answer option in a poll.
+  * `persistent_id` - Unique identifier of the option, persistent on option addition and deletion
   * `text` - Option text, 1-100 characters
   * `text_entities` - Optional. Special entities that appear in the option text. Currently, only custom emoji entities are allowed in poll option texts
-  * `voter_count` - Number of users that voted for this option
+  * `voter_count` - Number of users who voted for this option; may be 0 if unknown
+  * `added_by_user` - Optional. User who added the option; omitted if the option wasn't added by a user after poll creation
+  * `added_by_chat` - Optional. Chat that added the option; omitted if the option wasn't added by a chat after poll creation
+  * `addition_date` - Optional. Point in time (Unix timestamp) when the option was added; omitted if the option existed in the original poll
 """.
 -type 'PollOption'() :: #{
+	persistent_id := binary(),
 	text := binary_1_100(),
 	text_entities => nonempty_list('MessageEntity'()),
-	voter_count := integer()
+	voter_count := integer(),
+	added_by_user => 'User'(),
+	added_by_chat => 'Chat'(),
+	addition_date => integer()
 }.
 
 -doc """
@@ -1278,12 +1304,14 @@ This object represents an answer of a user in a non-anonymous poll.
   * `voter_chat` - Optional. The chat that changed the answer to the poll, if the voter is anonymous
   * `user` - Optional. The user that changed the answer to the poll, if the voter isn't anonymous
   * `option_ids` - 0-based identifiers of chosen answer options. May be empty if the vote was retracted.
+  * `option_persistent_ids` - Persistent identifiers of the chosen answer options. May be empty if the vote was retracted.
 """.
 -type 'PollAnswer'() :: #{
 	poll_id := binary(),
 	voter_chat => 'Chat'(),
 	user => 'User'(),
-	option_ids := nonempty_list(integer())
+	option_ids := nonempty_list(integer()),
+	option_persistent_ids := nonempty_list(binary())
 }.
 
 -doc """
@@ -1297,11 +1325,14 @@ This object contains information about a poll.
   * `is_anonymous` - True, if the poll is anonymous
   * `type` - Poll type, currently can be `regular` or `quiz`
   * `allows_multiple_answers` - True, if the poll allows multiple answers
-  * `correct_option_id` - Optional. 0-based identifier of the correct answer option. Available only for polls in the quiz mode, which are closed, or was sent (not forwarded) by the bot or to the private chat with the bot.
+  * `allows_revoting` - True, if the poll allows to change the chosen answer options
+  * `correct_option_ids` - Optional. Array of 0-based identifiers of the correct answer options. Available only for polls in quiz mode which are closed or were sent (not forwarded) by the bot or to the private chat with the bot.
   * `explanation` - Optional. Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters
   * `explanation_entities` - Optional. Special entities like usernames, URLs, bot commands, etc. that appear in the explanation
   * `open_period` - Optional. Amount of time in seconds the poll will be active after creation
   * `close_date` - Optional. Point in time (Unix timestamp) when the poll will be automatically closed
+  * `description` - Optional. Description of the poll; for polls inside the Message object only
+  * `description_entities` - Optional. Special entities like usernames, URLs, bot commands, etc. that appear in the description
 """.
 -type 'Poll'() :: #{
 	id := binary(),
@@ -1313,11 +1344,14 @@ This object contains information about a poll.
 	is_anonymous := boolean(),
 	type := binary(),
 	allows_multiple_answers := boolean(),
-	correct_option_id => integer(),
+	allows_revoting := boolean(),
+	correct_option_ids => nonempty_list(integer()),
 	explanation => binary_0_200(),
 	explanation_entities => nonempty_list('MessageEntity'()),
 	open_period => integer(),
-	close_date => integer()
+	close_date => integer(),
+	description => binary(),
+	description_entities => nonempty_list('MessageEntity'())
 }.
 
 -doc """
@@ -1359,7 +1393,7 @@ Describes a task to add to a checklist.
   * `id` - Unique identifier of the task; must be positive and unique among all task identifiers currently present in the checklist
   * `text` - Text of the task; 1-100 characters after entities parsing
   * `parse_mode` - Optional. Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
-  * `text_entities` - Optional. List of special entities that appear in the text, which can be specified instead of parse_mode. Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are allowed.
+  * `text_entities` - Optional. List of special entities that appear in the text, which can be specified instead of parse_mode. Currently, only bold, italic, underline, strikethrough, spoiler, custom_emoji, and date_time entities are allowed.
 """.
 -type 'InputChecklistTask'() :: #{
 	id := integer(),
@@ -1372,7 +1406,7 @@ Describes a task to add to a checklist.
 Describes a checklist to create.
   * `title` - Title of the checklist; 1-255 characters after entities parsing
   * `parse_mode` - Optional. Mode for parsing entities in the title. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
-  * `title_entities` - Optional. List of special entities that appear in the title, which can be specified instead of parse_mode. Currently, only bold, italic, underline, strikethrough, spoiler, and custom_emoji entities are allowed.
+  * `title_entities` - Optional. List of special entities that appear in the title, which can be specified instead of parse_mode. Currently, only bold, italic, underline, strikethrough, spoiler, custom_emoji, and date_time entities are allowed.
   * `tasks` - List of 1-30 tasks in the checklist
   * `others_can_add_tasks` - Optional. Pass True if other users can add tasks to the checklist
   * `others_can_mark_tasks_as_done` - Optional. Pass True if other users can mark tasks as done or not done in the checklist
@@ -1474,6 +1508,52 @@ This object represents a service message about a change in auto-delete timer set
 """.
 -type 'MessageAutoDeleteTimerChanged'() :: #{
 	message_auto_delete_time := integer()
+}.
+
+-doc """
+This object contains information about the bot that was created to be managed by the current bot.
+  * `bot` - Information about the bot. The bot's token can be fetched using the method getManagedBotToken.
+""".
+-type 'ManagedBotCreated'() :: #{
+	bot := 'User'()
+}.
+
+-doc """
+This object contains information about the creation, token update, or owner update of a bot that is managed by the current bot.
+  * `user` - User that created the bot
+  * `bot` - Information about the bot. Token of the bot can be fetched using the method getManagedBotToken.
+""".
+-type 'ManagedBotUpdated'() :: #{
+	user := 'User'(),
+	bot := 'User'()
+}.
+
+-doc """
+Describes a service message about an option added to a poll.
+  * `poll_message` - Optional. Message containing the poll to which the option was added, if known. Note that the Message object in this field will not contain the reply_to_message field even if it itself is a reply.
+  * `option_persistent_id` - Unique identifier of the added option
+  * `option_text` - Option text
+  * `option_text_entities` - Optional. Special entities that appear in the option_text
+""".
+-type 'PollOptionAdded'() :: #{
+	poll_message => 'MaybeInaccessibleMessage'(),
+	option_persistent_id := binary(),
+	option_text := binary(),
+	option_text_entities => nonempty_list('MessageEntity'())
+}.
+
+-doc """
+Describes a service message about an option deleted from a poll.
+  * `poll_message` - Optional. Message containing the poll from which the option was deleted, if known. Note that the Message object in this field will not contain the reply_to_message field even if it itself is a reply.
+  * `option_persistent_id` - Unique identifier of the deleted option
+  * `option_text` - Option text
+  * `option_text_entities` - Optional. Special entities that appear in the option_text
+""".
+-type 'PollOptionDeleted'() :: #{
+	poll_message => 'MaybeInaccessibleMessage'(),
+	option_persistent_id := binary(),
+	option_text := binary(),
+	option_text_entities => nonempty_list('MessageEntity'())
 }.
 
 -doc """
@@ -2011,6 +2091,7 @@ For simple text buttons, String can be used instead of this object to specify th
   * `style` - Optional. Style of the button. Must be one of `danger` (red), `success` (green) or `primary` (blue). If omitted, then an app-specific style is used.
   * `request_users` - Optional. If specified, pressing the button will open a list of suitable users. Identifiers of selected users will be sent to the bot in a `users_shared` service message. Available in private chats only.
   * `request_chat` - Optional. If specified, pressing the button will open a list of suitable chats. Tapping on a chat will send its identifier to the bot in a `chat_shared` service message. Available in private chats only.
+  * `request_managed_bot` - Optional. If specified, pressing the button will ask the user to create and share a bot that will be managed by the current bot. Available for bots that enabled management of other bots in the [@BotFather](https://t.me/botfather) Mini App. Available in private chats only.
   * `request_contact` - Optional. If True, the user's phone number will be sent as a contact when the button is pressed. Available in private chats only.
   * `request_location` - Optional. If True, the user's current location will be sent when the button is pressed. Available in private chats only.
   * `request_poll` - Optional. If specified, the user will be asked to create a poll and send it to the bot when the button is pressed. Available in private chats only.
@@ -2022,6 +2103,7 @@ For simple text buttons, String can be used instead of this object to specify th
 	style => binary(),
 	request_users => 'KeyboardButtonRequestUsers'(),
 	request_chat => 'KeyboardButtonRequestChat'(),
+	request_managed_bot => 'KeyboardButtonRequestManagedBot'(),
 	request_contact => boolean(),
 	request_location => boolean(),
 	request_poll => 'KeyboardButtonPollType'(),
@@ -2082,6 +2164,19 @@ The bot will be granted requested rights in the chat if appropriate.
 }.
 
 -doc """
+This object defines the parameters for the creation of a managed bot.  
+Information about the created bot will be shared with the bot using the update managed_bot and a Message with the field managed_bot_created.
+  * `request_id` - Signed 32-bit identifier of the request. Must be unique within the message
+  * `suggested_name` - Optional. Suggested name for the bot
+  * `suggested_username` - Optional. Suggested username for the bot
+""".
+-type 'KeyboardButtonRequestManagedBot'() :: #{
+	request_id := integer(),
+	suggested_name => binary(),
+	suggested_username => binary()
+}.
+
+-doc """
 This object represents type of a poll, which is allowed to be created and sent when the corresponding button is pressed.
   * `type` - Optional. If quiz is passed, the user will be allowed to create only polls in the quiz mode. If regular is passed, only regular polls will be allowed. Otherwise, the user will be allowed to create a poll of any type.
 """.
@@ -2120,7 +2215,7 @@ Exactly one of the fields other than text, icon_custom_emoji_id, and style must 
   * `style` - Optional. Style of the button. Must be one of `danger` (red), `success` (green) or `primary` (blue). If omitted, then an app-specific style is used.
   * `url` - Optional. HTTP or tg:// URL to be opened when the button is pressed. Links tg://user?id=<user_id> can be used to mention a user by their identifier without using a username, if this is allowed by their privacy settings.
   * `callback_data` - Optional. Data to be sent in a [callback query](https://core.telegram.org/bots/api#callbackquery) to the bot when the button is pressed, 1-64 bytes
-  * `web_app` - Optional. Description of the [Web App](https://core.telegram.org/bots/webapps) that will be launched when the user presses the button. The [Web App](https://core.telegram.org/bots/webapps) will be able to send an arbitrary message on behalf of the user using the method answerWebAppQuery. Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a Telegram Business account.
+  * `web_app` - Optional. Description of the [Web App](https://core.telegram.org/bots/webapps) that will be launched when the user presses the button. The [Web App](https://core.telegram.org/bots/webapps) will be able to send an arbitrary message on behalf of the user using the method answer[WebApp](https://core.telegram.org/bots/webapps#initializing-mini-apps)Query. Available only in private chats between a user and the bot. Not supported for messages sent on behalf of a Telegram Business account.
   * `login_url` - Optional. An HTTPS URL used to automatically authorize the user. Can be used as a replacement for the [Telegram Login Widget](https://core.telegram.org/widgets/login).
   * `switch_inline_query` - Optional. If set, pressing the button will prompt the user to select one of their chats, open that chat and insert the bot's username and the specified inline query in the input field. May be empty, in which case just the bot's username will be inserted. Not supported for messages sent in channel direct messages chats and on behalf of a Telegram Business account.
   * `switch_inline_query_current_chat` - Optional. If set, pressing the button will insert the bot's username and the specified inline query in the current chat's input field. May be empty, in which case only the bot's username will be inserted.
@@ -3267,7 +3362,7 @@ Represents a menu button, which opens the bot's list of commands.
 Represents a menu button, which launches a [Web App](https://core.telegram.org/bots/webapps).
   * `type` - Type of the button, must be web_app
   * `text` - Text on the button
-  * `web_app` - Description of the [Web App](https://core.telegram.org/bots/webapps) that will be launched when the user presses the button. The [Web App](https://core.telegram.org/bots/webapps) will be able to send an arbitrary message on behalf of the user using the method answerWebAppQuery. Alternatively, a t.me link to a [Web App](https://core.telegram.org/bots/webapps) of the bot can be specified in the object instead of the [Web App](https://core.telegram.org/bots/webapps)'s URL, in which case the [Web App](https://core.telegram.org/bots/webapps) will be opened as if the user pressed the link.
+  * `web_app` - Description of the [Web App](https://core.telegram.org/bots/webapps) that will be launched when the user presses the button. The [Web App](https://core.telegram.org/bots/webapps) will be able to send an arbitrary message on behalf of the user using the method answer[WebApp](https://core.telegram.org/bots/webapps#initializing-mini-apps)Query. Alternatively, a t.me link to a [Web App](https://core.telegram.org/bots/webapps) of the bot can be specified in the object instead of the [Web App](https://core.telegram.org/bots/webapps)'s URL, in which case the [Web App](https://core.telegram.org/bots/webapps) will be opened as if the user pressed the link.
 """.
 -type 'MenuButtonWebApp'() :: #{
 	type := binary(),
@@ -3451,6 +3546,32 @@ This object is received when messages are deleted from a connected business acco
 	business_connection_id := binary(),
 	chat := 'Chat'(),
 	message_ids := nonempty_list(integer())
+}.
+
+-doc """
+Describes an inline message sent by a [Web App](https://core.telegram.org/bots/webapps) on behalf of a user.
+  * `inline_message_id` - Optional. Identifier of the sent inline message. Available only if there is an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message.
+""".
+-type 'SentWebAppMessage'() :: #{
+	inline_message_id => binary()
+}.
+
+-doc """
+Describes an inline message to be sent by a user of a Mini App.
+  * `id` - Unique identifier of the prepared message
+  * `expiration_date` - Expiration date of the prepared message, in Unix time. Expired prepared messages can no longer be used
+""".
+-type 'PreparedInlineMessage'() :: #{
+	id := binary(),
+	expiration_date := integer()
+}.
+
+-doc """
+Describes a keyboard button to be used by a user of a Mini App.
+  * `id` - Unique identifier of the keyboard button
+""".
+-type 'PreparedKeyboardButton'() :: #{
+	id := binary()
 }.
 
 -doc """
@@ -4563,24 +4684,6 @@ Note: It is necessary to enable [inline feedback](https://core.telegram.org/bots
 	location => 'Location'(),
 	inline_message_id => binary(),
 	query := binary()
-}.
-
--doc """
-Describes an inline message sent by a [Web App](https://core.telegram.org/bots/webapps) on behalf of a user.
-  * `inline_message_id` - Optional. Identifier of the sent inline message. Available only if there is an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards) attached to the message.
-""".
--type 'SentWebAppMessage'() :: #{
-	inline_message_id => binary()
-}.
-
--doc """
-Describes an inline message to be sent by a user of a Mini App.
-  * `id` - Unique identifier of the prepared message
-  * `expiration_date` - Expiration date of the prepared message, in Unix time. Expired prepared messages can no longer be used
-""".
--type 'PreparedInlineMessage'() :: #{
-	id := binary(),
-	expiration_date := integer()
 }.
 
 -doc """
@@ -5881,14 +5984,21 @@ On success, the sent Message is returned.
   * `options` - A JSON-serialized list of 2-12 answer options
   * `is_anonymous` - True, if the poll needs to be anonymous, defaults to True
   * `type` - Poll type, `quiz` or `regular`, defaults to `regular`
-  * `allows_multiple_answers` - True, if the poll allows multiple answers, ignored for polls in quiz mode, defaults to False
-  * `correct_option_id` - 0-based identifier of the correct answer option, required for polls in quiz mode
+  * `allows_multiple_answers` - Pass True, if the poll allows multiple answers, defaults to False
+  * `allows_revoting` - Pass True, if the poll allows to change chosen answer options, defaults to False for quizzes and to True for regular polls
+  * `shuffle_options` - Pass True, if the poll options must be shown in random order
+  * `allow_adding_options` - Pass True, if answer options can be added to the poll after creation; not supported for anonymous polls and quizzes
+  * `hide_results_until_closes` - Pass True, if poll results must be shown only after the poll closes
+  * `correct_option_ids` - A JSON-serialized list of monotonically increasing 0-based identifiers of the correct answer options, required for polls in quiz mode
   * `explanation` - Text that is shown when a user chooses an incorrect answer or taps on the lamp icon in a quiz-style poll, 0-200 characters with at most 2 line feeds after entities parsing
   * `explanation_parse_mode` - Mode for parsing entities in the explanation. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
   * `explanation_entities` - A JSON-serialized list of special entities that appear in the poll explanation. It can be specified instead of explanation_parse_mode
-  * `open_period` - Amount of time in seconds the poll will be active after creation, 5-600. Can't be used together with close_date.
-  * `close_date` - Point in time (Unix timestamp) when the poll will be automatically closed. Must be at least 5 and no more than 600 seconds in the future. Can't be used together with open_period.
+  * `open_period` - Amount of time in seconds the poll will be active after creation, 5-2628000. Can't be used together with close_date.
+  * `close_date` - Point in time (Unix timestamp) when the poll will be automatically closed. Must be at least 5 and no more than 2628000 seconds in the future. Can't be used together with open_period.
   * `is_closed` - Pass True if the poll needs to be immediately closed. This can be useful for poll preview.
+  * `description` - Description of the poll to be sent, 0-1024 characters after entities parsing
+  * `description_parse_mode` - Mode for parsing entities in the poll description. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details.
+  * `description_entities` - A JSON-serialized list of special entities that appear in the poll description, which can be specified instead of description_parse_mode
   * `disable_notification` - Sends the message [silently](https://telegram.org/blog/channels-2-0#silent-messages). Users will receive a notification with no sound.
   * `protect_content` - Protects the contents of the sent message from forwarding and saving
   * `allow_paid_broadcast` - Pass True to allow up to 1000 messages per second, ignoring [broadcasting limits](https://core.telegram.org/bots/faq#how-can-i-message-all-of-my-bot-39s-subscribers-at-once) for a fee of 0.1 [Telegram Stars](https://t.me/BotNews/90) per message. The relevant Stars will be withdrawn from the bot's balance
@@ -5897,13 +6007,13 @@ On success, the sent Message is returned.
   * `reply_markup` - Additional interface options. A JSON-serialized object for an [inline keyboard](https://core.telegram.org/bots/features#inline-keyboards), custom reply keyboard, instructions to remove a reply keyboard or to force a reply from the user
 """.
 -doc (#{group=><<"Message">>,since=><<"4.2">>}).
--spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), correct_option_id => integer(), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
+-spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), allows_revoting => boolean(), shuffle_options => boolean(), allow_adding_options => boolean(), hide_results_until_closes => boolean(), correct_option_ids => nonempty_list(integer()), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), description => binary(), description_parse_mode => binary(), description_entities => nonempty_list('MessageEntity'()), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('Message'()).
 sendPoll(Pool, #{chat_id:=_,question:=_,options:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"sendPoll">>, Req, Async}, wpool:default_strategy(), Timeout).
 -doc (#{group=><<"Message">>,equiv=>sendPoll(Pool, Req, Async, 5000),since=><<"4.2">>}).
--spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), correct_option_id => integer(), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
+-spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), allows_revoting => boolean(), shuffle_options => boolean(), allow_adding_options => boolean(), hide_results_until_closes => boolean(), correct_option_ids => nonempty_list(integer()), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), description => binary(), description_parse_mode => binary(), description_entities => nonempty_list('MessageEntity'()), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}, Async :: boolean()) -> Result :: result('Message'()).
 sendPoll(Pool, Req, Async) -> sendPoll(Pool, Req, Async, ?TIMEOUT_DEFAULT).
 -doc (#{group=><<"Message">>,equiv=>sendPoll(Pool, Req, false),since=><<"4.2">>}).
--spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), correct_option_id => integer(), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
+-spec sendPoll(Pool :: pool_name(), Req :: #{business_connection_id => binary(), chat_id := integer() | binary(), message_thread_id => integer(), question := binary(), question_parse_mode => binary(), question_entities => nonempty_list('MessageEntity'()), options := nonempty_list('InputPollOption'()), is_anonymous => boolean(), type => binary(), allows_multiple_answers => boolean(), allows_revoting => boolean(), shuffle_options => boolean(), allow_adding_options => boolean(), hide_results_until_closes => boolean(), correct_option_ids => nonempty_list(integer()), explanation => binary(), explanation_parse_mode => binary(), explanation_entities => nonempty_list('MessageEntity'()), open_period => integer(), close_date => integer(), is_closed => boolean(), description => binary(), description_parse_mode => binary(), description_entities => nonempty_list('MessageEntity'()), disable_notification => boolean(), protect_content => boolean(), allow_paid_broadcast => boolean(), message_effect_id => binary(), reply_parameters => 'ReplyParameters'(), reply_markup => 'InlineKeyboardMarkup'() | 'ReplyKeyboardMarkup'() | 'ReplyKeyboardRemove'() | 'ForceReply'()}) -> Result :: result('Message'()).
 sendPoll(Pool, Req) -> sendPoll(Pool, Req, false).
 
 
@@ -7056,6 +7166,40 @@ getBusinessConnection(Pool, Req) -> getBusinessConnection(Pool, Req, false).
 
 
 -doc """
+Use this method to get the token of a managed bot.  
+Returns the token as String on success.
+## Parameters
+  * `user_id` - User identifier of the managed bot whose token will be returned
+""".
+-doc (#{group=><<"Managed Bot">>,since=><<"9.6">>}).
+-spec getManagedBotToken(Pool :: pool_name(), Req :: #{user_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(binary()).
+getManagedBotToken(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"getManagedBotToken">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Managed Bot">>,equiv=>getManagedBotToken(Pool, Req, Async, 5000),since=><<"9.6">>}).
+-spec getManagedBotToken(Pool :: pool_name(), Req :: #{user_id := integer()}, Async :: boolean()) -> Result :: result(binary()).
+getManagedBotToken(Pool, Req, Async) -> getManagedBotToken(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Managed Bot">>,equiv=>getManagedBotToken(Pool, Req, false),since=><<"9.6">>}).
+-spec getManagedBotToken(Pool :: pool_name(), Req :: #{user_id := integer()}) -> Result :: result(binary()).
+getManagedBotToken(Pool, Req) -> getManagedBotToken(Pool, Req, false).
+
+
+-doc """
+Use this method to revoke the current token of a managed bot and generate a new one.  
+Returns the new token as String on success.
+## Parameters
+  * `user_id` - User identifier of the managed bot whose token will be replaced
+""".
+-doc (#{group=><<"Managed Bot">>,since=><<"9.6">>}).
+-spec replaceManagedBotToken(Pool :: pool_name(), Req :: #{user_id := integer()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(binary()).
+replaceManagedBotToken(Pool, #{user_id:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"replaceManagedBotToken">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Managed Bot">>,equiv=>replaceManagedBotToken(Pool, Req, Async, 5000),since=><<"9.6">>}).
+-spec replaceManagedBotToken(Pool :: pool_name(), Req :: #{user_id := integer()}, Async :: boolean()) -> Result :: result(binary()).
+replaceManagedBotToken(Pool, Req, Async) -> replaceManagedBotToken(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Managed Bot">>,equiv=>replaceManagedBotToken(Pool, Req, false),since=><<"9.6">>}).
+-spec replaceManagedBotToken(Pool :: pool_name(), Req :: #{user_id := integer()}) -> Result :: result(binary()).
+replaceManagedBotToken(Pool, Req) -> replaceManagedBotToken(Pool, Req, false).
+
+
+-doc """
 Use this method to change the list of the bot's commands.  
 See [this manual](https://core.telegram.org/bots/features#commands) for more details about bot commands.  
 Returns True on success.
@@ -7348,8 +7492,8 @@ Returns True on success.
   * `gift_id` - Identifier of the gift; limited gifts can't be sent to channel chats
   * `pay_for_upgrade` - Pass True to pay for the gift upgrade from the bot's balance, thereby making the upgrade free for the receiver
   * `text` - Text that will be shown along with the gift; 0-128 characters
-  * `text_parse_mode` - Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
-  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
+  * `text_parse_mode` - Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, `custom_emoji`, and `date_time` are ignored.
+  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, `custom_emoji`, and `date_time` are ignored.
 """.
 -doc (#{group=><<"Gift">>,since=><<"8.0">>}).
 -spec sendGift(Pool :: pool_name(), Req :: #{user_id => integer(), chat_id => integer() | binary(), gift_id := binary(), pay_for_upgrade => boolean(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
@@ -7370,8 +7514,8 @@ Returns True on success.
   * `month_count` - Number of months the Telegram Premium subscription will be active for the user; must be one of 3, 6, or 12
   * `star_count` - Number of [Telegram Stars](https://t.me/BotNews/90) to pay for the Telegram Premium subscription; must be 1000 for 3 months, 1500 for 6 months, and 2500 for 12 months
   * `text` - Text that will be shown along with the service message about the subscription; 0-128 characters
-  * `text_parse_mode` - Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
-  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, and `custom_emoji` are ignored.
+  * `text_parse_mode` - Mode for parsing entities in the text. See [formatting options](https://core.telegram.org/bots/api#formatting-options) for more details. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, `custom_emoji`, and `date_time` are ignored.
+  * `text_entities` - A JSON-serialized list of special entities that appear in the gift text. It can be specified instead of text_parse_mode. Entities other than `bold`, `italic`, `underline`, `strikethrough`, `spoiler`, `custom_emoji`, and `date_time` are ignored.
 """.
 -doc (#{group=><<"Gift">>,since=><<"9.0">>}).
 -spec giftPremiumSubscription(Pool :: pool_name(), Req :: #{user_id := integer(), month_count := integer(), star_count := integer(), text => binary(), text_parse_mode => binary(), text_entities => nonempty_list('MessageEntity'())}, Async :: boolean(), Timeout :: timeout()) -> Result :: result(true).
@@ -7881,6 +8025,64 @@ deleteStory(Pool, Req, Async) -> deleteStory(Pool, Req, Async, ?TIMEOUT_DEFAULT)
 -doc (#{group=><<"Story">>,equiv=>deleteStory(Pool, Req, false),since=><<"9.0">>}).
 -spec deleteStory(Pool :: pool_name(), Req :: #{business_connection_id := binary(), story_id := integer()}) -> Result :: result(true).
 deleteStory(Pool, Req) -> deleteStory(Pool, Req, false).
+
+
+-doc """
+Use this method to set the result of an interaction with a [Web App](https://core.telegram.org/bots/webapps) and send a corresponding message on behalf of the user to the chat from which the query originated.  
+On success, a Sent[WebApp](https://core.telegram.org/bots/webapps#initializing-mini-apps)Message object is returned.
+## Parameters
+  * `web_app_query_id` - Unique identifier for the query to be answered
+  * `result` - A JSON-serialized object describing the message to be sent
+""".
+-doc (#{group=><<"Inline Mode">>,since=><<"6.0">>}).
+-spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('SentWebAppMessage'()).
+answerWebAppQuery(Pool, #{web_app_query_id:=_,result:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"answerWebAppQuery">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerWebAppQuery(Pool, Req, Async, 5000),since=><<"6.0">>}).
+-spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}, Async :: boolean()) -> Result :: result('SentWebAppMessage'()).
+answerWebAppQuery(Pool, Req, Async) -> answerWebAppQuery(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Inline Mode">>,equiv=>answerWebAppQuery(Pool, Req, false),since=><<"6.0">>}).
+-spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}) -> Result :: result('SentWebAppMessage'()).
+answerWebAppQuery(Pool, Req) -> answerWebAppQuery(Pool, Req, false).
+
+
+-doc """
+Stores a message that can be sent by a user of a Mini App.  
+Returns a PreparedInlineMessage object.
+## Parameters
+  * `user_id` - Unique identifier of the target user that can use the prepared message
+  * `result` - A JSON-serialized object describing the message to be sent
+  * `allow_user_chats` - Pass True if the message can be sent to private chats with users
+  * `allow_bot_chats` - Pass True if the message can be sent to private chats with bots
+  * `allow_group_chats` - Pass True if the message can be sent to group and supergroup chats
+  * `allow_channel_chats` - Pass True if the message can be sent to channel chats
+""".
+-doc (#{group=><<"Mini App">>,since=><<"8.0">>}).
+-spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('PreparedInlineMessage'()).
+savePreparedInlineMessage(Pool, #{user_id:=_,result:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"savePreparedInlineMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Mini App">>,equiv=>savePreparedInlineMessage(Pool, Req, Async, 5000),since=><<"8.0">>}).
+-spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}, Async :: boolean()) -> Result :: result('PreparedInlineMessage'()).
+savePreparedInlineMessage(Pool, Req, Async) -> savePreparedInlineMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Mini App">>,equiv=>savePreparedInlineMessage(Pool, Req, false),since=><<"8.0">>}).
+-spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}) -> Result :: result('PreparedInlineMessage'()).
+savePreparedInlineMessage(Pool, Req) -> savePreparedInlineMessage(Pool, Req, false).
+
+
+-doc """
+Stores a keyboard button that can be used by a user within a Mini App.  
+Returns a PreparedKeyboardButton object.
+## Parameters
+  * `user_id` - Unique identifier of the target user that can use the button
+  * `button` - A JSON-serialized object describing the button to be saved. The button must be of the type request_users, request_chat, or request_managed_bot
+""".
+-doc (#{group=><<"Mini App">>,since=><<"9.6">>}).
+-spec savePreparedKeyboardButton(Pool :: pool_name(), Req :: #{user_id := integer(), button := 'KeyboardButton'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('PreparedKeyboardButton'()).
+savePreparedKeyboardButton(Pool, #{user_id:=_,button:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"savePreparedKeyboardButton">>, Req, Async}, wpool:default_strategy(), Timeout).
+-doc (#{group=><<"Mini App">>,equiv=>savePreparedKeyboardButton(Pool, Req, Async, 5000),since=><<"9.6">>}).
+-spec savePreparedKeyboardButton(Pool :: pool_name(), Req :: #{user_id := integer(), button := 'KeyboardButton'()}, Async :: boolean()) -> Result :: result('PreparedKeyboardButton'()).
+savePreparedKeyboardButton(Pool, Req, Async) -> savePreparedKeyboardButton(Pool, Req, Async, ?TIMEOUT_DEFAULT).
+-doc (#{group=><<"Mini App">>,equiv=>savePreparedKeyboardButton(Pool, Req, false),since=><<"9.6">>}).
+-spec savePreparedKeyboardButton(Pool :: pool_name(), Req :: #{user_id := integer(), button := 'KeyboardButton'()}) -> Result :: result('PreparedKeyboardButton'()).
+savePreparedKeyboardButton(Pool, Req) -> savePreparedKeyboardButton(Pool, Req, false).
 
 
 -doc """
@@ -8492,46 +8694,6 @@ answerInlineQuery(Pool, Req, Async) -> answerInlineQuery(Pool, Req, Async, ?TIME
 -doc (#{group=><<"Inline Mode">>,equiv=>answerInlineQuery(Pool, Req, false),since=><<"1.16">>}).
 -spec answerInlineQuery(Pool :: pool_name(), Req :: #{inline_query_id := binary(), results := nonempty_list('InlineQueryResult'()), cache_time => integer(), is_personal => boolean(), next_offset => binary(), button => 'InlineQueryResultsButton'()}) -> Result :: result(true).
 answerInlineQuery(Pool, Req) -> answerInlineQuery(Pool, Req, false).
-
-
--doc """
-Use this method to set the result of an interaction with a [Web App](https://core.telegram.org/bots/webapps) and send a corresponding message on behalf of the user to the chat from which the query originated.  
-On success, a SentWebAppMessage object is returned.
-## Parameters
-  * `web_app_query_id` - Unique identifier for the query to be answered
-  * `result` - A JSON-serialized object describing the message to be sent
-""".
--doc (#{group=><<"Inline Mode">>,since=><<"6.0">>}).
--spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('SentWebAppMessage'()).
-answerWebAppQuery(Pool, #{web_app_query_id:=_,result:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"answerWebAppQuery">>, Req, Async}, wpool:default_strategy(), Timeout).
--doc (#{group=><<"Inline Mode">>,equiv=>answerWebAppQuery(Pool, Req, Async, 5000),since=><<"6.0">>}).
--spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}, Async :: boolean()) -> Result :: result('SentWebAppMessage'()).
-answerWebAppQuery(Pool, Req, Async) -> answerWebAppQuery(Pool, Req, Async, ?TIMEOUT_DEFAULT).
--doc (#{group=><<"Inline Mode">>,equiv=>answerWebAppQuery(Pool, Req, false),since=><<"6.0">>}).
--spec answerWebAppQuery(Pool :: pool_name(), Req :: #{web_app_query_id := binary(), result := 'InlineQueryResult'()}) -> Result :: result('SentWebAppMessage'()).
-answerWebAppQuery(Pool, Req) -> answerWebAppQuery(Pool, Req, false).
-
-
--doc """
-Stores a message that can be sent by a user of a Mini App.  
-Returns a PreparedInlineMessage object.
-## Parameters
-  * `user_id` - Unique identifier of the target user that can use the prepared message
-  * `result` - A JSON-serialized object describing the message to be sent
-  * `allow_user_chats` - Pass True if the message can be sent to private chats with users
-  * `allow_bot_chats` - Pass True if the message can be sent to private chats with bots
-  * `allow_group_chats` - Pass True if the message can be sent to group and supergroup chats
-  * `allow_channel_chats` - Pass True if the message can be sent to channel chats
-""".
--doc (#{group=><<"Message">>,since=><<"8.0">>}).
--spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}, Async :: boolean(), Timeout :: timeout()) -> Result :: result('PreparedInlineMessage'()).
-savePreparedInlineMessage(Pool, #{user_id:=_,result:=_} = Req, Async, Timeout) ->wpool:call(Pool, {raw, <<"savePreparedInlineMessage">>, Req, Async}, wpool:default_strategy(), Timeout).
--doc (#{group=><<"Message">>,equiv=>savePreparedInlineMessage(Pool, Req, Async, 5000),since=><<"8.0">>}).
--spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}, Async :: boolean()) -> Result :: result('PreparedInlineMessage'()).
-savePreparedInlineMessage(Pool, Req, Async) -> savePreparedInlineMessage(Pool, Req, Async, ?TIMEOUT_DEFAULT).
--doc (#{group=><<"Message">>,equiv=>savePreparedInlineMessage(Pool, Req, false),since=><<"8.0">>}).
--spec savePreparedInlineMessage(Pool :: pool_name(), Req :: #{user_id := integer(), result := 'InlineQueryResult'(), allow_user_chats => boolean(), allow_bot_chats => boolean(), allow_group_chats => boolean(), allow_channel_chats => boolean()}) -> Result :: result('PreparedInlineMessage'()).
-savePreparedInlineMessage(Pool, Req) -> savePreparedInlineMessage(Pool, Req, false).
 
 
 -doc """
