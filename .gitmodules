@@ -19,3 +19,6 @@
 [submodule "example/captcha"]
 	path = example/captcha
 	url = git@github.com:krot3232/telegram_bot_captcha.git
+[submodule "example/logger"]
+	path = example/logger
+	url = git@github.com:krot3232/logger_telegram_h.git
