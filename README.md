@@ -21,7 +21,7 @@ in
 ## Basic usage
 1. Get a Telegram API token, use telegram bot [@BotFather](https://t.me/BotFather) for receiving a token
 ``` erlang
-Token = <<"8803758952:Qo2xCv3DAGxyJyXePA8S4dYN-BzSkUEbqFj">>,
+Token = <<"1111111111:Qo2xCv3DAGxyJyXePA8S4dYN-BzSkUEbqFj">>,
 ```
 2. Create pool. Each bot is a separate pool of workers: 
 *1 Bot = 1 Pool → N Workers*
