@@ -56,6 +56,7 @@ end.
 ```
 [all methods](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#message)
 ## Send message
+sendMessage → pool → worker → Telegram
 ``` erlang            
 {ok,200,Result} = telegram_bot_api:sendMessage(Pool,#{
         chat_id=>ChatId,
@@ -63,8 +64,6 @@ end.
         }
         ).
 ```
-[telegram_bot_hello_example](https://github.com/krot3232/telegram_bot_hello_example/)  
-[telegram_bot_echo_example](https://github.com/krot3232/telegram_bot_echo_example/)  
 ## Async send message
 ``` erlang             
 {ok,Ref} = telegram_bot_api:sendMessage(Pool,#{
@@ -77,7 +76,7 @@ receive
    {async,Ref,{ok,200,Map}}->ok
 end.
 ```
-[telegram_bot_async_example](https://github.com/krot3232/telegram_bot_async_example/)
+[`telegram_bot_api:sendMessage`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#sendMessage/4)
 
 ---
 ## Long polling
@@ -95,6 +94,8 @@ gen_event:add_handler(my_event, my_event_handler1, [#{name=>Pool}]),
 }).
 ```
 [`telegram_bot_api_sup:start_update`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_update/1)
+[`telegram_bot_api_updater_server`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_updater_server.html)  
+
 
 ## Webhook
 ``` erlang  
@@ -123,7 +124,7 @@ WebhookId=telegram_bot_api_webhook_server:name_server({0,0,0,0},8443),
 {ok,WebhookPid}=global:whereis_name(WebhookId).
 ```
 
-[`telegram_bot_api_sup:start_webhook`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_webhook/1)   
+[`telegram_bot_api_sup:start_webhook`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_webhook/1) 
 [`telegram_bot_api_webhook_server`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_webhook_server.html)  
 
 ## Webhook dynamic add bot
@@ -435,7 +436,6 @@ ban_chat_member(BotName, ChatId, UserId, Minute) ->
         _ -> false
     end.
 ```
-[telegram_bot_captcha_example](https://github.com/krot3232/telegram_bot_captcha/)
 ## Get chat member
 ``` erlang 
 %%Get a user role in a group
@@ -467,7 +467,8 @@ case telegram_bot_api:setChatMemberTag(Pool, #{
 ```
 
 ## See
-* [all examples](https://github.com/krot3232/telegram_bot_api/tree/main/example)   
+
+* [Examples](https://github.com/krot3232/telegram_bot_api/tree/main/example) 
 
 ## Macros 
-* [message emoji](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_emoji.html#module-emoji)
+* [Message Emojis](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_emoji.html#module-emoji)
