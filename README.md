@@ -82,13 +82,16 @@ end.
 ---
 ## Long polling
 ``` erlang  
-{ok, Pid} = telegram_bot_api_sup:start_update(#{
+{ok, Pid1}=gen_event:start_link({global, my_event}),
+gen_event:add_handler(my_event, my_event_handler1, [#{name=>Pool}]),
+
+{ok, Pid2} = telegram_bot_api_sup:start_update(#{
     name=>Pool,
     update_time=>1000,
     offset=>0,
     limit=>100,
-    event=>{global,my_event},% or pid. new messages will be sent to this process
-    allowed_updates=>[message]
+    event=>{global,my_event},% or Pid1. new messages will be sent to this process
+    allowed_updates=>[message]% see https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#t:update_type/0
 }).
 ```
 [`telegram_bot_api_sup:start_update`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_update/1)
@@ -100,13 +103,13 @@ WebhookId=telegram_bot_api_webhook_server:name_server({0,0,0,0},8443),
     id=>WebhookId,%% name process, may not be specified, then create an ID for the supervisor by calling telegram_bot_api_webhook_server:name_server
     secret_token=><<"my_secret">>,%this is the secret_token that is set in the Parameter method setWebhook https://core.telegram.org/bots/api#setwebhook
     bots=>#{
-		%%set bots when creating a webhook or add them later via add_bot
-		%% add 1 bot
-		atom_to_binary(Pool)=>#{
-		event=>{global,my_event},% the message will come here
-		name=>Pool 
+	%%set bots when creating a webhook or add them later via add_bot
+	%% add 1 bot
+	atom_to_binary(Pool)=>#{
+	event=>{global,my_event},% the message will come here
+	name=>Pool 
     }
-    %%.. other bot
+     %%.. other bot
     },
     transport_opts=>#{
         ip=>{0,0,0,0},
