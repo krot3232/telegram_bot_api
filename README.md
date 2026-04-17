@@ -21,7 +21,7 @@ in
 ## Basic usage
 1. Get a Telegram API token, use telegram bot [@BotFather](https://t.me/BotFather) for receiving a token
 ``` erlang
-Token = <<"1111111111:Qo2xCv3DAGxyJyXePA8S4dYN-BzSkUEbqFj">>,
+Token = <<"1111111111:Q2xCv3DAGxyJyXePA8S4dYN-BzSkUEbqFj">>,
 ```
 2. Create pool. Each bot is a separate pool of workers: 
 *1 Bot = 1 Pool → N Workers*
@@ -436,8 +436,8 @@ mute_chat_member(Pool, ChatId, UserId, Minute) ->
 ```
 ## Bun chat member
 ``` erlang 
-ban_chat_member(BotName, ChatId, UserId, Minute) ->
-    Result = telegram_bot_api:banChatMember(BotName, #{
+ban_chat_member(Pool, ChatId, UserId, Minute) ->
+    Result = telegram_bot_api:banChatMember(Pool, #{
         chat_id => ChatId,
         user_id => UserId,
         until_date => erlang:system_time(seconds) + (60 * Minute)
