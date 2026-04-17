@@ -19,33 +19,42 @@ in
 ```
 
 ## Basic usage
+1. Get a Telegram API token, use telegram bot [@BotFather](https://t.me/BotFather) for receiving a token
 ``` erlang
-%1. Get a Telegram API token, use telegram bot @BotFather for receiving a token
 Token = <<"8803758952:Qo2xCv3DAGxyJyXePA8S4dYN-BzSkUEbqFj">>,
-
-%2. Create pool
-%%Each bot is a separate pool of workers
-%%Bot -> Pool -> Workers -> Telegram API
-Pool=mybot1_pool,
+```
+2. Create pool. Each bot is a separate pool of workers: 
+*1 Bot = 1 Pool → N Workers*
+``` erlang
+Pool=mybot_pool,
 {ok, Pid} = telegram_bot_api_sup:start_pool(#{
 	name=>Pool,
 	token=>Token,
 	workers=>1
-	}), 
-%See param https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_pool/1
-%%ok=telegram_bot_api_sup:stop_pool(Pool).
+	}).
+```
+[`telegram_bot_api_sup:start_pool`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_pool/1)
 
-%3. Send request Telegram Bot Api
-%%After creating an HTTP pool, you can use any methods available in the Telegram API. 
-%%Once the pool is created, you can call any methods as they are named in the Telegram documentation: telegram_bot_api:'Method'
-%%The names of the methods from the Telegram documentation and the telegram_bot_api module are the same.
-%%The first parameter is the pool, the second is the request parameters sent to Telegram, the third indicates asynchrony, and the fourth parameter is the call timeout.
+3. Send request Telegram Bot Api.  
+After creating an HTTP pool, you can use any methods available in the Telegram API. 
+Once the pool is created, you can call any methods as they are named in the Telegram documentation: telegram_bot_api:'Method'  
+The names of the methods from the Telegram documentation and the telegram_bot_api module are the same.  
+The first parameter is the pool, the second is the request parameters sent to Telegram, the third indicates asynchrony, and the fourth parameter is the call timeout.  
+``` erlang
+%% parameters are always maps
+Params=#{chat_id=><<"@channelusername">>,...},
 
-ChatId=<<"@channelusername">>,
-Params=#{chat_id=>ChatId,...},%%parameters are always maps
-Async=false,%*if you install Async=true, the query result will be sent to the process mailbox message: {async,Ref,{ok,HttpCode,MapJson}} or {async, Ref, saved_to_file}(use in telegram_bot_api_file:download) or {error, Reason}
-Timeout=5000,%*default timeout for gen_server:call
-Method = ..., % sendMessage or sendMessageDraft or sendVoice or any method
+%%*if you install Async=true
+%% the query result will be sent to the process mailbox message:
+%% {async,Ref,{ok,HttpCode,MapJson}} or {async, Ref, saved_to_file}(use in telegram_bot_api_file:download) or {error, Reason}
+Async=false,
+
+%%*default timeout for gen_server:call
+Timeout=5000,
+
+%% sendMessage or sendMessageDraft or sendVoice or any method
+Method = ...,
+
 Result=telegram_bot_api:Method(Pool,Params,Async,Timeout),
 case Result of
     {ok, Ref}->ok; %is Async=true
@@ -54,9 +63,10 @@ case Result of
     {Error, Reason}->error
 end.
 ```
+
 [all methods](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#message)
 ## Send message
-sendMessage → pool → worker → Telegram
+sendMessage → pool → worker → Telegram API
 ``` erlang            
 {ok,200,Result} = telegram_bot_api:sendMessage(Pool,#{
         chat_id=>ChatId,
@@ -110,12 +120,12 @@ WebhookId=telegram_bot_api_webhook_server:name_server({0,0,0,0},8443),
 	event=>{global,my_event},% the message will come here
 	name=>Pool 
     }
-     %%.. other bot
+     %%.. other bots
     },
     transport_opts=>#{
         ip=>{0,0,0,0},
         port=>8443,
-        %% Optional parameter
+        %% see https://core.telegram.org/bots/self-signed
         certfile=>"/etc/telegram_bot_api/ssl/YOURPUBLIC.pem",
         keyfile=>"/etc/telegram_bot_api/ssl/YOURPRIVATE.key",
         verify=> verify_none
@@ -141,9 +151,10 @@ ok= telegram_bot_api_webhook_server:add_bot(
 %%delete
     telegram_bot_api_webhook_server:delete_bot({global,WebhookId},mybot_pool).
 ```
+[`telegram_bot_api_webhook_server:add_bot`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_webhook_server.html#add_bot/3) [`telegram_bot_api_webhook_server:delete_bot`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_webhook_server.html#delete_bot/2)
 ## Set webhook
 ``` erlang  
-telegram_bot_api:setWebhook(Pool1,#{
+telegram_bot_api:setWebhook(Pool,#{
 		url=>telegram_bot_api_webhook_server:make_url(<<"8.8.8.8">>, <<"8443">>, <<"mybot_pool">>),% make url: https://8.8.8.8:8443/telegram/mybot_pool/update
 		ip_address=><<"8.8.8.8">>,
 		certificate=>#{
