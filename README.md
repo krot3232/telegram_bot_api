@@ -45,7 +45,7 @@ Token = <<"1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ">>,
 **2.** Create pool. Each bot is a separate pool of workers: 
 *1 Bot = 1 Pool → N Workers*
 ``` erlang
-Pool=mybot_pool,
+Pool=mybot1,
 {ok, Pid} = telegram_bot_api_sup:start_pool(#{
 	name=>Pool,
 	token=>Token,
