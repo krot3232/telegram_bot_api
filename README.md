@@ -59,7 +59,7 @@ After creating an HTTP pool, you can call any Telegram API method directly using
 
 Simply use:
 ``` erlang
-Result=telegram_bot_api:'MethodName'(Pool, Params, Async, Timeout)
+Result=telegram_bot_api:MethodName(Pool, Params, Async, Timeout)
 ```
 Parameters explained:
 + `Pool` – your HTTP pool
