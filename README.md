@@ -4,11 +4,30 @@
 Erlang library for Telegram Bot API.  
 It contains all methods and types available in Telegram Bot API 9.6, released April 3, 2026.
 
+
 [![Erlang](https://img.shields.io/badge/Erlang%2FOTP-27+-deeppink?style=flat-square&logo=erlang&logoColor=ffffff)](https://www.erlang.org)
 [![Hex Version](https://img.shields.io/hexpm/v/telegram_bot_api.svg?style=flat-square)](https://hex.pm/packages/telegram_bot_api)
 [![Hex Docs](https://img.shields.io/badge/hex-docs-orange?style=flat-square)](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html)
 [![Compatible with Bot API v9.6](https://img.shields.io/badge/Bot%20API%20version-v9.6-success?style=flat-square)](https://core.telegram.org/bots/api#april-3-2026)
 
+## Why Use ?
+
+`telegram_bot_api` is a modern, fully-featured library that supports all Bot API methods and types. It's designed for developers who want a stable and comprehensive foundation for their projects, with built-in support for the Cowboy web server and a worker pool for efficient request handling.
+
+In the world of messaging platforms, Telegram stands out for its robust API and bot support. For developers who prioritize fault tolerance, scalability, and real-time performance, using Erlang to build Telegram bots is a strategic choice. Leveraging the power of the BEAM virtual machine ensures that your bot can handle millions of users and concurrent messages without breaking a sweat.
+
++ **Use case:** Ideal for production-grade bots that require high reliability and full API coverage.
+
+## Why Choose Erlang for Telegram Bot Development?
+Erlang was designed for massive concurrency and "nine-nines" availability. When building a Telegram bot, these features translate to:
+
++ **Massive Scalability:** Effortlessly manage thousands of simultaneous webhook updates or long-polling connections.
++ **Hot Code Reloading:** Update your bot’s logic on the fly without restarting the service or dropping user sessions.
++ **Fault Isolation:** If one bot process crashes, it won't affect the rest of the system, thanks to Erlang’s "let it crash" philosophy.  
+---
+>Building a Telegram bot with Erlang is the best path for developers who value reliability and performance. Whether you are creating a complex fintech assistant or a high-traffic notification service, an Erlang-based library provides the foundation you need for professional-grade messaging solutions.  
+**Explore our Erlang Telegram Bot Library today and start scaling your bot to the moon!**
+---
 ## Installation
 
 The package can be installed by adding `telegram_bot_api` to your list of dependencies
@@ -17,13 +36,13 @@ in
 ```erlang
 {deps, [telegram_bot_api]}.
 ```
-
+* [Examples of bots](https://github.com/krot3232/telegram_bot_api/tree/main/example) 
 ## Basic usage
-1. Get a Telegram API token, use telegram bot [@BotFather](https://t.me/BotFather) for receiving a token
+**1.** Get a Telegram API token, use telegram bot [@BotFather](https://t.me/BotFather) for receiving a token
 ``` erlang
-Token = <<"1111111111:Q2xCv3DAGxyJyXePA8S4dYN-BzSkUEbqFj">>,
+Token = <<"1234567890:ABCDEFGHIJKLMNOPQRSTUVWXYZ">>,
 ```
-2. Create pool. Each bot is a separate pool of workers: 
+**2.** Create pool. Each bot is a separate pool of workers: 
 *1 Bot = 1 Pool → N Workers*
 ``` erlang
 Pool=mybot_pool,
@@ -35,27 +54,23 @@ Pool=mybot_pool,
 ```
 [`telegram_bot_api_sup:start_pool`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_sup.html#start_pool/1)
 
-3. Send request Telegram Bot Api.  
-After creating an HTTP pool, you can use any methods available in the Telegram API. 
-Once the pool is created, you can call any methods as they are named in the Telegram documentation: telegram_bot_api:'Method'  
-The names of the methods from the Telegram documentation and the telegram_bot_api module are the same.  
-The first parameter is the pool, the second is the request parameters sent to Telegram, the third indicates asynchrony, and the fourth parameter is the call timeout.  
+**3.** Send request Telegram Bot Api.  
+After creating an HTTP pool, you can call any Telegram API method directly using the same names as in the official documentation.
+
+Simply use:
 ``` erlang
-%% parameters are always maps
-Params=#{chat_id=><<"@channelusername">>,...},
+Result=telegram_bot_api:'MethodName'(Pool, Params, Async, Timeout)
+```
+Parameters explained:
++ `Pool` – your HTTP pool
++ `Params` – request parameters are always maps
++ `Async` – true for asynchronous calls, false for synchronous
++ `Timeout` – call timeout in milliseconds  
 
-%%*if you install Async=true
-%% the query result will be sent to the process mailbox message:
-%% {async,Ref,{ok,HttpCode,MapJson}} or {async, Ref, saved_to_file}(use in telegram_bot_api_file:download) or {error, Reason}
-Async=false,
+>💡 Method names match the Telegram Bot API exactly — no extra wrapping.
 
-%%*default timeout for gen_server:call
-Timeout=5000,
-
-%% sendMessage or sendMessageDraft or sendVoice or any method
-Method = ...,
-
-Result=telegram_bot_api:Method(Pool,Params,Async,Timeout),
+Return value of the function:
+``` erlang
 case Result of
     {ok, Ref}->ok; %is Async=true
     {ok, HttpCode, MapJson}->ok; %is Async=false
@@ -63,8 +78,8 @@ case Result of
     {Error, Reason}->error
 end.
 ```
+* [telegram_bot_api:*](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#message)
 
-[all methods](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#message)
 ## Send message
 sendMessage → pool → worker → Telegram API
 ``` erlang            
@@ -84,6 +99,9 @@ sendMessage → pool → worker → Telegram API
 %%the response will come as process messages
 receive
    {async,Ref,{ok,200,Map}}->ok
+   %%use in telegram_bot_api_file:download
+   {async, Ref, saved_to_file}->ok
+   {error, Reason}->error
 end.
 ```
 [`telegram_bot_api:sendMessage`](https://hexdocs.pm/telegram_bot_api/telegram_bot_api.html#sendMessage/4)
@@ -477,9 +495,9 @@ case telegram_bot_api:setChatMemberTag(Pool, #{
         end.
 ```
 
-## See
 
-* [Examples](https://github.com/krot3232/telegram_bot_api/tree/main/example) 
 
 ## Macros 
 * [Message Emojis](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_emoji.html#module-emoji)
+
+
