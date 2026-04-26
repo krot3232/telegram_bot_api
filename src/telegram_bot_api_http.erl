@@ -52,6 +52,18 @@
 -type http_option() :: nonempty_list('HttpOption'()).
 -type option_request() :: nonempty_list('OptionRequest'()).
 -type http_timeout() :: timeout().
+
+-doc """
+Base URL of the HTTP(S) API endpoint.
+This address is used for all API requests.
+## Examples:
+```erlang
+  <<"https://api.telegram.org">>
+  <<"https://mysite">>
+  <<"http://mysite:8081">>
+  <<"http://1.2.3.4:8081">>
+```
+""".
 -type http_endpoint() :: binary().
 -type ipv4() :: {0..255, 0..255, 0..255, 0..255}.
 -type http_port() :: pos_integer().
@@ -273,8 +285,9 @@ multipart_body({K, V, INext}, Acc) ->
     Var = atom_to_binary(K),
     Name =
         case V of
-            #{name := FileName, file := File} ->
-                {ok, Bin} = file:read_file(File),
+            #{file := FilePath} = File ->
+                FileName = maps:get(name, File, filename:basename(FilePath)),
+                {ok, Bin} = prim_file:read_file(FilePath),
                 <<Var/binary, "\"; filename=\"", FileName/binary, "\"", ?CRLF/binary, ?CRLF/binary,
                     Bin/binary>>;
             _ ->

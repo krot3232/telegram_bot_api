@@ -200,16 +200,16 @@ telegram_bot_api:setMyName(Pool,#{name=><<"Бот">>,language_code=>ru}).
 ## Set bot photo
 ``` erlang  
 telegram_bot_api:setMyProfilePhoto(Pool,#{
-                                    photo=>
-                                            #{
-                                            type=><<"static">>,
-                                            photo=><<"attach://myfile">>
-                                        },
-                                        myfile=>#{
-                                            file=><<"/etc/telegram_bot_api/file.jpg">>,
-                                             name=><<"file.jpg">>
-                                           }
-                                        }).
+    photo=>
+    #{
+        type=><<"static">>,
+        photo=><<"attach://myfile">>
+    },
+    myfile=>#{
+        file=><<"/etc/telegram_bot_api/file.jpg">>,
+        name=><<"file.jpg">>
+    }
+    }).
 ```
 ## Set bot commands
 ``` erlang  
@@ -233,15 +233,62 @@ telegram_bot_api:sendContact(Pool,#{
 ``` erlang  
 telegram_bot_api:sendPhoto(Pool,#{
         chat_id=><<"@channelusername">>,
-        photo=>#{file=><<"/dir/file.jpg">>,name=><<"file.jpg">>}
+        photo=>#{file=><<"/dir/file.jpg">>}
         }).
 ```
 ## Send audio
 ``` erlang  
 telegram_bot_api:sendAudio(Pool,#{
         chat_id=>ChatId,
-        audio =>#{file=><<"/dir/file.mp3">>,name=><<"file.mp3">>}
+        audio =>#{file=><<"/dir/file.mp3">>,name=><<"file123.mp3">>}
         }).
+```
+## Send voice
+``` erlang  
+telegram_bot_api:sendVoice(Pool,#{
+        chat_id=> ChatId,
+        voice =>#{file=> <<"/dir/sample-3s.mp3">>}
+        }).
+```
+## Send media group
+``` erlang 
+%% After sending a file, you can send the file again knowing the file_id
+{ok,200,#{ok := true, result := #{photo:=[#{file_id:=FileId}|_]} }} = telegram_bot_api:sendPhoto(Pool,#{
+    chat_id=> ChatId,
+    photo=> #{file=> <<"/dir/photo_1.jpg">>},  
+    caption=> <<"input file">>
+}), 
+%% Send files photo, 3 in three different ways:
+AttachFileKey1=file1,
+telegram_bot_api:sendMediaGroup(Pool,#{
+  chat_id=> ChatId,
+    media =>[
+      %% 1. file_attach_url
+      #{
+        type=>photo,
+        media=><<"attach://",(atom_to_binary(AttachFileKey1))/binary>>
+      },
+      %% 2. file_id
+      #{
+        type=>photo,
+        media=>FileId
+      },
+      %% 3. file_local_url - if start_pool http endpoint=my site
+      #{
+       type=>photo,
+       media=><<"file://","/var/lib/telegram/photo.jpg">>
+      }
+      ],
+      %% 1.1 key map = match media attach://key map
+      AttachFileKey1 => 
+      #{
+       file=> <<"/dir/photo_1.jpg">>
+      } 
+}).
+```
+## Get file
+``` erlang  
+telegram_bot_api:getFile(Pool,{file_id=>FileId}).
 ```
 ## Set message reaction
 ``` erlang 
@@ -382,6 +429,13 @@ telegram_bot_api:editMessageReplyMarkup(Pool,#{
         action=>?CHAT_ACTION_UPLOAD_PHOTO
     }).
 ```
+## Set chat photo
+``` erlang 
+telegram_bot_api:setChatPhoto(Pool,#{
+    chat_id=> ChatId,
+    photo=> #{file=> <<"/dir/photo_1.jpg">>} 
+},false),
+```
 ## Send dice
 ``` erlang 
 -include_lib("telegram_bot_api/include/message_dice.hrl").
@@ -495,9 +549,5 @@ case telegram_bot_api:setChatMemberTag(Pool, #{
         end.
 ```
 
-
-
 ## Macros 
 * [Message Emojis](https://hexdocs.pm/telegram_bot_api/telegram_bot_api_emoji.html#module-emoji)
-
-

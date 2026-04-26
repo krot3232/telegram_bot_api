@@ -138,7 +138,7 @@ stop_update(Id) ->
 -doc """
 Start webhook
 ### Parameters:
-- `secret_token` - A secret token to be sent in a header “X-Telegram-Bot-Api-Secret-Token” in every webhook request, 1-256 characters.
+- `secret_token` - A secret token to be sent in a header `X-Telegram-Bot-Api-Secret-Token` in every webhook request, 1-256 characters.
 - [`bots`](`t:telegram_bot_api_webhook_server:bots/0`) - Maps bot
 - [`transport_opts`](`t:telegram_bot_api_webhook_server:transport_opts/0`) - Maps contains the IP address and port for REST API webhook, use for set url webhook `telegram_bot_api:setWebhook/3`
 ## Examples:
