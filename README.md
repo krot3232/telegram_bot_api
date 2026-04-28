@@ -506,7 +506,7 @@ mute_chat_member(Pool, ChatId, UserId, Minute) ->
         _ -> false
     end.
 ```
-## Bun chat member
+## Ban chat member
 ``` erlang 
 ban_chat_member(Pool, ChatId, UserId, Minute) ->
     Result = telegram_bot_api:banChatMember(Pool, #{
