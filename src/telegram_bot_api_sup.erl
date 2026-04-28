@@ -22,12 +22,11 @@ start_link() ->
 
 init(_) ->
     SupFlags = #{
-        strategy => application:get_env(telegram_bot_api, supervisor_strategy, one_for_one),
-        intensity => application:get_env(telegram_bot_api, supervisor_intensity, 1000),
-        period => application:get_env(telegram_bot_api, supervisor_period, 60)
+        strategy => one_for_one,
+        intensity => 5,
+        period => 1
     },
     {ok, {SupFlags, []}}.
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 -doc """
 Start Http pool telegram bot
